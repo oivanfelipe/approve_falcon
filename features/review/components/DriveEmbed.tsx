@@ -17,9 +17,9 @@ function OpenInDriveLink({ url }: { url: string }) {
       target="_blank"
       rel="noopener noreferrer"
       className={cn(
-        "inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium",
-        "bg-white/[0.06] border border-white/[0.10] text-white/70",
-        "hover:bg-white/[0.10] hover:text-white/90 transition-colors",
+        "inline-flex items-center gap-2 px-4 py-2 text-sm font-bold uppercase",
+        "bg-white border-2 border-black text-black",
+        "hover:bg-black/5 transition-colors",
       )}
     >
       <svg
@@ -52,7 +52,7 @@ export default function DriveEmbed({
   if (!parsed) {
     return (
       <div className="flex flex-col items-center justify-center gap-4 p-12 text-center">
-        <p className="text-sm text-white/60">
+        <p className="text-sm text-black/60">
           Não foi possível carregar a prévia deste link do Google Drive.
         </p>
         <OpenInDriveLink url={driveUrl} />
@@ -67,14 +67,14 @@ export default function DriveEmbed({
       <iframe
         src={parsed.embedUrl}
         className={cn(
-          "w-full rounded-xl border border-white/[0.06] bg-white",
+          "w-full border-2 border-black bg-white",
           isFolder ? "h-[70vh]" : "h-[70vh]",
         )}
         title={fileName}
         allow="autoplay; fullscreen"
         allowFullScreen
       />
-      <p className="text-[11px] text-white/30 text-center max-w-md">
+      <p className="text-[11px] text-black/45 text-center max-w-md">
         Criativo hospedado no Google Drive. Se a prévia não carregar,
         confirme que o link está compartilhado como &ldquo;Qualquer pessoa
         com o link pode visualizar&rdquo;.

@@ -30,8 +30,8 @@ type Panel =
 function StatusBanner({ status }: { status: Status }) {
   if (status === "APPROVED") {
     return (
-      <div className="flex items-center gap-3 p-4 bg-emerald-500/[0.08] border border-emerald-500/25 rounded-xl">
-        <div className="w-8 h-8 rounded-lg bg-emerald-500/15 flex items-center justify-center text-emerald-400 shrink-0">
+      <div className="flex items-center gap-3 p-4 bg-white border-2 border-black">
+        <div className="w-8 h-8 bg-black flex items-center justify-center text-white shrink-0">
           <svg
             width="16"
             height="16"
@@ -47,8 +47,8 @@ function StatusBanner({ status }: { status: Status }) {
           </svg>
         </div>
         <div>
-          <p className="text-sm font-semibold text-emerald-400">Aprovado</p>
-          <p className="text-xs text-white/50 mt-0.5">
+          <p className="text-sm font-bold text-black">Aprovado</p>
+          <p className="text-xs text-black/50 mt-0.5">
             Esta versão foi aprovada
           </p>
         </div>
@@ -58,8 +58,8 @@ function StatusBanner({ status }: { status: Status }) {
 
   if (status === "CHANGES_REQUESTED") {
     return (
-      <div className="flex items-center gap-3 p-4 bg-yellow-500/[0.08] border border-yellow-500/25 rounded-xl">
-        <div className="w-8 h-8 rounded-lg bg-yellow-500/[0.12] flex items-center justify-center text-yellow-400 shrink-0">
+      <div className="flex items-center gap-3 p-4 bg-white border-2 border-[#e10600]">
+        <div className="w-8 h-8 bg-[#e10600] flex items-center justify-center text-white shrink-0">
           <svg
             width="16"
             height="16"
@@ -76,10 +76,10 @@ function StatusBanner({ status }: { status: Status }) {
           </svg>
         </div>
         <div>
-          <p className="text-sm font-semibold text-yellow-400">
+          <p className="text-sm font-bold text-[#e10600]">
             Alterações solicitadas
           </p>
-          <p className="text-xs text-white/50 mt-0.5">
+          <p className="text-xs text-black/50 mt-0.5">
             O revisor solicitou alterações
           </p>
         </div>
@@ -105,14 +105,7 @@ function fireConfetti() {
   }
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
-  const colors = [
-    "#7c3aed",
-    "#10b981",
-    "#f59e0b",
-    "#60a5fa",
-    "#f472b6",
-    "#34d399",
-  ];
+  const colors = ["#e10600", "#000000", "#ffffff"];
   const particles = Array.from({ length: 90 }, () => ({
     x: Math.random() * canvas.width,
     y: Math.random() * -canvas.height * 0.4,
@@ -254,11 +247,11 @@ export default function ApprovalPanel({
       {/* ── Idle ──────────────────────────────────────────────────────────── */}
       {panel === "idle" && (
         <div className="flex flex-col gap-3">
-          <p className="text-xs text-white/50 uppercase tracking-wider font-semibold">
+          <p className="text-xs text-black/50 uppercase tracking-wider font-bold font-mono">
             Decisão de revisão
           </p>
           <Button
-            variant="success"
+            variant="primary"
             fullWidth
             onClick={() => setPanel("approving")}
             leftIcon={<Check className="w-4 h-4" />}
@@ -266,7 +259,7 @@ export default function ApprovalPanel({
             Aprovar esta versão
           </Button>
           <Button
-            variant="danger"
+            variant="secondary"
             fullWidth
             onClick={() => setPanel("requesting")}
             leftIcon={<Edit className="w-4 h-4" />}
@@ -278,8 +271,8 @@ export default function ApprovalPanel({
 
       {/* ── Approve form ──────────────────────────────────────────────────── */}
       {panel === "approving" && (
-        <div className="flex flex-col gap-4 p-4 bg-emerald-500/[0.05] border border-emerald-500/20 rounded-xl">
-          <p className="text-sm font-semibold text-emerald-400">
+        <div className="flex flex-col gap-4 p-4 bg-white border-2 border-black">
+          <p className="text-sm font-extrabold uppercase text-black">
             Confirmar aprovação
           </p>
           <Input
@@ -299,7 +292,7 @@ export default function ApprovalPanel({
             fullWidth
           />
           {formError && (
-            <p className="text-xs text-red-400" role="alert">
+            <p className="text-xs font-medium text-[#e10600]" role="alert">
               {formError}
             </p>
           )}
@@ -328,8 +321,8 @@ export default function ApprovalPanel({
 
       {/* ── Changes form ──────────────────────────────────────────────────── */}
       {panel === "requesting" && (
-        <div className="flex flex-col gap-4 p-4 bg-yellow-500/[0.05] border border-yellow-500/20 rounded-xl">
-          <p className="text-sm font-semibold text-yellow-400">
+        <div className="flex flex-col gap-4 p-4 bg-white border-2 border-[#e10600]">
+          <p className="text-sm font-extrabold uppercase text-[#e10600]">
             Solicitar alterações
           </p>
           <Input
@@ -350,7 +343,7 @@ export default function ApprovalPanel({
             fullWidth
           />
           {formError && (
-            <p className="text-xs text-red-400" role="alert">
+            <p className="text-xs font-medium text-[#e10600]" role="alert">
               {formError}
             </p>
           )}
@@ -366,7 +359,7 @@ export default function ApprovalPanel({
               Cancelar
             </Button>
             <Button
-              variant="outline"
+              variant="secondary"
               size="sm"
               onClick={handleRequestChanges}
               loading={isPending}
@@ -384,8 +377,8 @@ export default function ApprovalPanel({
       {panel === "done_approve" && (
         <div className="flex flex-col gap-4">
           {/* Celebration banner */}
-          <div className="flex flex-col items-center gap-3 p-5 bg-emerald-500/[0.06] border border-emerald-500/20 rounded-xl text-center">
-            <div className="w-12 h-12 rounded-full bg-emerald-500/15 flex items-center justify-center">
+          <div className="flex flex-col items-center gap-3 p-5 bg-black border-2 border-black text-center">
+            <div className="w-12 h-12 bg-[#e10600] flex items-center justify-center">
               <svg
                 width="22"
                 height="22"
@@ -395,17 +388,17 @@ export default function ApprovalPanel({
                 strokeWidth="2.5"
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                className="text-emerald-400"
+                className="text-white"
                 aria-hidden="true"
               >
                 <polyline points="20 6 9 17 4 12" />
               </svg>
             </div>
             <div>
-              <p className="text-base font-bold text-emerald-400">
-                🎉 Versão aprovada!
+              <p className="text-base font-extrabold uppercase text-white">
+                Versão aprovada!
               </p>
-              <p className="text-xs text-white/45 mt-1">
+              <p className="text-xs text-white/60 mt-1">
                 O freelancer foi notificado.
               </p>
             </div>
@@ -435,8 +428,8 @@ export default function ApprovalPanel({
               )}
             </div>
           ) : (
-            <p className="text-xs text-emerald-400/60 text-center">
-              ✓ Mensagem enviada ao freelancer
+            <p className="text-xs font-medium text-black/50 text-center">
+              Mensagem enviada ao freelancer
             </p>
           )}
         </div>

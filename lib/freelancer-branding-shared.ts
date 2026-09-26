@@ -1,5 +1,5 @@
-﻿export const DEFAULT_PRIMARY_COLOR = "#7C3AED";
-export const DEFAULT_SECONDARY_COLOR = "#4F46E5";
+﻿export const DEFAULT_PRIMARY_COLOR = "#E10600";
+export const DEFAULT_SECONDARY_COLOR = "#000000";
 
 export interface FreelancerBranding {
   userId: string;
@@ -90,12 +90,14 @@ function mixHex(baseHex: string, otherHex: string, weight: number) {
   );
 }
 
+// Canvas is white, so an accent that's too light would wash out — nudge it
+// toward black instead of the old dark-canvas guard that nudged toward white.
 function ensureAccessibleAccent(hex: string) {
   let candidate = hex.startsWith("#") ? hex : `#${hex}`;
   let tries = 0;
 
-  while (relativeLuminance(candidate) < 0.18 && tries < 5) {
-    candidate = mixHex(candidate, "#FFFFFF", 0.18);
+  while (relativeLuminance(candidate) > 0.75 && tries < 5) {
+    candidate = mixHex(candidate, "#000000", 0.18);
     tries += 1;
   }
 

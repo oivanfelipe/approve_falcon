@@ -9,18 +9,15 @@ type CardPadding = "none" | "sm" | "md" | "lg" | "xl";
 interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
   variant?: CardVariant;
   padding?: CardPadding;
-  /** Renders an outer glow or gradient highlight ring */
-  glow?: boolean;
 }
 
 // ─── Variant & padding maps ───────────────────────────────────────────────────
 
 const variantClasses: Record<CardVariant, string> = {
-  default: "bg-[#0d0d1e] border border-white/[0.06] rounded-2xl",
-  glass: "glass rounded-2xl",
-  elevated:
-    "bg-[#111122] border border-white/[0.08] rounded-2xl shadow-xl shadow-black/30",
-  outlined: "bg-transparent border border-white/10 rounded-2xl",
+  default: "bg-white border-2 border-black",
+  glass: "bg-white border-2 border-black shadow-[6px_6px_0_0_#000]",
+  elevated: "bg-white border-2 border-black shadow-[6px_6px_0_0_#000]",
+  outlined: "bg-transparent border-2 border-black",
 };
 
 const paddingClasses: Record<CardPadding, string> = {
@@ -53,7 +50,7 @@ function CardTitle({
   return (
     <h3
       className={cn(
-        "text-base font-semibold text-white/90 leading-snug",
+        "text-base font-extrabold text-black leading-snug",
         className,
       )}
       {...props}
@@ -70,7 +67,7 @@ function CardDescription({
 }: React.HTMLAttributes<HTMLParagraphElement>) {
   return (
     <p
-      className={cn("text-sm text-white/50 leading-relaxed", className)}
+      className={cn("text-sm text-black/55 leading-relaxed", className)}
       {...props}
     >
       {children}
@@ -98,7 +95,7 @@ function CardFooter({
   return (
     <div
       className={cn(
-        "flex items-center pt-4 mt-4 border-t border-white/[0.06]",
+        "flex items-center pt-4 mt-4 border-t-2 border-black/10",
         className,
       )}
       {...props}
@@ -113,7 +110,6 @@ function CardFooter({
 function Card({
   variant = "default",
   padding = "md",
-  glow = false,
   className,
   children,
   ...props
@@ -123,7 +119,6 @@ function Card({
       className={cn(
         variantClasses[variant],
         paddingClasses[padding],
-        glow && "glow-brand",
         "transition-colors duration-200",
         className,
       )}

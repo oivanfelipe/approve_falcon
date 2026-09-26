@@ -8,7 +8,6 @@ import { Input } from "@/components/ui/Input";
 import {
   DEFAULT_PRIMARY_COLOR,
   getBrandTextColor,
-  hexToRgba,
   type FreelancerBranding,
 } from "@/lib/freelancer-branding-shared";
 
@@ -56,21 +55,11 @@ export default function PasswordGate({
   };
 
   return (
-    <div className="min-h-screen bg-canvas flex items-center justify-center p-6">
-      {/* Ambient glow */}
-      <div
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-[300px] w-[500px] rounded-full blur-3xl pointer-events-none"
-        style={{ backgroundColor: hexToRgba(primaryColor, 0.16) }}
-        aria-hidden="true"
-      />
-
+    <div className="min-h-screen bg-white flex items-center justify-center p-6">
       <div className="relative w-full max-w-sm">
         {/* Lock icon */}
         <div className="flex justify-center mb-6">
-          <div
-            className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-2xl border bg-white/[0.04]"
-            style={{ borderColor: hexToRgba(primaryColor, 0.26) }}
-          >
+          <div className="flex h-14 w-14 items-center justify-center overflow-hidden border-2 border-black bg-white">
             {branding?.logoUrl ? (
               <img
                 src={branding.logoUrl}
@@ -87,7 +76,6 @@ export default function PasswordGate({
                 strokeWidth="1.5"
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                className="text-violet-400"
                 style={{ color: primaryColor }}
                 aria-hidden="true"
               >
@@ -99,15 +87,15 @@ export default function PasswordGate({
         </div>
 
         <div className="text-center mb-8">
-          <p className="mb-2 text-xs uppercase tracking-[0.22em] text-white/35">
+          <p className="mb-2 text-xs font-mono uppercase tracking-[0.22em] text-black/40">
             {displayName}
           </p>
-          <h1 className="text-xl font-bold text-white mb-1">
+          <h1 className="text-xl font-extrabold uppercase text-black mb-1">
             Password required
           </h1>
-          <p className="text-sm text-white/50">
-            <span className="text-white/70">{projectName}</span> is password
-            protected. Enter the password to view the file.
+          <p className="text-sm text-black/50">
+            <span className="text-black/80 font-medium">{projectName}</span>{" "}
+            is password protected. Enter the password to view the file.
           </p>
         </div>
 
@@ -115,13 +103,17 @@ export default function PasswordGate({
           <Input
             type="password"
             label="Password"
-            placeholder="Enter passwordâ€¦"
+            placeholder="Enter password…"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             autoFocus
           />
 
-          {error && <p className="text-sm text-red-400 -mt-1">{error}</p>}
+          {error && (
+            <p className="text-sm font-medium text-[#e10600] -mt-1">
+              {error}
+            </p>
+          )}
 
           <Button
             type="submit"

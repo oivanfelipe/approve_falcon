@@ -9,11 +9,7 @@ type BadgeVariant =
   | "success"
   | "warning"
   | "error"
-  | "info"
-  // Falcon design system — used on screens already migrated
-  | "falconNeutral"
-  | "falconDone"
-  | "falconAlert";
+  | "info";
 
 type BadgeSize = "sm" | "md";
 
@@ -27,34 +23,31 @@ interface BadgeProps {
 }
 
 // ─── Variant maps ─────────────────────────────────────────────────────────────
+// Approve Falcon system: white/black/red only. Red is reserved for the one
+// status that needs attention ("changes requested"); everything resolved or
+// waiting stays neutral black/white.
 
 const variantClasses: Record<BadgeVariant, string> = {
-  default: "bg-white/[0.08] text-white/70 border-white/[0.10]",
-  brand: "bg-violet-500/[0.12] text-violet-300 border-violet-500/25",
-  success: "bg-emerald-500/[0.12] text-emerald-400 border-emerald-500/25",
-  warning: "bg-amber-500/[0.12] text-amber-400 border-amber-500/25",
-  error: "bg-red-500/[0.12] text-red-400 border-red-500/25",
-  info: "bg-blue-500/[0.12] text-blue-400 border-blue-500/25",
-  falconNeutral: "rounded-md! bg-white text-black/70 border-black/45",
-  falconDone: "rounded-md! bg-black text-white border-black",
-  falconAlert: "rounded-md! bg-[#e10600] text-white border-black",
+  default: "bg-white text-black/70 border-black/30",
+  brand: "bg-black text-white border-black",
+  success: "bg-black text-white border-black",
+  warning: "bg-white text-black/70 border-black/45",
+  error: "bg-[#e10600] text-white border-black",
+  info: "bg-white text-black/70 border-black/30",
 };
 
 const dotClasses: Record<BadgeVariant, string> = {
-  default: "bg-white/50",
-  brand: "bg-violet-400",
-  success: "bg-emerald-400",
-  warning: "bg-amber-400",
-  error: "bg-red-400",
-  info: "bg-blue-400",
-  falconNeutral: "bg-black/40",
-  falconDone: "bg-white",
-  falconAlert: "bg-white",
+  default: "bg-black/40",
+  brand: "bg-white",
+  success: "bg-white",
+  warning: "bg-black/40",
+  error: "bg-white",
+  info: "bg-black/40",
 };
 
 const sizeClasses: Record<BadgeSize, string> = {
-  sm: "px-2 py-0.5 text-[11px] rounded-full",
-  md: "px-2.5 py-1 text-xs rounded-full",
+  sm: "px-2 py-0.5 text-[11px] rounded-md",
+  md: "px-2.5 py-1 text-xs rounded-md",
 };
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -69,7 +62,7 @@ function Badge({
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1.5 font-medium border",
+        "inline-flex items-center gap-1.5 font-mono font-bold uppercase tracking-wide border-[1.5px]",
         variantClasses[variant],
         sizeClasses[size],
         className,

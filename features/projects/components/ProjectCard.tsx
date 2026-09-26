@@ -27,9 +27,9 @@ const statusLabel: Record<string, string> = {
 };
 
 const statusVariant: Record<string, BadgeVariant> = {
-  PENDING: "falconNeutral",
-  APPROVED: "falconDone",
-  CHANGES_REQUESTED: "falconAlert",
+  PENDING: "warning",
+  APPROVED: "success",
+  CHANGES_REQUESTED: "error",
 };
 
 function timeAgo(date: Date): string {
@@ -54,7 +54,7 @@ export default function ProjectCard({
   updatedAt,
   lastViewedAt,
 }: ProjectCardProps) {
-  const variant = latestStatus ? statusVariant[latestStatus] : "falconNeutral";
+  const variant = latestStatus ? statusVariant[latestStatus] : "warning";
   const label = latestStatus ? statusLabel[latestStatus] : "Sem entregas";
 
   return (

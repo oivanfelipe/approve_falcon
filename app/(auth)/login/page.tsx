@@ -1,12 +1,12 @@
-﻿"use client";
+"use client";
 
 import React, { useState, useTransition } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { signIn } from "next-auth/react";
 import { registerUser } from "@/features/auth/actions/auth";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
+import FalconMark from "@/components/ui/FalconMark";
 import { cn } from "@/lib/utils";
 
 // ─── Tab helpers ──────────────────────────────────────────────────────────────
@@ -60,7 +60,7 @@ function SignInForm({ next }: { next?: string }) {
         fullWidth
       />
       {error && (
-        <p className="text-xs text-red-400" role="alert">
+        <p className="text-xs font-medium text-[#e10600]" role="alert">
           {error}
         </p>
       )}
@@ -128,7 +128,7 @@ function RegisterForm({ next }: { next?: string }) {
         hint="At least 8 characters"
       />
       {error && (
-        <p className="text-xs text-red-400" role="alert">
+        <p className="text-xs font-medium text-[#e10600]" role="alert">
           {error}
         </p>
       )}
@@ -156,34 +156,28 @@ export default function LoginPage() {
     <div className="w-full max-w-sm flex flex-col gap-8">
       {/* Logo */}
       <Link href="/" className="flex items-center gap-2.5 justify-center">
-        <Image
-          src="/logo.png"
-          alt=""
-          width={32}
-          height={32}
-          className="shrink-0"
-        />
-        <span className="text-lg font-bold tracking-tight">
-          <span className="text-white">Approve</span>
-          <span className="gradient-text">Falcon</span>
+        <FalconMark size={26} className="shrink-0 text-[#e10600]" />
+        <span className="text-lg font-extrabold uppercase tracking-tight">
+          <span className="text-black">Approve</span>
+          <span className="text-[#e10600]">Falcon</span>
         </span>
       </Link>
 
       {/* Card */}
-      <div className="glass rounded-2xl p-7 border border-white/[0.06]">
+      <div className="bg-white border-2 border-black shadow-[8px_8px_0_0_#000] p-7">
         {/* Tabs */}
-        <div className="flex gap-1 p-1 bg-white/[0.04] rounded-xl mb-6">
+        <div className="flex gap-1 p-1 bg-white border-2 border-black mb-6">
           {(["signin", "register"] as Tab[]).map((tab) => (
             <button
               key={tab}
               type="button"
               onClick={() => setActiveTab(tab)}
               className={cn(
-                "flex-1 py-1.5 rounded-lg text-sm font-medium transition-all duration-150",
-                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/50",
+                "flex-1 py-1.5 text-sm font-bold uppercase tracking-wide transition-colors duration-150",
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#e10600]/50",
                 activeTab === tab
-                  ? "bg-violet-600/80 text-white shadow-sm"
-                  : "text-white/50 hover:text-white/80",
+                  ? "bg-black text-white"
+                  : "text-black/50 hover:text-black",
               )}
             >
               {tab === "signin" ? "Sign in" : "Create account"}

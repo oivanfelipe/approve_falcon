@@ -32,7 +32,7 @@ function FileIcon() {
       strokeWidth="1.5"
       strokeLinecap="round"
       strokeLinejoin="round"
-      className="text-violet-500"
+      className="text-black"
       aria-hidden="true"
     >
       <polyline points="16 16 12 12 8 16" />
@@ -100,14 +100,14 @@ export default function UploadZone({
         onDragLeave={() => setIsDragging(false)}
         onDrop={handleDrop}
         className={cn(
-          "relative flex flex-col items-center justify-center gap-3 p-8 rounded-2xl",
-          "border-2 border-dashed transition-all duration-200 text-center cursor-pointer",
+          "relative flex flex-col items-center justify-center gap-3 p-8 rounded-md",
+          "border-2 border-dashed transition-colors duration-150 text-center cursor-pointer",
           disabled && "opacity-50 pointer-events-none",
           isDragging
-            ? "border-violet-500/70 bg-violet-500/[0.06]"
+            ? "border-[#e10600] bg-[#e10600]/[0.04]"
             : selectedFile
-              ? "border-emerald-500/40 bg-emerald-500/[0.04]"
-              : "border-white/[0.10] hover:border-violet-500/40 hover:bg-violet-500/[0.03] bg-white/[0.02]",
+              ? "border-black bg-black/[0.03]"
+              : "border-black/30 hover:border-black bg-white",
         )}
       >
         <label className="flex flex-col items-center gap-3 cursor-pointer w-full">
@@ -121,7 +121,7 @@ export default function UploadZone({
 
           {selectedFile ? (
             <>
-              <div className="w-10 h-10 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center">
+              <div className="w-10 h-10 bg-black border-2 border-black flex items-center justify-center">
                 <svg
                   width="18"
                   height="18"
@@ -131,21 +131,21 @@ export default function UploadZone({
                   strokeWidth="2.5"
                   strokeLinecap="round"
                   strokeLinejoin="round"
-                  className="text-emerald-400"
+                  className="text-white"
                   aria-hidden="true"
                 >
                   <polyline points="20 6 9 17 4 12" />
                 </svg>
               </div>
               <div>
-                <p className="text-sm font-medium text-white/80 truncate max-w-[200px]">
+                <p className="text-sm font-semibold text-black truncate max-w-[200px]">
                   {selectedFile.name}
                 </p>
-                <p className="text-xs text-white/40 mt-0.5">
+                <p className="text-xs text-black/50 mt-0.5">
                   {formatSize(selectedFile.size)}
                 </p>
               </div>
-              <span className="text-xs text-violet-400 underline underline-offset-2">
+              <span className="text-xs font-semibold text-[#e10600] underline underline-offset-2">
                 Click to change file
               </span>
             </>
@@ -153,13 +153,11 @@ export default function UploadZone({
             <>
               <FileIcon />
               <div>
-                <p className="text-sm text-white/70">
-                  <span className="font-medium text-violet-400">
-                    Click to upload
-                  </span>{" "}
+                <p className="text-sm text-black/70">
+                  <span className="font-bold text-black">Click to upload</span>{" "}
                   or drag and drop
                 </p>
-                <p className="text-xs text-white/35 mt-1">
+                <p className="text-xs text-black/40 mt-1">
                   Images, PDFs, videos, documents, ZIP — up to {maxSizeMb} MB
                 </p>
               </div>
@@ -169,7 +167,7 @@ export default function UploadZone({
       </div>
 
       {error && (
-        <p className="mt-2 text-xs text-red-400" role="alert">
+        <p className="mt-2 text-xs font-medium text-[#e10600]" role="alert">
           {error}
         </p>
       )}

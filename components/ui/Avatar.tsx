@@ -15,21 +15,6 @@ const sizes = {
   lg: "w-14 h-14 text-lg",
 };
 
-// Deterministic gradient based on name initials
-const gradients = [
-  "from-violet-600 to-indigo-600",
-  "from-pink-600 to-rose-600",
-  "from-amber-500 to-orange-600",
-  "from-emerald-500 to-teal-600",
-  "from-cyan-600 to-sky-600",
-  "from-fuchsia-600 to-purple-700",
-];
-
-function getGradient(name: string) {
-  const code = name.split("").reduce((acc, c) => acc + c.charCodeAt(0), 0);
-  return gradients[code % gradients.length];
-}
-
 function getInitials(name: string) {
   return name
     .split(" ")
@@ -49,7 +34,7 @@ export function Avatar({ name, src, size = "md", className }: AvatarProps) {
         src={src}
         alt={name ?? "Avatar"}
         className={cn(
-          "rounded-full object-cover flex-shrink-0",
+          "border-2 border-black object-cover flex-shrink-0",
           sizeClass,
           className,
         )}
@@ -58,14 +43,12 @@ export function Avatar({ name, src, size = "md", className }: AvatarProps) {
   }
 
   const displayName = name ?? "?";
-  const gradient = getGradient(displayName);
 
   return (
     <div
       aria-label={displayName}
       className={cn(
-        "rounded-full flex-shrink-0 flex items-center justify-center font-semibold text-white",
-        `bg-gradient-to-br ${gradient}`,
+        "flex-shrink-0 flex items-center justify-center font-extrabold text-white bg-black",
         sizeClass,
         className,
       )}

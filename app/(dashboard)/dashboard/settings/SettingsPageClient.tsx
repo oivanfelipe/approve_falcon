@@ -10,7 +10,6 @@ import {
   DEFAULT_SECONDARY_COLOR,
   getBrandTextColor,
   getPublicReviewPath,
-  hexToRgba,
   normalizeHexColor,
   normalizeSlug,
   type FreelancerBranding,
@@ -117,22 +116,22 @@ export default function SettingsPageClient({
   };
 
   return (
-    <div className="mx-auto flex max-w-6xl flex-col gap-8 px-6 py-8">
+    <div className="mx-auto flex max-w-6xl flex-col gap-8 px-6 py-8 bg-white min-h-screen">
       <div className="flex flex-col gap-2">
-        <p className="text-xs font-semibold uppercase tracking-[0.24em] text-white/35">
+        <p className="text-xs font-mono font-bold uppercase tracking-[0.24em] text-black/40">
           Configurações
         </p>
-        <h1 className="text-3xl font-bold text-white">
+        <h1 className="text-3xl font-extrabold uppercase tracking-tight text-black">
           Sua identidade no link
         </h1>
-        <p className="max-w-2xl text-sm text-white/45">
+        <p className="max-w-2xl text-sm text-black/50">
           Personalize nome exibido, logo, cores e o slug do link público sem
           alterar o fluxo atual dos reviews.
         </p>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1.1fr)_380px]">
-        <Card className="border-white/[0.08] bg-[#0d0d1e]" padding="lg">
+        <Card variant="elevated" padding="lg">
           <form className="flex flex-col gap-5" onSubmit={handleSave}>
             <Input
               label="Nome exibido"
@@ -145,13 +144,13 @@ export default function SettingsPageClient({
 
             <div className="flex flex-col gap-2">
               <div className="flex items-center justify-between gap-3">
-                <label className="text-sm font-medium text-white/80">
+                <label className="text-sm font-semibold text-black">
                   Logo
                 </label>
                 {logoPreview && (
                   <button
                     type="button"
-                    className="text-xs text-white/45 transition-colors hover:text-white/70"
+                    className="text-xs font-medium text-black/45 transition-colors hover:text-black"
                     onClick={() => {
                       setLogoUrl("");
                       setLogoPreview(null);
@@ -161,8 +160,8 @@ export default function SettingsPageClient({
                   </button>
                 )}
               </div>
-              <div className="flex items-center gap-4 rounded-2xl border border-white/[0.08] bg-white/[0.03] p-4">
-                <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl border border-white/[0.08] bg-[#06060f]">
+              <div className="flex items-center gap-4 border-2 border-black bg-white p-4">
+                <div className="flex h-16 w-16 items-center justify-center overflow-hidden border-2 border-black bg-white">
                   {logoPreview ? (
                     <img
                       src={logoPreview}
@@ -170,11 +169,11 @@ export default function SettingsPageClient({
                       className="h-full w-full object-cover"
                     />
                   ) : (
-                    <span className="text-xs text-white/30">Sem logo</span>
+                    <span className="text-xs text-black/35">Sem logo</span>
                   )}
                 </div>
                 <div className="flex flex-1 flex-col gap-2">
-                  <p className="text-sm text-white/60">
+                  <p className="text-sm text-black/60">
                     PNG, JPG, WEBP ou SVG com até 2 MB.
                   </p>
                   <div className="flex gap-2">
@@ -203,34 +202,34 @@ export default function SettingsPageClient({
 
             <div className="grid gap-4 sm:grid-cols-2">
               <label className="flex flex-col gap-2">
-                <span className="text-sm font-medium text-white/80">
+                <span className="text-sm font-semibold text-black">
                   Cor primária
                 </span>
-                <div className="flex items-center gap-3 rounded-full border border-white/[0.08] bg-white/[0.04] px-3 py-2">
+                <div className="flex items-center gap-3 border-2 border-black bg-white px-3 py-2">
                   <input
                     type="color"
                     value={previewPrimary}
                     onChange={(event) => setPrimaryColor(event.target.value)}
-                    className="h-8 w-8 cursor-pointer rounded-full border-0 bg-transparent"
+                    className="h-8 w-8 cursor-pointer border-0 bg-transparent"
                   />
-                  <span className="text-sm text-white/75">
+                  <span className="text-sm font-mono text-black/75">
                     {previewPrimary}
                   </span>
                 </div>
               </label>
 
               <label className="flex flex-col gap-2">
-                <span className="text-sm font-medium text-white/80">
+                <span className="text-sm font-semibold text-black">
                   Cor secundária
                 </span>
-                <div className="flex items-center gap-3 rounded-full border border-white/[0.08] bg-white/[0.04] px-3 py-2">
+                <div className="flex items-center gap-3 border-2 border-black bg-white px-3 py-2">
                   <input
                     type="color"
                     value={previewSecondary}
                     onChange={(event) => setSecondaryColor(event.target.value)}
-                    className="h-8 w-8 cursor-pointer rounded-full border-0 bg-transparent"
+                    className="h-8 w-8 cursor-pointer border-0 bg-transparent"
                   />
-                  <span className="text-sm text-white/75">
+                  <span className="text-sm font-mono text-black/75">
                     {previewSecondary}
                   </span>
                 </div>
@@ -248,14 +247,14 @@ export default function SettingsPageClient({
               hint="Use apenas letras minúsculas, números e hí­fen."
             />
 
-            <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-4">
-              <p className="text-xs uppercase tracking-[0.22em] text-white/35">
+            <div className="border-2 border-black bg-white p-4">
+              <p className="text-xs font-mono uppercase tracking-[0.22em] text-black/40">
                 Link compartilhado
               </p>
-              <p className="mt-2 font-mono text-sm text-white/80">
+              <p className="mt-2 font-mono text-sm text-black">
                 {`seu-dominio.com${previewPath}`}
               </p>
-              <p className="mt-2 text-xs text-white/40">
+              <p className="mt-2 text-xs text-black/45">
                 O formato branded preserva o token da review e usa o seu slug
                 como identidade pública.
               </p>
@@ -264,7 +263,9 @@ export default function SettingsPageClient({
             {(error || success) && (
               <p
                 className={
-                  error ? "text-sm text-red-400" : "text-sm text-emerald-400"
+                  error
+                    ? "text-sm font-medium text-[#e10600]"
+                    : "text-sm font-medium text-black"
                 }
                 role={error ? "alert" : "status"}
               >
@@ -280,30 +281,15 @@ export default function SettingsPageClient({
           </form>
         </Card>
 
-        <Card
-          className="overflow-hidden border-white/[0.08] bg-[#080814]"
-          padding="none"
-        >
-          <div
-            className="p-5"
-            style={{
-              background: `linear-gradient(135deg, ${hexToRgba(previewPrimary, 0.25)}, ${hexToRgba(previewSecondary, 0.18)})`,
-              /* background color preview disabled */
-            }}
-          >
-            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-white/45">
+        <Card variant="elevated" padding="none" className="overflow-hidden">
+          <div className="p-5 bg-black border-b-2 border-black">
+            <p className="text-xs font-mono font-bold uppercase tracking-[0.22em] text-white/60">
               Preview em tempo real
             </p>
           </div>
           <div className="flex flex-col gap-6 p-5">
             <div className="flex items-center gap-3">
-              <div
-                className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-2xl border"
-                style={{
-                  backgroundColor: hexToRgba(previewPrimary, 0.14),
-                  borderColor: hexToRgba(previewPrimary, 0.36),
-                }}
-              >
+              <div className="flex h-14 w-14 items-center justify-center overflow-hidden border-2 border-black bg-white">
                 {logoPreview ? (
                   <img
                     src={logoPreview}
@@ -312,7 +298,7 @@ export default function SettingsPageClient({
                   />
                 ) : (
                   <span
-                    className="text-lg font-semibold"
+                    className="text-lg font-extrabold"
                     style={{ color: previewPrimary }}
                   >
                     {previewName.charAt(0).toUpperCase()}
@@ -320,23 +306,23 @@ export default function SettingsPageClient({
                 )}
               </div>
               <div>
-                <p className="text-lg font-semibold text-white">
+                <p className="text-lg font-extrabold text-black">
                   {previewName}
                 </p>
-                <p className="text-sm text-white/45">Ambiente do cliente</p>
+                <p className="text-sm text-black/45">Ambiente do cliente</p>
               </div>
             </div>
 
-            <div className="rounded-2xl border border-white/[0.08] bg-[#06060f] p-4">
+            <div className="border-2 border-black bg-white p-4">
               <div className="flex items-center justify-between gap-4">
                 <div>
-                  <p className="text-sm font-semibold text-white">
+                  <p className="text-sm font-bold text-black">
                     Homepage redesign
                   </p>
-                  <p className="text-xs text-white/40">Cliente: Example Co.</p>
+                  <p className="text-xs text-black/40">Cliente: Example Co.</p>
                 </div>
                 <span
-                  className="rounded-full px-3 py-1 text-xs font-semibold"
+                  className="px-3 py-1 text-xs font-mono font-bold uppercase border-[1.5px] border-black"
                   style={{
                     backgroundColor: previewPrimary,
                     color: getBrandTextColor(previewPrimary),
@@ -346,20 +332,14 @@ export default function SettingsPageClient({
                 </span>
               </div>
 
-              <div
-                className="mt-4 rounded-2xl border p-4"
-                style={{
-                  borderColor: hexToRgba(previewPrimary, 0.28),
-                  background: `linear-gradient(180deg, ${hexToRgba(previewPrimary, 0.12)}, rgba(255,255,255,0.02))`,
-                }}
-              >
-                <p className="text-xs uppercase tracking-[0.22em] text-white/35">
+              <div className="mt-4 border-2 border-black p-4">
+                <p className="text-xs font-mono uppercase tracking-[0.22em] text-black/40">
                   Decisão de revisão
                 </p>
                 <div className="mt-3 grid gap-2">
                   <button
                     type="button"
-                    className="rounded-full px-4 py-3 text-sm font-semibold"
+                    className="px-4 py-3 text-sm font-extrabold uppercase border-2 border-black shadow-[3px_3px_0_0_#000]"
                     style={{
                       backgroundColor: previewPrimary,
                       color: getBrandTextColor(previewPrimary),
@@ -369,10 +349,10 @@ export default function SettingsPageClient({
                   </button>
                   <button
                     type="button"
-                    className="rounded-full border px-4 py-3 text-sm font-semibold text-white"
+                    className="px-4 py-3 text-sm font-extrabold uppercase border-2 bg-white"
                     style={{
-                      borderColor: hexToRgba(previewSecondary, 0.45),
-                      backgroundColor: hexToRgba(previewSecondary, 0.14),
+                      borderColor: previewSecondary,
+                      color: previewSecondary,
                     }}
                   >
                     Solicitar alterações
@@ -381,12 +361,12 @@ export default function SettingsPageClient({
               </div>
             </div>
 
-            <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-4">
-              <p className="text-xs uppercase tracking-[0.22em] text-white/35">
+            <div className="border-2 border-black bg-white p-4">
+              <p className="text-xs font-mono uppercase tracking-[0.22em] text-black/40">
                 Rota branded
               </p>
-              <p className="mt-2 text-sm text-white/75">{previewPath}</p>
-              <p className="mt-2 text-xs text-white/40">
+              <p className="mt-2 text-sm text-black/75">{previewPath}</p>
+              <p className="mt-2 text-xs text-black/40">
                 Se o slug não existir, o sistema continua aceitando o caminho
                 padrão em <code>/review/[token]</code>.
               </p>

@@ -92,7 +92,7 @@ export default function NewProjectModal({
           resize="none"
         />
         {error && (
-          <p className="text-xs text-red-400" role="alert">
+          <p className="text-xs font-medium text-[#e10600]" role="alert">
             {error}
           </p>
         )}

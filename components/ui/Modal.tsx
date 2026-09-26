@@ -98,7 +98,7 @@ function Modal({
     >
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black/75 backdrop-blur-sm"
+        className="absolute inset-0 bg-black/70"
         onClick={closeOnOverlayClick ? onClose : undefined}
         aria-hidden="true"
       />
@@ -108,20 +108,19 @@ function Modal({
         ref={panelRef}
         className={cn(
           "relative w-full flex flex-col max-h-[90vh]",
-          "bg-[#0d0d1e] border border-white/[0.08] rounded-2xl",
-          "shadow-2xl shadow-black/60",
+          "bg-white border-2 border-black shadow-[8px_8px_0_0_#000]",
           sizeClasses[size],
           className,
         )}
       >
         {/* Header */}
         {(title || description) && (
-          <div className="flex items-start justify-between p-6 border-b border-white/[0.06] shrink-0">
+          <div className="flex items-start justify-between p-6 border-b-2 border-black shrink-0">
             <div className="pr-4">
               {title && (
                 <h2
                   id="modal-title"
-                  className="text-lg font-semibold text-white leading-snug"
+                  className="text-lg font-extrabold uppercase tracking-tight text-black leading-snug"
                 >
                   {title}
                 </h2>
@@ -129,7 +128,7 @@ function Modal({
               {description && (
                 <p
                   id="modal-description"
-                  className="mt-1 text-sm text-white/50"
+                  className="mt-1 text-sm text-black/55"
                 >
                   {description}
                 </p>
@@ -138,10 +137,10 @@ function Modal({
             <button
               onClick={onClose}
               className={cn(
-                "shrink-0 p-1.5 rounded-lg",
-                "text-white/40 hover:text-white/80 hover:bg-white/[0.06]",
+                "shrink-0 p-1.5",
+                "text-black/50 hover:text-black hover:bg-black/[0.06]",
                 "transition-colors duration-150",
-                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/60",
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#e10600]/60",
               )}
               aria-label="Close modal"
             >
@@ -155,9 +154,7 @@ function Modal({
 
         {/* Footer */}
         {footer && (
-          <div className="p-6 border-t border-white/[0.06] shrink-0">
-            {footer}
-          </div>
+          <div className="p-6 border-t-2 border-black shrink-0">{footer}</div>
         )}
       </div>
     </div>,

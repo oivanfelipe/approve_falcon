@@ -34,10 +34,10 @@ function DownloadButton({ url, fileName }: { url: string; fileName: string }) {
       onClick={handleDownload}
       disabled={loading}
       className={cn(
-        "inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium",
-        "bg-white/[0.06] border border-white/[0.10] text-white/70",
-        "hover:bg-white/[0.10] hover:text-white/90 transition-colors",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/60",
+        "inline-flex items-center gap-2 px-4 py-2 text-sm font-bold uppercase",
+        "bg-white border-2 border-black text-black",
+        "hover:bg-black/5 transition-colors",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#e10600]/60",
         "disabled:opacity-50 disabled:cursor-not-allowed",
       )}
     >
@@ -82,7 +82,7 @@ export default function FilePreview({
         <video
           src={signedUrl}
           controls
-          className="w-full max-h-[70vh] rounded-xl bg-black object-contain"
+          className="w-full max-h-[70vh] border-2 border-black bg-black object-contain"
           aria-label={fileName}
         >
           Your browser does not support the video tag.
@@ -99,7 +99,7 @@ export default function FilePreview({
       <div className="flex flex-col items-center gap-4 w-full">
         <iframe
           src={`${signedUrl}#toolbar=0&navpanes=0`}
-          className="w-full h-[70vh] rounded-xl border border-white/[0.06] bg-white"
+          className="w-full h-[70vh] border-2 border-black bg-white"
           title={fileName}
         />
         {allowDownload && (
@@ -112,7 +112,7 @@ export default function FilePreview({
   // Generic file
   return (
     <div className="flex flex-col items-center justify-center gap-6 p-12">
-      <div className="w-20 h-20 rounded-2xl bg-white/[0.05] border border-white/[0.10] flex items-center justify-center">
+      <div className="w-20 h-20 bg-white border-2 border-black flex items-center justify-center">
         <svg
           width="36"
           height="36"
@@ -122,7 +122,7 @@ export default function FilePreview({
           strokeWidth="1.5"
           strokeLinecap="round"
           strokeLinejoin="round"
-          className="text-white/40"
+          className="text-black"
           aria-hidden="true"
         >
           <path d="M13 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V9z" />
@@ -130,10 +130,10 @@ export default function FilePreview({
         </svg>
       </div>
       <div className="text-center">
-        <p className="text-sm font-medium text-white/70 max-w-[240px] break-words">
+        <p className="text-sm font-semibold text-black max-w-[240px] break-words">
           {fileName}
         </p>
-        <p className="text-xs text-white/35 mt-1">
+        <p className="text-xs text-black/45 mt-1">
           Preview not available for this file type
         </p>
       </div>

@@ -1,11 +1,11 @@
 "use client";
 
 import React from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { cn } from "@/lib/utils";
+import FalconMark from "@/components/ui/FalconMark";
 
 // ─── Nav items ────────────────────────────────────────────────────────────────
 
@@ -66,13 +66,7 @@ const navItems: NavItem[] = [
 function SidebarLogo() {
   return (
     <Link href="/dashboard" className="flex items-center gap-2.5 px-4 py-5">
-      <Image
-        src="/logo.png"
-        alt=""
-        width={28}
-        height={28}
-        className="shrink-0"
-      />
+      <FalconMark size={22} className="shrink-0 text-[#e10600]" />
       <span className="text-sm font-extrabold uppercase tracking-tight">
         <span className="text-white">Approve</span>
         <span className="text-[#e10600]">Falcon</span>

@@ -11,7 +11,6 @@ import { Modal } from "@/components/ui/Modal";
 import { Input } from "@/components/ui";
 import {
   DEFAULT_PRIMARY_COLOR,
-  hexToRgba,
   getBrandTextColor,
 } from "@/lib/freelancer-branding-shared";
 
@@ -111,57 +110,49 @@ function CommentBubble({
           }
         }}
         className={cn(
-          "max-w-[80%] px-3 py-2 rounded-xl border text-sm",
-          active && "ring-2",
+          "max-w-[80%] px-3 py-2 border-2 text-sm",
+          active && "ring-2 ring-offset-2",
         )}
         style={{
           backgroundColor: isOwn
-            ? hexToRgba(primary, 0.3)
-            : isClient
-              ? isResolved
-                ? hexToRgba("#10B981", 0.1)
-                : hexToRgba(primary, 0.04)
-              : "rgba(255,255,255,0.02)",
-          borderColor: isOwn
-            ? hexToRgba(primary, 0.3)
-            : isClient
-              ? isResolved
-                ? hexToRgba("#10B981", 0.2)
-                : hexToRgba(primary, 0.12)
-              : "rgba(255,255,255,0.06)",
-          color: isOwn ? getBrandTextColor(primary) : undefined,
+            ? primary
+            : isClient && isResolved
+              ? "rgba(0,0,0,0.04)"
+              : "#ffffff",
+          borderColor: "#000000",
+          color: isOwn ? getBrandTextColor(primary) : "#000000",
         }}
       >
         <div className="flex items-baseline gap-2">
-          <span className="text-[10px] font-semibold">
-            {comment.authorName}
-          </span>
+          <span className="text-[10px] font-bold">{comment.authorName}</span>
           {typeof pinnedNumber === "number" ? (
             <span
-              className="ml-1 inline-flex items-center justify-center text-[8px] p-1 rounded-full"
+              className="ml-1 inline-flex items-center justify-center text-[8px] font-mono font-bold px-1.5 py-0.5 border border-black"
               style={{
-                backgroundColor: primary,
-                color: getBrandTextColor(primary),
+                backgroundColor: isOwn ? "#ffffff" : primary,
+                color: isOwn ? primary : getBrandTextColor(primary),
               }}
             >
-              Pin #{pinnedNumber}
+              PIN #{pinnedNumber}
             </span>
           ) : (
             comment.xPosition !== null &&
             comment.yPosition !== null && (
               <span
-                className="ml-2 inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full"
+                className="ml-2 inline-flex items-center gap-1 text-[10px] font-mono font-bold uppercase px-1.5 py-0.5 border border-black"
                 style={{
-                  backgroundColor: hexToRgba(primary, 0.8),
-                  color: getBrandTextColor(primary),
+                  backgroundColor: isOwn ? "#ffffff" : primary,
+                  color: isOwn ? primary : getBrandTextColor(primary),
                 }}
               >
-                <span aria-hidden>📌</span>
-                <span>Fixado</span>
+                Fixado
               </span>
             )
           )}
-          <span className="ml-auto text-[10px] text-white/30">
+          <span
+            className="ml-auto text-[10px] font-mono"
+            style={{ opacity: isOwn ? 0.75 : 0.4 }}
+          >
             {timeAgo(comment.createdAt)}
           </span>
         </div>
@@ -172,13 +163,20 @@ function CommentBubble({
               e.stopPropagation();
               onJumpToComment(parentComment.id);
             }}
-            className="mt-1.5 flex w-full flex-col items-start gap-0.5 rounded-md bg-white/[0.06] px-2.5 py-2 text-left transition hover:bg-white/[0.10]"
-            style={{ borderLeft: `2px solid ${hexToRgba(primary, 0.7)}` }}
+            className={cn(
+              "mt-1.5 flex w-full flex-col items-start gap-0.5 border-l-2 px-2.5 py-2 text-left transition",
+              isOwn
+                ? "border-white/60 bg-black/10 hover:bg-black/20"
+                : "border-black/40 bg-black/[0.04] hover:bg-black/[0.08]",
+            )}
           >
-            <span className="text-[10px] font-semibold text-violet-200">
+            <span className="text-[10px] font-bold">
               Respondendo a {parentComment.authorName}
             </span>
-            <span className="truncate w-full text-[11px] leading-snug text-white/60">
+            <span
+              className="truncate w-full text-[11px] leading-snug"
+              style={{ opacity: isOwn ? 0.85 : 0.6 }}
+            >
               {getCommentPreview(parentComment)}
             </span>
           </button>
@@ -217,10 +215,8 @@ function CommentBubble({
               isToggling ? "Salvando..." : isResolved ? "Desfazer" : "Resolver"
             }
             className={cn(
-              "inline-flex h-7 w-7 items-center justify-center rounded-full border shadow-sm transition",
-              isResolved
-                ? "border-rose-400/30 bg-rose-500/10 text-rose-300 hover:bg-rose-500/15"
-                : "border-emerald-400/30 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/15",
+              "inline-flex h-7 w-7 items-center justify-center border-2 border-black transition",
+              isResolved ? "bg-white text-black" : "bg-[#e10600] text-white",
               isToggling && "cursor-not-allowed opacity-60",
             )}
           >
@@ -232,7 +228,7 @@ function CommentBubble({
           onClick={() => onReply(comment)}
           aria-label="Responder"
           title="Responder"
-          className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-white/[0.10] bg-white/[0.03] text-white/60 shadow-sm transition hover:border-violet-400/25 hover:bg-violet-500/10 hover:text-violet-200"
+          className="inline-flex h-7 w-7 items-center justify-center border-2 border-black bg-white text-black/60 transition hover:text-black hover:bg-black/5"
         >
           <Reply size={14} />
         </button>
@@ -588,7 +584,7 @@ export default function CommentSystem({
 
   return (
     <div className="flex flex-col gap-4 h-full">
-      <p className="text-xs font-semibold uppercase tracking-wider text-white/50">
+      <p className="text-xs font-mono font-bold uppercase tracking-wider text-black/50">
         Comentários{comments.length > 0 ? ` (${comments.length})` : ""}
       </p>
 
@@ -637,26 +633,26 @@ export default function CommentSystem({
           <div ref={commentsEndRef} />
         </div>
       ) : (
-        <p className="py-4 text-center text-sm text-white/30">
+        <p className="py-4 text-center text-sm text-black/40">
           Nenhum comentário ainda
         </p>
       )}
 
-      <div className="flex flex-col gap-3 border-t border-white/[0.06] pt-2">
+      <div className="flex flex-col gap-3 border-t-2 border-black/10 pt-2">
         {toggleError && (
-          <p className="text-xs text-red-400" role="alert">
+          <p className="text-xs font-medium text-[#e10600]" role="alert">
             {toggleError}
           </p>
         )}
 
         {isFreelancer && (
           <div className="mb-1 flex items-center gap-2">
-            <div className="flex h-6 w-6 items-center justify-center rounded-full border border-white/[0.10] bg-white/[0.06] text-xs font-bold text-white/60">
+            <div className="flex h-6 w-6 items-center justify-center border-2 border-black bg-black text-xs font-bold text-white">
               {freelancerName[0]?.toUpperCase() ?? "F"}
             </div>
-            <span className="text-xs text-white/50">
+            <span className="text-xs text-black/50">
               Respondendo como{" "}
-              <span className="font-medium text-white/80">
+              <span className="font-semibold text-black">
                 {freelancerName}
               </span>
             </span>
@@ -664,12 +660,12 @@ export default function CommentSystem({
         )}
 
         {replyingToComment && (
-          <div className="flex items-start justify-between gap-3 rounded-xl border border-violet-500/20 bg-violet-500/10 px-3 py-2">
+          <div className="flex items-start justify-between gap-3 border-2 border-black bg-black/[0.03] px-3 py-2">
             <div className="min-w-0">
-              <p className="text-[11px] font-semibold text-violet-200">
+              <p className="text-[11px] font-bold text-black">
                 Respondendo a {replyingToComment.authorName}
               </p>
-              <p className="mt-1 truncate text-xs text-white/65">
+              <p className="mt-1 truncate text-xs text-black/60">
                 {getCommentPreview(replyingToComment)}
               </p>
             </div>
@@ -757,7 +753,7 @@ export default function CommentSystem({
         </div>
 
         {formError && (
-          <p className="text-xs text-red-400" role="alert">
+          <p className="text-xs font-medium text-[#e10600]" role="alert">
             {formError}
           </p>
         )}
@@ -794,7 +790,9 @@ export default function CommentSystem({
               onChange={(e) => setAuthorName(e.target.value)}
               brandColor={primaryColor}
             />
-            {formError && <p className="text-xs text-red-400">{formError}</p>}
+            {formError && (
+              <p className="text-xs font-medium text-[#e10600]">{formError}</p>
+            )}
           </div>
         </Modal>
 

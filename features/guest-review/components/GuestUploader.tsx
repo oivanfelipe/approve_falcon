@@ -103,9 +103,9 @@ export default function GuestUploader() {
   // ── Done state ────────────────────────────────────────────────────────────
   if (state === "done" && result) {
     return (
-      <div className="flex flex-col gap-5 p-6 rounded-2xl bg-[#080814] border border-white/[0.08]">
+      <div className="flex flex-col gap-5 p-6 bg-white border-2 border-black shadow-hard-sm">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-emerald-500/15 flex items-center justify-center shrink-0">
+          <div className="w-10 h-10 bg-black flex items-center justify-center shrink-0">
             <svg
               width="18"
               height="18"
@@ -115,35 +115,37 @@ export default function GuestUploader() {
               strokeWidth="2.5"
               strokeLinecap="round"
               strokeLinejoin="round"
-              className="text-emerald-400"
+              className="text-white"
               aria-hidden="true"
             >
               <polyline points="20 6 9 17 4 12" />
             </svg>
           </div>
           <div>
-            <p className="text-base font-bold text-white">Review link ready!</p>
-            <p className="text-xs text-white/45 truncate max-w-[240px]">
+            <p className="text-base font-extrabold uppercase text-black">
+              Review link ready!
+            </p>
+            <p className="text-xs text-black/50 truncate max-w-[240px]">
               {result.fileName}
             </p>
           </div>
         </div>
 
         {/* URL box */}
-        <div className="flex items-center gap-2 p-3 bg-white/[0.03] border border-white/[0.08] rounded-xl">
-          <span className="flex-1 text-xs text-white/60 truncate select-all">
+        <div className="flex items-center gap-2 p-3 bg-white border-2 border-black">
+          <span className="flex-1 text-xs text-black/70 truncate select-all">
             {result.reviewUrl}
           </span>
           <button
             onClick={copyLink}
             className={cn(
-              "shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium transition-all",
+              "shrink-0 px-3 py-1.5 text-xs font-bold uppercase transition-all border-2 border-black",
               copiedLink
-                ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/25"
-                : "bg-violet-600 hover:bg-violet-500 text-white",
+                ? "bg-black text-white"
+                : "bg-[#e10600] hover:bg-black text-white",
             )}
           >
-            {copiedLink ? "✓ Copied!" : "Copy"}
+            {copiedLink ? "Copied!" : "Copy"}
           </button>
         </div>
 
@@ -152,13 +154,13 @@ export default function GuestUploader() {
           <button
             onClick={copyWhatsApp}
             className={cn(
-              "flex-1 py-2.5 rounded-xl text-sm font-medium transition-all border",
+              "flex-1 py-2.5 text-sm font-bold uppercase transition-all border-2 border-black",
               copiedWa
-                ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/25"
-                : "bg-white/[0.05] text-white/70 border-white/[0.08] hover:bg-white/[0.08] hover:text-white",
+                ? "bg-black text-white"
+                : "bg-white text-black/70 hover:bg-black/5 hover:text-black",
             )}
           >
-            {copiedWa ? "✓ Copied!" : "📱 Copy WhatsApp message"}
+            {copiedWa ? "Copied!" : "Copy WhatsApp message"}
           </button>
         </div>
 
@@ -166,20 +168,20 @@ export default function GuestUploader() {
           href={result.reviewUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="py-2.5 rounded-xl text-sm font-semibold text-center text-white bg-violet-600 hover:bg-violet-500 transition-colors"
+          className="py-2.5 text-sm font-bold uppercase text-center text-white bg-[#e10600] border-2 border-black shadow-[3px_3px_0_0_#000] hover:shadow-[1px_1px_0_0_#000] hover:translate-x-[2px] hover:translate-y-[2px] transition-all"
         >
           Open review page ↗
         </a>
 
-        <hr className="border-white/[0.06]" />
+        <hr className="border-black/10" />
 
         {/* Upsell */}
         <div className="flex flex-col gap-3">
           <div>
-            <p className="text-sm font-semibold text-white/80">
-              💾 Save this project permanently
+            <p className="text-sm font-extrabold uppercase text-black">
+              Save this project permanently
             </p>
-            <p className="text-xs text-white/40 mt-1">
+            <p className="text-xs text-black/45 mt-1">
               Free guest links expire in 7 days. Create a free account to keep
               them and manage all your projects in one place.
             </p>
@@ -187,7 +189,7 @@ export default function GuestUploader() {
           <div className="flex gap-2">
             <Link
               href="/login"
-              className="flex-1 py-2 rounded-xl text-xs font-semibold text-center text-white bg-violet-600 hover:bg-violet-500 transition-colors"
+              className="flex-1 py-2 text-xs font-bold uppercase text-center text-white bg-[#e10600] border-2 border-black shadow-[3px_3px_0_0_#000] hover:shadow-[1px_1px_0_0_#000] hover:translate-x-[2px] hover:translate-y-[2px] transition-all"
             >
               Sign up free →
             </Link>
@@ -196,7 +198,7 @@ export default function GuestUploader() {
                 setState("idle");
                 setResult(null);
               }}
-              className="px-4 py-2 rounded-xl text-xs text-white/45 hover:text-white/70 bg-white/[0.04] hover:bg-white/[0.06] transition-colors"
+              className="px-4 py-2 text-xs font-bold uppercase text-black/60 hover:text-black border-2 border-black bg-white hover:bg-black/5 transition-colors"
             >
               New upload
             </button>
@@ -209,9 +211,9 @@ export default function GuestUploader() {
   // ── Uploading state ───────────────────────────────────────────────────────
   if (state === "uploading") {
     return (
-      <div className="flex flex-col items-center justify-center gap-4 p-12 rounded-2xl bg-[#080814] border border-violet-500/20 min-h-[240px]">
-        <div className="w-10 h-10 rounded-full border-2 border-violet-500/30 border-t-violet-500 animate-spin" />
-        <p className="text-sm text-white/60">Uploading your file…</p>
+      <div className="flex flex-col items-center justify-center gap-4 p-12 bg-white border-2 border-black min-h-[240px]">
+        <div className="w-10 h-10 rounded-full border-2 border-black/15 border-t-[#e10600] animate-spin" />
+        <p className="text-sm text-black/60">Uploading your file…</p>
       </div>
     );
   }
@@ -229,13 +231,13 @@ export default function GuestUploader() {
         aria-label="Upload file for review"
         onKeyDown={(e) => e.key === "Enter" && inputRef.current?.click()}
         className={cn(
-          "flex flex-col items-center justify-center gap-4 p-10 rounded-2xl",
+          "flex flex-col items-center justify-center gap-4 p-10",
           "cursor-pointer transition-all duration-200 border-2 border-dashed select-none",
           isDragging
-            ? "border-violet-500/70 bg-violet-500/[0.06]"
+            ? "border-[#e10600] bg-[#e10600]/[0.04]"
             : state === "error"
-              ? "border-red-400/40 bg-red-500/[0.03] hover:border-red-400/60"
-              : "border-white/[0.10] bg-white/[0.02] hover:border-violet-500/40 hover:bg-violet-500/[0.03]",
+              ? "border-[#e10600] bg-white"
+              : "border-black/30 bg-white hover:border-black",
         )}
       >
         <input
@@ -248,8 +250,8 @@ export default function GuestUploader() {
 
         <div
           className={cn(
-            "w-14 h-14 rounded-2xl flex items-center justify-center transition-colors",
-            isDragging ? "bg-violet-500/20" : "bg-white/[0.05]",
+            "w-14 h-14 flex items-center justify-center transition-colors",
+            isDragging ? "bg-[#e10600]/10" : "bg-black/[0.05]",
           )}
         >
           <svg
@@ -261,7 +263,7 @@ export default function GuestUploader() {
             strokeWidth="1.5"
             strokeLinecap="round"
             strokeLinejoin="round"
-            className={isDragging ? "text-violet-400" : "text-white/35"}
+            className={isDragging ? "text-[#e10600]" : "text-black/40"}
             aria-hidden="true"
           >
             <polyline points="16 16 12 12 8 16" />
@@ -271,24 +273,24 @@ export default function GuestUploader() {
         </div>
 
         <div className="text-center">
-          <p className="text-sm font-medium text-white/70">
+          <p className="text-sm font-bold text-black/70">
             {isDragging ? "Drop it!" : "Drop your file here"}
           </p>
-          <p className="text-xs text-white/35 mt-0.5">
+          <p className="text-xs text-black/40 mt-0.5">
             or{" "}
-            <span className="text-violet-400 underline underline-offset-2">
+            <span className="text-[#e10600] underline underline-offset-2">
               browse files
             </span>
           </p>
         </div>
 
-        <p className="text-[11px] text-white/25">
+        <p className="text-[11px] text-black/40 font-mono uppercase">
           Images · PDFs · Videos · Max 20 MB
         </p>
       </div>
 
       {state === "error" && (
-        <p className="text-xs text-red-400 px-1">{error}</p>
+        <p className="text-xs font-medium text-[#e10600] px-1">{error}</p>
       )}
     </div>
   );

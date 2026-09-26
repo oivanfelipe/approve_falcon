@@ -2,7 +2,6 @@
 
 import React, { useId } from "react";
 import { cn } from "@/lib/utils";
-import { hexToRgba } from "@/lib/freelancer-branding-shared";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -49,11 +48,11 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
         {label && (
           <label
             htmlFor={textareaId}
-            className="text-sm font-medium text-white/80 select-none"
+            className="text-sm font-semibold text-black select-none"
           >
             {label}
             {required && (
-              <span className="ml-1 text-red-400" aria-hidden="true">
+              <span className="ml-1 text-[#e10600]" aria-hidden="true">
                 *
               </span>
             )}
@@ -66,21 +65,16 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
           rows={rows}
           required={required}
           className={cn(
-            "w-full bg-white/[0.04] border text-white/90 placeholder:text-white/30",
-            `px-4 py-3 text-sm ${rows > 1 ? "rounded-lg" : "rounded-full"}`,
-            "transition-all duration-200 outline-none",
-            "focus:bg-white/[0.06] focus:ring-2",
+            "w-full bg-white border-2 text-black placeholder:text-black/35",
+            "px-4 py-3 text-sm rounded-md",
+            "transition-colors duration-150 outline-none",
             error
-              ? "border-red-500/50 focus:border-red-400/70 focus:ring-red-500/15"
-              : "border-white/[0.08] focus:border-violet-500/50 focus:ring-violet-500/10",
+              ? "border-[#e10600] focus:ring-2 focus:ring-[#e10600]/25"
+              : "border-black focus:ring-2 focus:ring-[#e10600]/25",
             resizeClasses[resize],
             className,
           )}
-          style={
-            brandColor
-              ? { borderColor: hexToRgba(brandColor, 0.18) }
-              : undefined
-          }
+          style={brandColor ? { borderColor: brandColor } : undefined}
           aria-describedby={
             error
               ? `${textareaId}-error`
@@ -95,14 +89,14 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
         {error && (
           <p
             id={`${textareaId}-error`}
-            className="text-xs text-red-400"
+            className="text-xs text-[#e10600] font-medium"
             role="alert"
           >
             {error}
           </p>
         )}
         {!error && hint && (
-          <p id={`${textareaId}-hint`} className="text-xs text-white/40">
+          <p id={`${textareaId}-hint`} className="text-xs text-black/45">
             {hint}
           </p>
         )}

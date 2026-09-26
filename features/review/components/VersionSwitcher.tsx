@@ -50,8 +50,8 @@ export default function VersionSwitcher({
 
   return (
     <div className="flex flex-col gap-2">
-      <p className="text-xs text-white/50 uppercase tracking-wider font-semibold">
-        HistÃ³rico de versÃµes
+      <p className="text-xs text-black/50 uppercase tracking-wider font-mono font-bold">
+        Histórico de versões
       </p>
       <ul className="flex flex-col gap-1 list-none" role="list">
         {deliveries
@@ -68,19 +68,19 @@ export default function VersionSwitcher({
                 <Link
                   href={href}
                   className={cn(
-                    "flex items-center justify-between gap-2 px-3 py-2.5 rounded-xl text-sm",
-                    "transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/60",
+                    "flex items-center justify-between gap-2 px-3 py-2.5 text-sm border-2",
+                    "transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#e10600]/60",
                     isCurrent
-                      ? "bg-violet-500/[0.10] border border-violet-500/20 pointer-events-none"
-                      : "hover:bg-white/[0.05] border border-transparent text-white/60 hover:text-white/80",
+                      ? "bg-black border-black text-white pointer-events-none"
+                      : "hover:bg-black/5 border-transparent text-black/60 hover:text-black",
                   )}
                   aria-current={isCurrent ? "page" : undefined}
                 >
                   <div className="flex items-center gap-2 min-w-0">
                     <span
                       className={cn(
-                        "text-xs font-mono font-semibold shrink-0",
-                        isCurrent ? "text-violet-400" : "text-white/40",
+                        "text-xs font-mono font-bold shrink-0",
+                        isCurrent ? "text-[#e10600]" : "text-black/40",
                       )}
                     >
                       v{d.versionNumber}

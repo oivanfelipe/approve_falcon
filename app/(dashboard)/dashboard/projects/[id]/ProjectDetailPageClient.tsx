@@ -91,7 +91,7 @@ function ShareButtons({
     <div className="flex items-center gap-1">
       <Button
         onClick={copyLink}
-        variant={copiedLink ? "success" : "outline"}
+        variant={copiedLink ? "primary" : "outline"}
         size="sm"
         aria-label="Copy review link"
       >
@@ -206,12 +206,12 @@ export default function ProjectDetailClient({
   }, [projectId, refetch, liveDeliveries]);
 
   return (
-    <div className="max-w-4xl mx-auto px-6 py-8 flex flex-col gap-8">
+    <div className="max-w-4xl mx-auto px-6 py-8 flex flex-col gap-8 bg-white min-h-screen">
       {/* Back + header */}
       <div className="flex flex-col gap-4">
         <Link
           href="/dashboard"
-          className="flex items-center gap-1.5 text-xs text-white/35 hover:text-white/70 transition-colors w-fit"
+          className="flex items-center gap-1.5 text-xs font-semibold uppercase text-black/40 hover:text-black transition-colors w-fit"
         >
           <svg
             width="12"
@@ -231,11 +231,13 @@ export default function ProjectDetailClient({
 
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-white">{projectName}</h1>
-            <p className="text-sm text-white/40 mt-1">
+            <h1 className="text-2xl font-extrabold uppercase tracking-tight text-black">
+              {projectName}
+            </h1>
+            <p className="text-sm text-black/50 mt-1">
               Client: {clientName}
               {clientEmail && (
-                <span className="text-white/25"> · {clientEmail}</span>
+                <span className="text-black/35"> · {clientEmail}</span>
               )}
             </p>
           </div>
@@ -269,7 +271,7 @@ export default function ProjectDetailClient({
       {/* Deliveries */}
       {liveDeliveries.length > 0 ? (
         <div className="flex flex-col gap-3">
-          <h2 className="text-xs font-semibold text-white/40 uppercase tracking-wider">
+          <h2 className="text-xs font-mono font-bold text-black/40 uppercase tracking-wider">
             {liveDeliveries.length} version
             {liveDeliveries.length !== 1 ? "s" : ""}
           </h2>
@@ -277,19 +279,19 @@ export default function ProjectDetailClient({
             {liveDeliveries.map((d) => (
               <div
                 key={d.id}
-                className="flex flex-col sm:flex-row sm:items-center gap-4 p-4 rounded-2xl bg-white/[0.03] border border-white/[0.06] hover:border-white/[0.10] transition-colors"
+                className="flex flex-col sm:flex-row sm:items-center gap-4 p-4 bg-white border-2 border-black shadow-hard-sm"
               >
                 {/* Left: version info */}
                 <div className="flex items-center gap-3 flex-1 min-w-0">
-                  <span className="shrink-0 font-mono text-xs text-violet-400 bg-violet-500/[0.10] border border-violet-500/25 px-2 py-0.5 rounded-md">
+                  <span className="shrink-0 font-mono text-xs font-bold text-white bg-black px-2 py-0.5">
                     v{d.versionNumber}
                   </span>
                   <div className="min-w-0">
-                    <p className="text-sm font-medium text-white/80 truncate">
+                    <p className="text-sm font-semibold text-black truncate">
                       {d.label ?? d.fileName}
                     </p>
                     {d.label && (
-                      <p className="text-xs text-white/35 truncate">
+                      <p className="text-xs text-black/40 truncate">
                         {d.fileName}
                       </p>
                     )}
@@ -299,16 +301,16 @@ export default function ProjectDetailClient({
                 {/* Meta */}
                 <div className="flex items-center gap-3 shrink-0 flex-wrap">
                   {d.sourceType === "DRIVE_LINK" ? (
-                    <span className="text-xs text-emerald-400/80 bg-emerald-500/[0.08] border border-emerald-500/25 px-2 py-0.5 rounded-md">
+                    <span className="text-xs font-mono font-bold text-white bg-black px-2 py-0.5">
                       Google Drive
                     </span>
                   ) : (
-                    <span className="text-xs text-white/30">
+                    <span className="text-xs font-mono text-black/40">
                       {formatSize(d.fileSize)}
                     </span>
                   )}
 
-                  <div className="flex items-center gap-1.5 text-xs text-white/30">
+                  <div className="flex items-center gap-1.5 text-xs font-mono text-black/40">
                     <svg
                       width="10"
                       height="10"
@@ -325,7 +327,7 @@ export default function ProjectDetailClient({
                     {d.commentCount}
                   </div>
 
-                  <div className="flex items-center gap-1.5 text-xs text-white/30">
+                  <div className="flex items-center gap-1.5 text-xs font-mono text-black/40">
                     <svg
                       width="10"
                       height="10"
@@ -347,16 +349,16 @@ export default function ProjectDetailClient({
                     {statusLabel[d.status]}
                   </Badge>
 
-                  <span className="text-[10px] text-white/25">
+                  <span className="text-[10px] font-mono text-black/35">
                     {timeAgo(d.createdAt)}
                   </span>
 
                   {d.lastViewedAt ? (
-                    <span className="flex items-center gap-1 text-[10px] text-violet-400/70">
+                    <span className="flex items-center gap-1 text-[10px] font-mono text-[#e10600]">
                       👀 {timeAgo(d.lastViewedAt)}
                     </span>
                   ) : (
-                    <span className="text-[10px] text-white/20 italic">
+                    <span className="text-[10px] font-mono text-black/25 italic">
                       Not viewed
                     </span>
                   )}
@@ -367,7 +369,7 @@ export default function ProjectDetailClient({
                     href={`${getPublicReviewPath(d.reviewToken, freelancerSlug)}?preview=1`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-xs text-violet-400/70 hover:text-violet-400 transition-colors"
+                    className="text-xs font-semibold text-black/60 hover:text-black transition-colors"
                   >
                     Preview ↗
                   </Link>
@@ -378,7 +380,7 @@ export default function ProjectDetailClient({
         </div>
       ) : (
         <div className="flex flex-col items-center justify-center py-20 gap-4 text-center">
-          <div className="w-16 h-16 rounded-2xl bg-white/[0.04] border border-white/[0.07] flex items-center justify-center">
+          <div className="w-16 h-16 bg-white border-2 border-black flex items-center justify-center">
             <svg
               width="26"
               height="26"
@@ -388,7 +390,7 @@ export default function ProjectDetailClient({
               strokeWidth="1.5"
               strokeLinecap="round"
               strokeLinejoin="round"
-              className="text-white/30"
+              className="text-black"
               aria-hidden="true"
             >
               <polyline points="16 16 12 12 8 16" />
@@ -397,10 +399,8 @@ export default function ProjectDetailClient({
             </svg>
           </div>
           <div>
-            <p className="text-sm font-semibold text-white/60">
-              No versions yet
-            </p>
-            <p className="text-xs text-white/30 mt-1">
+            <p className="text-sm font-semibold text-black">No versions yet</p>
+            <p className="text-xs text-black/45 mt-1">
               Upload your first file to generate a review link
             </p>
           </div>

@@ -2,7 +2,6 @@
 
 import React, { useId } from "react";
 import { cn } from "@/lib/utils";
-import { hexToRgba } from "@/lib/freelancer-branding-shared";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -22,9 +21,9 @@ interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
 // ─── Size map ─────────────────────────────────────────────────────────────────
 
 const sizeClasses: Record<InputSize, string> = {
-  sm: "h-8 px-3 text-sm rounded-full",
-  md: "h-10 px-4 text-sm rounded-full",
-  lg: "h-12 px-4 text-base rounded-full",
+  sm: "h-8 px-3 text-sm rounded-md",
+  md: "h-10 px-4 text-sm rounded-md",
+  lg: "h-12 px-4 text-base rounded-md",
 };
 
 const paddingLeft: Record<InputSize, string> = {
@@ -67,11 +66,11 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
         {label && (
           <label
             htmlFor={inputId}
-            className="text-sm font-medium text-white/80 select-none"
+            className="text-sm font-semibold text-black select-none"
           >
             {label}
             {required && (
-              <span className="ml-1 text-red-400" aria-hidden="true">
+              <span className="ml-1 text-[#e10600]" aria-hidden="true">
                 *
               </span>
             )}
@@ -81,7 +80,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
         <div className="relative flex items-center">
           {leftElement && (
             <div
-              className="absolute left-3 flex items-center text-white/40 pointer-events-none z-10"
+              className="absolute left-3 flex items-center text-black/40 pointer-events-none z-10"
               aria-hidden="true"
             >
               {leftElement}
@@ -93,22 +92,17 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
             id={inputId}
             required={required}
             className={cn(
-              "w-full bg-white/[0.04] border text-white/90 placeholder:text-white/30",
-              "transition-all duration-200 outline-none",
-              "focus:bg-white/[0.06] focus:ring-2",
+              "w-full bg-white border-2 text-black placeholder:text-black/35",
+              "transition-colors duration-150 outline-none",
               error
-                ? "border-red-500/50 focus:border-red-400/70 focus:ring-red-500/15"
-                : "border-white/[0.08] focus:border-violet-500/50 focus:ring-violet-500/10",
+                ? "border-[#e10600] focus:ring-2 focus:ring-[#e10600]/25"
+                : "border-black focus:ring-2 focus:ring-[#e10600]/25",
               sizeClasses[inputSize],
               leftElement ? paddingLeft[inputSize] : undefined,
               rightElement ? paddingRight[inputSize] : undefined,
               className,
             )}
-            style={
-              brandColor
-                ? { borderColor: hexToRgba(brandColor, 0.18) }
-                : undefined
-            }
+            style={brandColor ? { borderColor: brandColor } : undefined}
             aria-describedby={
               error ? `${inputId}-error` : hint ? `${inputId}-hint` : undefined
             }
@@ -118,7 +112,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
 
           {rightElement && (
             <div
-              className="absolute right-3 flex items-center text-white/40"
+              className="absolute right-3 flex items-center text-black/40"
               aria-hidden="true"
             >
               {rightElement}
@@ -129,14 +123,14 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
         {error && (
           <p
             id={`${inputId}-error`}
-            className="text-xs text-red-400"
+            className="text-xs text-[#e10600] font-medium"
             role="alert"
           >
             {error}
           </p>
         )}
         {!error && hint && (
-          <p id={`${inputId}-hint`} className="text-xs text-white/40">
+          <p id={`${inputId}-hint`} className="text-xs text-black/45">
             {hint}
           </p>
         )}

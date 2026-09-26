@@ -49,20 +49,18 @@ function ReviewLinkBox({
 
   return (
     <div className="flex flex-col gap-3">
-      <p className="text-sm text-white/70">
+      <p className="text-sm text-black/60">
         Compartilhe este link com seu cliente. Sem necessidade de conta.
       </p>
-      <div className="flex items-center gap-2 p-3 bg-white/[0.04] border border-white/[0.08] rounded-xl">
-        <span className="flex-1 text-xs text-violet-300 font-mono truncate">
+      <div className="flex items-center gap-2 p-3 bg-white border-2 border-black">
+        <span className="flex-1 text-xs text-black font-mono truncate">
           {url}
         </span>
         <button
           onClick={copy}
           className={cn(
-            "shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-150",
-            copied
-              ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30"
-              : "bg-white/[0.06] text-white/70 border border-white/[0.10] hover:bg-white/[0.10]",
+            "shrink-0 px-3 py-1.5 text-xs font-bold uppercase border-2 border-black transition-colors duration-150",
+            copied ? "bg-black text-white" : "bg-white text-black hover:bg-black/5",
           )}
         >
           {copied ? "Copiado!" : "Copiar"}
@@ -300,7 +298,7 @@ export default function NewDeliveryModal({
           />
 
           <label className="flex items-center justify-between cursor-pointer">
-            <span className="text-sm text-white/70">
+            <span className="text-sm font-medium text-black/70">
               Permitir download pelo cliente
             </span>
             <button
@@ -309,14 +307,14 @@ export default function NewDeliveryModal({
               aria-checked={allowDownload}
               onClick={() => setAllowDownload((v) => !v)}
               className={cn(
-                "relative w-10 h-5.5 rounded-full transition-colors duration-200",
-                allowDownload ? "bg-violet-600" : "bg-white/[0.12]",
+                "relative w-10 h-5.5 border-2 border-black transition-colors duration-150",
+                allowDownload ? "bg-[#e10600]" : "bg-white",
               )}
             >
               <span
                 className={cn(
-                  "absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform duration-200",
-                  allowDownload ? "translate-x-4" : "translate-x-0",
+                  "absolute top-0.5 left-0.5 w-4 h-4 border border-black transition-transform duration-150",
+                  allowDownload ? "translate-x-4 bg-white" : "translate-x-0 bg-black",
                 )}
               />
             </button>
@@ -329,7 +327,7 @@ export default function NewDeliveryModal({
         <div className="flex flex-col items-center gap-5 py-6">
           <div className="relative w-16 h-16">
             <svg
-              className="animate-spin w-16 h-16 text-violet-500/30"
+              className="animate-spin w-16 h-16 text-black/15"
               viewBox="0 0 64 64"
               fill="none"
               aria-hidden="true"
@@ -343,7 +341,7 @@ export default function NewDeliveryModal({
               />
             </svg>
             <svg
-              className="absolute inset-0 w-16 h-16 -rotate-90 text-violet-500"
+              className="absolute inset-0 w-16 h-16 -rotate-90 text-[#e10600]"
               viewBox="0 0 64 64"
               fill="none"
               aria-hidden="true"
@@ -356,15 +354,15 @@ export default function NewDeliveryModal({
                 strokeWidth="4"
                 strokeDasharray={`${2 * Math.PI * 28}`}
                 strokeDashoffset={`${2 * Math.PI * 28 * (1 - progress / 100)}`}
-                strokeLinecap="round"
+                strokeLinecap="square"
                 className="transition-all duration-300"
               />
             </svg>
-            <span className="absolute inset-0 flex items-center justify-center text-sm font-semibold text-white">
+            <span className="absolute inset-0 flex items-center justify-center text-sm font-bold text-black">
               {progress}%
             </span>
           </div>
-          <p className="text-sm text-white/60">
+          <p className="text-sm font-medium text-black/60">
             {sourceMode === "drive" ? "Salvando link…" : "Enviando seu arquivo…"}
           </p>
         </div>
@@ -373,8 +371,8 @@ export default function NewDeliveryModal({
       {/* ── Done ──────────────────────────────────────────────────────────── */}
       {step === "done" && (
         <div className="flex flex-col gap-5">
-          <div className="flex items-center gap-3 p-4 bg-emerald-500/[0.08] border border-emerald-500/25 rounded-xl">
-            <div className="w-8 h-8 rounded-lg bg-emerald-500/15 flex items-center justify-center text-emerald-400 shrink-0">
+          <div className="flex items-center gap-3 p-4 bg-white border-2 border-black">
+            <div className="w-8 h-8 bg-black flex items-center justify-center text-white shrink-0">
               <svg
                 width="16"
                 height="16"
@@ -390,10 +388,8 @@ export default function NewDeliveryModal({
               </svg>
             </div>
             <div>
-              <p className="text-sm font-semibold text-emerald-400">
-                Envio concluído!
-              </p>
-              <p className="text-xs text-white/50 mt-0.5">
+              <p className="text-sm font-bold text-black">Envio concluído!</p>
+              <p className="text-xs text-black/50 mt-0.5">
                 Seu link de revisão está pronto
               </p>
             </div>
@@ -405,8 +401,8 @@ export default function NewDeliveryModal({
       {/* ── Error ─────────────────────────────────────────────────────────── */}
       {step === "error" && (
         <div className="flex flex-col gap-4">
-          <div className="flex items-start gap-3 p-4 bg-red-500/[0.08] border border-red-500/25 rounded-xl">
-            <div className="w-8 h-8 rounded-lg bg-red-500/[0.12] flex items-center justify-center text-red-400 shrink-0">
+          <div className="flex items-start gap-3 p-4 bg-white border-2 border-[#e10600]">
+            <div className="w-8 h-8 bg-[#e10600] flex items-center justify-center text-white shrink-0">
               <svg
                 width="16"
                 height="16"
@@ -424,10 +420,8 @@ export default function NewDeliveryModal({
               </svg>
             </div>
             <div>
-              <p className="text-sm font-semibold text-red-400">
-                Falha no envio
-              </p>
-              <p className="text-xs text-white/50 mt-0.5">{errorMsg}</p>
+              <p className="text-sm font-bold text-[#e10600]">Falha no envio</p>
+              <p className="text-xs text-black/50 mt-0.5">{errorMsg}</p>
             </div>
           </div>
           <Button

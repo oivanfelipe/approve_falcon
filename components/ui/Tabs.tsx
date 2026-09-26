@@ -50,7 +50,7 @@ function TabList({
     <div
       role="tablist"
       className={cn(
-        "flex gap-1 bg-white/[0.04] border border-white/[0.06] p-1 rounded-xl",
+        "flex gap-1 bg-white border-2 border-black p-1 rounded-md",
         className,
       )}
     >
@@ -81,12 +81,12 @@ function Tab({ value, children, className, disabled }: TabProps) {
       disabled={disabled}
       onClick={() => onChange(value)}
       className={cn(
-        "flex-1 px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/60",
+        "flex-1 px-4 py-2 text-sm font-bold uppercase tracking-wide rounded-sm transition-colors duration-150",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#e10600]/60",
         disabled && "opacity-40 cursor-not-allowed pointer-events-none",
         isSelected
-          ? "bg-[#1a1a35] text-white shadow-sm border border-white/[0.08]"
-          : "text-white/50 hover:text-white/80 hover:bg-white/[0.04]",
+          ? "bg-black text-white"
+          : "text-black/50 hover:text-black hover:bg-black/[0.04]",
         className,
       )}
     >

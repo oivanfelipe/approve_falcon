@@ -3,8 +3,8 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { Badge } from "@/components/ui/Badge";
+import FalconMark from "@/components/ui/FalconMark";
 import ApprovalPanel from "@/features/review/components/ApprovalPanel";
 import CommentSystem, {
   type CommentData,
@@ -105,7 +105,7 @@ function DownloadFileButton({
     <button
       onClick={handleDownload}
       disabled={loading}
-      className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium bg-white/[0.06] border border-white/[0.10] text-white/70 hover:bg-white/[0.10] hover:text-white/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+      className="inline-flex items-center gap-2 px-4 py-2 text-sm font-bold uppercase border-2 border-black bg-white text-black hover:bg-black/5 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
     >
       <svg
         width="14"
@@ -174,39 +174,30 @@ export default function ReviewClientShell({
   });
 
   return (
-    <div
-      className="h-auto lg:h-screen bg-[#06060f] flex flex-col"
-      style={{
-        backgroundImage: `radial-gradient(circle at top right, ${hexToRgba(primaryColor, 0.1)}, transparent 28%)`,
-      }}
-    >
+    <div className="h-auto lg:h-screen bg-white flex flex-col">
       {/* Header  */}
-      <header className="sticky top-0 z-40 flex items-center justify-between h-14 px-4 md:px-8 border-b border-white/[0.06] bg-[#06060f]/90 backdrop-blur-sm">
+      <header className="sticky top-0 z-40 flex items-center justify-between h-14 px-4 md:px-8 border-b-2 border-black bg-white">
         <Link href="/" className="flex items-center gap-2.5">
           {brandLogo ? (
             <img
               src={brandLogo}
               alt={brandName}
-              className="h-6 w-6 shrink-0 rounded-md object-cover"
+              className="h-6 w-6 shrink-0 border border-black object-cover"
             />
           ) : (
-            <Image
-              src="/logo.png"
-              alt=""
-              width={24}
-              height={24}
-              className="shrink-0"
-            />
+            <FalconMark size={20} className="shrink-0" style={{ color: primaryColor }} />
           )}
-          <span className="text-sm font-semibold text-white">{brandName}</span>
+          <span className="text-sm font-extrabold uppercase text-black">
+            {brandName}
+          </span>
         </Link>
 
         <div className="flex items-center gap-3">
           <div className="hidden sm:flex flex-col items-end">
-            <span className="text-xs font-semibold text-white/70 truncate max-w-[160px]">
+            <span className="text-xs font-semibold text-black/70 truncate max-w-[160px]">
               {projectName}
             </span>
-            <span className="text-[11px] text-white/35">
+            <span className="text-[11px] text-black/40">
               Cliente: {clientName}
             </span>
           </div>
@@ -230,8 +221,8 @@ export default function ReviewClientShell({
             >
               v{versionNumber}
             </span>
-            {label && <span className="text-xs text-white/50">{label}</span>}
-            <span className="text-xs text-white/30 truncate ml-auto">
+            {label && <span className="text-xs text-black/50">{label}</span>}
+            <span className="text-xs text-black/40 truncate ml-auto">
               {fileName}
             </span>
           </div>
@@ -278,13 +269,13 @@ export default function ReviewClientShell({
         {/* Sidebar */}
         <aside
           className={cn(
-            "w-full lg:w-80 shrink-0 border-t lg:border-t-0 lg:border-l border-white/[0.06]",
-            "bg-[#080814] flex flex-col lg:h-[calc(100vh-112px)] overflow-y-auto",
+            "w-full lg:w-80 shrink-0 border-t-2 lg:border-t-0 lg:border-l-2 border-black",
+            "bg-white flex flex-col lg:h-[calc(100vh-112px)] overflow-y-auto",
           )}
         >
           {showChat ? (
             <div className="flex flex-col h-full">
-              <div className="flex items-center justify-between px-2 py-2 border-b border-white/[0.06]">
+              <div className="flex items-center justify-between px-2 py-2 border-b-2 border-black">
                 <Button
                   onClick={() => setShowChat(false)}
                   variant="outline"
@@ -292,7 +283,7 @@ export default function ReviewClientShell({
                 >
                   <ChevronLeft className="w-4 h-4" />
                 </Button>
-                <span className="text-base font-semibold text-white">
+                <span className="text-base font-extrabold uppercase text-black">
                   Conversa
                 </span>
                 <span className="w-12" />
@@ -323,13 +314,13 @@ export default function ReviewClientShell({
                     status={status}
                     onStatusChange={setStatus}
                   />
-                  <hr className="border-white/[0.06]" />
+                  <hr className="border-black/10" />
                 </>
               )}
 
               {isFreelancerPreview && (
                 <div
-                  className="flex items-center gap-2.5 rounded-xl border px-3.5 py-3"
+                  className="flex items-center gap-2.5 border-2 border-black px-3.5 py-3"
                   style={{
                     backgroundColor: hexToRgba(primaryColor, 0.1),
                     borderColor: hexToRgba(primaryColor, 0.24),
@@ -370,7 +361,7 @@ export default function ReviewClientShell({
 
               {allDeliveries.length > 1 && (
                 <>
-                  <hr className="border-white/[0.06]" />
+                  <hr className="border-black/10" />
                   <VersionSwitcher
                     deliveries={allDeliveries}
                     currentToken={token}
@@ -385,12 +376,10 @@ export default function ReviewClientShell({
       </div>
 
       {/* Footer */}
-      <footer className="shrink-0 py-2.5 text-center border-t border-white/[0.04]">
-        <p className="text-[11px] text-white/20">
+      <footer className="shrink-0 py-2.5 text-center border-t-2 border-black/10">
+        <p className="text-[11px] text-black/40">
           Revisão via{" "}
-          <span style={{ color: hexToRgba(secondaryColor, 0.72) }}>
-            {brandName}
-          </span>
+          <span style={{ color: secondaryColor }}>{brandName}</span>
         </p>
       </footer>
     </div>

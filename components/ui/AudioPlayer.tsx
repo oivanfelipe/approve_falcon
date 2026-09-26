@@ -80,7 +80,7 @@ export default function AudioPlayer({ src, className }: AudioPlayerProps) {
     <div
       className={cn(
         "flex items-center gap-3",
-        "bg-white/[0.02] border border-white/[0.06] rounded-2xl px-3 py-2",
+        "bg-white border-2 border-black rounded-md px-3 py-2",
         className,
       )}
     >
@@ -100,9 +100,9 @@ export default function AudioPlayer({ src, className }: AudioPlayerProps) {
           step={0.01}
           value={current}
           onChange={onSeek}
-          className="w-full h-1 appearance-none bg-white/10 rounded-lg"
+          className="w-full h-1 appearance-none bg-black/15 rounded-lg accent-[#e10600]"
         />
-        <div className="flex justify-between text-[8px] text-white/60 mt-1">
+        <div className="flex justify-between text-[8px] font-mono text-black/60 mt-1">
           <span>{formatTime(current)}</span>
           <span>{formatTime(duration)}</span>
         </div>

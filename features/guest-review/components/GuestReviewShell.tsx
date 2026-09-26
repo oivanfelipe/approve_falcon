@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { Badge } from "@/components/ui/Badge";
 import ApprovalPanel from "@/features/review/components/ApprovalPanel";
@@ -10,6 +9,7 @@ import CommentSystem, {
 } from "@/features/review/components/CommentSystem";
 import ImageWithComments from "@/features/review/components/ImageWithComments";
 import FilePreview from "@/features/review/components/FilePreview";
+import FalconMark from "@/components/ui/FalconMark";
 import { cn } from "@/lib/utils";
 import type { BadgeVariant } from "@/components/ui/Badge";
 
@@ -74,25 +74,19 @@ export default function GuestReviewShell({
   const expiringSoon = daysLeft <= 2;
 
   return (
-    <div className="h-auto lg:h-screen bg-[#06060f] flex flex-col">
+    <div className="h-auto lg:h-screen bg-white flex flex-col">
       {/* ── Header ──────────────────────────────────────────────────────────── */}
-      <header className="sticky top-0 z-40 flex items-center justify-between h-14 px-4 md:px-8 border-b border-white/[0.06] bg-[#06060f]/90 backdrop-blur-sm">
+      <header className="sticky top-0 z-40 flex items-center justify-between h-14 px-4 md:px-8 border-b-2 border-black bg-white">
         <Link href="/" className="flex items-center gap-2">
-          <Image
-            src="/logo.png"
-            alt=""
-            width={24}
-            height={24}
-            className="shrink-0"
-          />
-          <span className="text-sm font-semibold">
-            <span className="text-white">Approve</span>
-            <span className="text-violet-400">Flow</span>
+          <FalconMark size={20} className="shrink-0 text-[#e10600]" />
+          <span className="text-sm font-extrabold uppercase tracking-tight">
+            <span className="text-black">Approve</span>
+            <span className="text-[#e10600]">Falcon</span>
           </span>
         </Link>
 
         <div className="flex items-center gap-3">
-          <span className="hidden sm:block text-xs text-white/40 truncate max-w-[200px]">
+          <span className="hidden sm:block text-xs text-black/40 truncate max-w-[200px]">
             {fileName}
           </span>
           <Badge variant={statusVariant[status]} dot size="sm">
@@ -127,8 +121,8 @@ export default function GuestReviewShell({
         {/* ── Sidebar ─────────────────────────────────────────────────────── */}
         <aside
           className={cn(
-            "w-full lg:w-80 shrink-0 border-t lg:border-t-0 lg:border-l border-white/[0.06]",
-            "bg-[#080814] overflow-y-auto flex flex-col lg:h-[calc(100vh-112px)]",
+            "w-full lg:w-80 shrink-0 border-t-2 lg:border-t-0 lg:border-l-2 border-black",
+            "bg-white overflow-y-auto flex flex-col lg:h-[calc(100vh-112px)]",
           )}
         >
           <div className="flex flex-col gap-6 p-5">
@@ -140,53 +134,51 @@ export default function GuestReviewShell({
               apiBase="/api/guest"
             />
 
-            <hr className="border-white/[0.06]" />
+            <hr className="border-black/10" />
 
             {/* Save CTA */}
             <div
               className={cn(
-                "flex flex-col gap-3 p-4 rounded-xl border",
-                expiringSoon
-                  ? "bg-yellow-500/[0.06] border-yellow-500/20"
-                  : "bg-violet-600/[0.07] border-violet-500/20",
+                "flex flex-col gap-3 p-4 border-2 bg-white",
+                expiringSoon ? "border-[#e10600]" : "border-black",
               )}
             >
               <div>
-                <p className="text-sm font-semibold text-white/80">
+                <p className="text-sm font-extrabold uppercase text-black">
                   Save this project
                 </p>
-                <p className="text-xs text-white/45 mt-1">
+                <p className="text-xs text-black/50 mt-1">
                   Create a free account to keep this review permanently and
                   manage all your projects in one place.
                 </p>
                 <p
                   className={cn(
-                    "text-xs mt-2",
-                    expiringSoon ? "text-yellow-400" : "text-white/30",
+                    "text-xs mt-2 font-mono font-bold uppercase",
+                    expiringSoon ? "text-[#e10600]" : "text-black/40",
                   )}
                 >
                   {expiringSoon
-                    ? `⚠️ Expires in ${daysLeft} day${daysLeft !== 1 ? "s" : ""}`
+                    ? `Expires in ${daysLeft} day${daysLeft !== 1 ? "s" : ""}`
                     : `Free guest link · expires in ${daysLeft} days`}
                 </p>
               </div>
               <div className="flex gap-2">
                 <Link
                   href="/login"
-                  className="flex-1 py-2 rounded-lg text-xs font-semibold text-center text-white bg-violet-600 hover:bg-violet-500 transition-colors"
+                  className="flex-1 py-2 text-xs font-bold uppercase text-center text-white bg-[#e10600] border-2 border-black shadow-[3px_3px_0_0_#000] hover:shadow-[1px_1px_0_0_#000] hover:translate-x-[2px] hover:translate-y-[2px] transition-all"
                 >
                   Create free account
                 </Link>
                 <Link
                   href="/"
-                  className="px-3 py-2 rounded-lg text-xs text-white/50 hover:text-white/80 bg-white/[0.04] hover:bg-white/[0.07] transition-colors"
+                  className="px-3 py-2 text-xs font-bold uppercase text-black/60 hover:text-black border-2 border-black bg-white hover:bg-black/5 transition-colors"
                 >
                   Guest
                 </Link>
               </div>
             </div>
 
-            <hr className="border-white/[0.06]" />
+            <hr className="border-black/10" />
 
             {/* Comments */}
             <CommentSystem
@@ -202,8 +194,8 @@ export default function GuestReviewShell({
       </div>
 
       {/* ── Footer ───────────────────────────────────────────────────────────── */}
-      <footer className="shrink-0 py-3 px-4 text-center border-t border-white/[0.04]">
-        <p className="text-[11px] text-white/25">Review powered by Approve Falcon</p>
+      <footer className="shrink-0 py-3 px-4 text-center border-t-2 border-black/10">
+        <p className="text-[11px] text-black/40">Review powered by Approve Falcon</p>
       </footer>
     </div>
   );

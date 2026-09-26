@@ -40,9 +40,9 @@ export default async function GuestReviewPage({ params }: PageProps) {
   // Expired link
   if (upload.expiresAt < new Date()) {
     return (
-      <div className="min-h-screen bg-[#06060f] flex items-center justify-center p-8">
+      <div className="min-h-screen bg-white flex items-center justify-center p-8">
         <div className="text-center max-w-sm">
-          <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center">
+          <div className="w-16 h-16 mx-auto mb-4 bg-white border-2 border-black flex items-center justify-center">
             <svg
               width="28"
               height="28"
@@ -52,15 +52,17 @@ export default async function GuestReviewPage({ params }: PageProps) {
               strokeWidth="1.5"
               strokeLinecap="round"
               strokeLinejoin="round"
-              className="text-white/30"
+              className="text-black"
               aria-hidden="true"
             >
               <circle cx="12" cy="12" r="10" />
               <polyline points="12 6 12 12 16 14" />
             </svg>
           </div>
-          <h1 className="text-xl font-bold text-white mb-2">Link expired</h1>
-          <p className="text-sm text-white/50 mb-6">
+          <h1 className="text-xl font-extrabold uppercase text-black mb-2">
+            Link expired
+          </h1>
+          <p className="text-sm text-black/50 mb-6">
             This guest review link has expired. Contact the sender for a new
             link.
           </p>
@@ -83,12 +85,12 @@ export default async function GuestReviewPage({ params }: PageProps) {
     signedUrl = await getSignedUrl(upload.filePath, 60 * 60 * 2);
   } catch {
     return (
-      <div className="min-h-screen bg-[#06060f] flex items-center justify-center p-8">
+      <div className="min-h-screen bg-white flex items-center justify-center p-8">
         <div className="text-center max-w-sm">
-          <h1 className="text-xl font-bold text-white mb-2">
+          <h1 className="text-xl font-extrabold uppercase text-black mb-2">
             File unavailable
           </h1>
-          <p className="text-sm text-white/50">
+          <p className="text-sm text-black/50">
             The file could not be loaded. Please try again later.
           </p>
         </div>

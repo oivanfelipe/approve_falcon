@@ -37,7 +37,7 @@ export default function RootLayout({
   return (
     <html lang="pt-BR" suppressHydrationWarning>
       <body
-        className={`${archivo.variable} ${jetbrainsMono.variable} font-sans antialiased bg-canvas text-white`}
+        className={`${archivo.variable} ${jetbrainsMono.variable} font-sans antialiased bg-canvas text-black`}
         suppressHydrationWarning
       >
         {children}

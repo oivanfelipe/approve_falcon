@@ -92,7 +92,7 @@ export default function DashboardPageClient({
             </p>
           </div>
           <Button
-            variant="falconPrimary"
+            variant="primary"
             size="sm"
             onClick={() => setModalOpen(true)}
             leftIcon={
@@ -207,7 +207,7 @@ export default function DashboardPageClient({
               </p>
             </div>
             <Button
-              variant="falconPrimary"
+              variant="primary"
               size="sm"
               onClick={() => setModalOpen(true)}
             >

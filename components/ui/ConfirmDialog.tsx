@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { cn } from "@/lib/utils";
 
 interface ConfirmDialogProps {
   open: boolean;
@@ -54,20 +55,18 @@ export default function ConfirmDialog({
     >
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        className="absolute inset-0 bg-black/60"
         onClick={onCancel}
         aria-hidden="true"
       />
 
       {/* Panel */}
-      <div className="relative w-full max-w-sm rounded-2xl border border-white/[0.08] bg-[#0d0d1e] shadow-2xl shadow-black/60 p-6 flex flex-col gap-5">
+      <div className="relative w-full max-w-sm border-2 border-black bg-white shadow-[8px_8px_0_0_#000] p-6 flex flex-col gap-5">
         {/* Icon + title */}
         <div className="flex items-start gap-4">
           <div
-            className={`shrink-0 flex items-center justify-center size-10 rounded-full ${
-              destructive
-                ? "bg-red-500/10 text-red-400"
-                : "bg-violet-500/10 text-violet-400"
+            className={`shrink-0 flex items-center justify-center size-10 border-2 border-black ${
+              destructive ? "bg-[#e10600] text-white" : "bg-black text-white"
             }`}
           >
             {destructive ? (
@@ -108,13 +107,13 @@ export default function ConfirmDialog({
           <div>
             <h2
               id="confirm-dialog-title"
-              className="text-base font-semibold text-white"
+              className="text-base font-extrabold uppercase tracking-tight text-black"
             >
               {title}
             </h2>
             <p
               id="confirm-dialog-desc"
-              className="mt-1 text-sm text-white/50 leading-relaxed"
+              className="mt-1 text-sm text-black/55 leading-relaxed"
             >
               {description}
             </p>
@@ -122,7 +121,7 @@ export default function ConfirmDialog({
         </div>
 
         {/* Divider */}
-        <div className="h-px bg-white/[0.06]" />
+        <div className="h-0.5 bg-black/10" />
 
         {/* Actions */}
         <div className="flex gap-3 justify-end">
@@ -130,18 +129,19 @@ export default function ConfirmDialog({
             ref={cancelRef}
             onClick={onCancel}
             disabled={loading}
-            className="px-4 py-2 rounded-xl text-sm font-semibold text-white/60 bg-white/[0.04] border border-white/[0.08] hover:bg-white/[0.08] hover:text-white transition-colors disabled:opacity-40"
+            className="px-4 py-2 rounded-md text-sm font-bold uppercase text-black/60 bg-white border-2 border-black/20 hover:border-black hover:text-black transition-colors disabled:opacity-40"
           >
             {cancelLabel}
           </button>
           <button
             onClick={onConfirm}
             disabled={loading}
-            className={`px-4 py-2 rounded-xl text-sm font-semibold transition-colors disabled:opacity-50 flex items-center gap-2 ${
-              destructive
-                ? "bg-red-600 hover:bg-red-500 text-white"
-                : "bg-violet-600 hover:bg-violet-500 text-white"
-            }`}
+            className={cn(
+              "px-4 py-2 rounded-md text-sm font-bold uppercase text-white border-2 border-black",
+              "shadow-[4px_4px_0_0_#000] hover:shadow-[2px_2px_0_0_#000] hover:translate-x-[2px] hover:translate-y-[2px]",
+              "transition-all duration-150 disabled:opacity-50 flex items-center gap-2",
+              destructive ? "bg-[#e10600]" : "bg-black",
+            )}
           >
             {loading && (
               <svg

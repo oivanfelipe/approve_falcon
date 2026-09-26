@@ -3,7 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-import { hexToRgba, getBrandTextColor } from "@/lib/freelancer-branding-shared";
+import { getBrandTextColor } from "@/lib/freelancer-branding-shared";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -13,9 +13,7 @@ type ButtonVariant =
   | "ghost"
   | "outline"
   | "danger"
-  | "success"
-  | "falconPrimary"
-  | "falconSecondary";
+  | "success";
 type ButtonSize = "sm" | "md" | "lg";
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -30,48 +28,38 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 // ─── Variant & size maps ──────────────────────────────────────────────────────
+// Approve Falcon system: black structure, white surfaces, red reserved for
+// the primary action. Solid offset shadows instead of blur, hard borders
+// instead of soft translucent ones, no gradients.
 
-// Radius lives on the variant (not the size) so the falcon-* variants can opt
-// out of the pill shape without fighting the old variants' classes in the
-// generated CSS, where declaration order — not className order — wins.
 const variantClasses: Record<ButtonVariant, string> = {
   primary:
-    "rounded-full bg-gradient-to-r from-violet-600 to-indigo-600 text-white " +
-    "hover:from-violet-500 hover:to-indigo-500 " +
-    "shadow-lg shadow-violet-900/30 border border-violet-500/20",
-  secondary:
-    "rounded-full bg-white/[0.06] text-white/90 border border-white/10 " +
-    "hover:bg-white/[0.10] hover:border-white/20",
-  ghost:
-    "rounded-full text-white/70 hover:text-white hover:bg-white/[0.06] border border-transparent",
-  outline:
-    "rounded-full border border-violet-500/40 text-violet-400 " +
-    "hover:border-violet-400/70 hover:bg-violet-500/[0.08] hover:text-violet-300",
-  danger:
-    "rounded-full bg-red-500/10 text-red-400 border border-red-500/30 " +
-    "hover:bg-red-500/20 hover:border-red-400/60",
-  success:
-    "rounded-full bg-gradient-to-r from-emerald-600 to-teal-600 text-white " +
-    "hover:from-emerald-500 hover:to-teal-500 " +
-    "shadow-lg shadow-emerald-900/30 border border-emerald-500/20",
-  // Falcon design system (preto/branco/vermelho, sombra sólida deslocada) —
-  // used on the screens already migrated; the rest keep the variants above
-  // until the full rollout.
-  falconPrimary:
     "rounded-md bg-[#e10600] text-white border-2 border-black " +
-    "uppercase tracking-wide font-extrabold! " +
     "shadow-[4px_4px_0_0_#000] hover:shadow-[2px_2px_0_0_#000] " +
     "hover:translate-x-[2px] hover:translate-y-[2px]",
-  falconSecondary:
+  secondary:
     "rounded-md bg-white text-black border-2 border-black " +
-    "uppercase tracking-wide font-extrabold! " +
+    "shadow-[4px_4px_0_0_#000] hover:shadow-[2px_2px_0_0_#000] " +
+    "hover:translate-x-[2px] hover:translate-y-[2px]",
+  ghost: "rounded-md text-black/60 hover:text-black hover:bg-black/[0.05]",
+  outline:
+    "rounded-md border-2 border-black text-black bg-transparent " +
+    "hover:bg-black/[0.04]",
+  // Solid red — for a genuinely destructive action or an active/urgent state
+  // (e.g. "recording…"), not just any red-tinted warning.
+  danger:
+    "rounded-md bg-[#e10600] text-white border-2 border-black " +
+    "shadow-[4px_4px_0_0_#000] hover:shadow-[2px_2px_0_0_#000] " +
+    "hover:translate-x-[2px] hover:translate-y-[2px]",
+  success:
+    "rounded-md bg-[#e10600] text-white border-2 border-black " +
     "shadow-[4px_4px_0_0_#000] hover:shadow-[2px_2px_0_0_#000] " +
     "hover:translate-x-[2px] hover:translate-y-[2px]",
 };
 
 const sizeClasses: Record<ButtonSize, string> = {
   sm: "h-8 px-3.5 text-xs gap-1.5",
-  md: "h-11 px-3 text-sm gap-2",
+  md: "h-11 px-4 text-sm gap-2",
   lg: "h-12 px-7 text-base gap-2.5",
 };
 
@@ -132,13 +120,11 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     ref,
   ) => {
     const classes = cn(
-      "inline-flex items-center justify-center font-medium",
-      "transition-all duration-200 cursor-pointer select-none",
+      "inline-flex items-center justify-center font-extrabold uppercase tracking-wide",
+      "transition-all duration-150 cursor-pointer select-none",
       "focus-visible:outline-none focus-visible:ring-2",
-      "focus-visible:ring-violet-500/60 focus-visible:ring-offset-2",
-      "focus-visible:ring-offset-[#06060f]",
+      "focus-visible:ring-[#e10600]/60 focus-visible:ring-offset-2",
       "disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none",
-      "active:scale-[0.97]",
       variantClasses[variant],
       sizeClasses[size],
       fullWidth && "w-full",
@@ -157,20 +143,16 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       </>
     );
 
+    // A freelancer's own brand color (Settings) takes over the accent while
+    // keeping the system's black border/shadow structure intact.
     const styleOverride = brandColor
-      ? variant === "primary"
+      ? variant === "primary" || variant === "danger" || variant === "success"
         ? {
-            backgroundImage: "none",
             backgroundColor: brandColor,
-            borderColor: hexToRgba(brandColor, 0.28),
             color: getBrandTextColor(brandColor),
           }
         : variant === "outline"
-          ? {
-              borderColor: brandColor,
-              color: brandColor,
-              backgroundColor: hexToRgba(brandColor, 0.06),
-            }
+          ? { borderColor: brandColor, color: brandColor }
           : { color: brandColor }
       : undefined;
 

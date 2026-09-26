@@ -28,7 +28,7 @@ export function Spinner({
       height={d}
       viewBox="0 0 24 24"
       fill="none"
-      className={cn("animate-spin text-violet-500", className)}
+      className={cn("animate-spin text-[#e10600]", className)}
       role="status"
       aria-label={label}
     >
