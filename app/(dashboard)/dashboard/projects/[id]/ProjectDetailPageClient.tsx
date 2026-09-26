@@ -159,7 +159,7 @@ export default function ProjectDetailClient({
       // Status changes live on Delivery rows
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "Delivery" },
+        { event: "*", schema: "falcon", table: "Delivery" },
         (payload) => {
           const row = (
             payload.eventType === "DELETE" ? payload.old : payload.new
@@ -172,7 +172,7 @@ export default function ProjectDetailClient({
       // View inserts → viewCount + lastViewedAt
       .on(
         "postgres_changes",
-        { event: "INSERT", schema: "public", table: "View" },
+        { event: "INSERT", schema: "falcon", table: "View" },
         (payload) => {
           const { deliveryId } = payload.new as { deliveryId: string };
           const belongs = liveDeliveries.some((d) => d.id === deliveryId);
@@ -182,7 +182,7 @@ export default function ProjectDetailClient({
       // Comment inserts/deletes → commentCount
       .on(
         "postgres_changes",
-        { event: "INSERT", schema: "public", table: "Comment" },
+        { event: "INSERT", schema: "falcon", table: "Comment" },
         (payload) => {
           const { deliveryId } = payload.new as { deliveryId: string };
           const belongs = liveDeliveries.some((d) => d.id === deliveryId);
@@ -191,7 +191,7 @@ export default function ProjectDetailClient({
       )
       .on(
         "postgres_changes",
-        { event: "DELETE", schema: "public", table: "Comment" },
+        { event: "DELETE", schema: "falcon", table: "Comment" },
         (payload) => {
           const { deliveryId } = payload.old as { deliveryId: string };
           const belongs = liveDeliveries.some((d) => d.id === deliveryId);

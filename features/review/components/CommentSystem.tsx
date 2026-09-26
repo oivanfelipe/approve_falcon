@@ -300,7 +300,7 @@ export default function CommentSystem({
       .channel(`comments-${deliveryId}`)
       .on(
         "postgres_changes",
-        { event: "INSERT", schema: "public", table: "Comment" },
+        { event: "INSERT", schema: "falcon", table: "Comment" },
         (payload) => {
           const newComment = payload.new as CommentData & {
             deliveryId: string;
@@ -321,7 +321,7 @@ export default function CommentSystem({
       )
       .on(
         "postgres_changes",
-        { event: "UPDATE", schema: "public", table: "Comment" },
+        { event: "UPDATE", schema: "falcon", table: "Comment" },
         (payload) => {
           const updated = payload.new as CommentData & { deliveryId: string };
           if (updated && updated.deliveryId === deliveryId) {
@@ -333,7 +333,7 @@ export default function CommentSystem({
       )
       .on(
         "postgres_changes",
-        { event: "DELETE", schema: "public", table: "Comment" },
+        { event: "DELETE", schema: "falcon", table: "Comment" },
         (payload) => {
           const deleted = payload.old as CommentData & { deliveryId: string };
           if (deleted && deleted.deliveryId === deliveryId) {

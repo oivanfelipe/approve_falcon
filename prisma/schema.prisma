@@ -8,11 +8,13 @@ generator client {
 
 datasource db {
     provider = "postgresql"
+    schemas  = ["falcon"]
 }
 
 // ─── NextAuth required models ────────────────────────────────────────────────
 
 model User {
+    @@schema("falcon")
     id            String    @id @default(cuid())
     name          String?
     email         String    @unique
@@ -30,6 +32,7 @@ model User {
 }
 
 model Account {
+    @@schema("falcon")
     id                String   @id @default(cuid())
     userId            String
     type              String
@@ -51,6 +54,7 @@ model Account {
 }
 
 model Session {
+    @@schema("falcon")
     id           String   @id @default(cuid())
     sessionToken String   @unique
     userId       String
@@ -62,6 +66,7 @@ model Session {
 }
 
 model VerificationToken {
+    @@schema("falcon")
     identifier String
     token      String
     expires    DateTime
@@ -72,6 +77,7 @@ model VerificationToken {
 // ─── Approve Falcon domain models ────────────────────────────────────────────
 
 model Project {
+    @@schema("falcon")
     id          String   @id @default(cuid())
     userId      String
     name        String
@@ -86,6 +92,7 @@ model Project {
 }
 
 model Delivery {
+    @@schema("falcon")
     id            String         @id @default(cuid())
     projectId     String
     versionNumber Int
@@ -113,6 +120,7 @@ model Delivery {
 }
 
 model ChatNotificationState {
+    @@schema("falcon")
     id                     String    @id @default(cuid())
     deliveryId             String    @unique
     hasPendingNotification Boolean   @default(false)
@@ -125,6 +133,7 @@ model ChatNotificationState {
 }
 
 model Comment {
+    @@schema("falcon")
     id          String     @id @default(cuid())
     deliveryId  String
     parentId    String?
@@ -145,6 +154,7 @@ model Comment {
 }
 
 model View {
+    @@schema("falcon")
     id         String   @id @default(cuid())
     deliveryId String
     ipAddress  String?
@@ -155,6 +165,7 @@ model View {
 }
 
 model Approval {
+    @@schema("falcon")
     id          String   @id @default(cuid())
     deliveryId  String   @unique
     signerName  String
@@ -166,12 +177,13 @@ model Approval {
 }
 
 model FreelancerSettings {
+    @@schema("falcon")
     id             String   @id @default(cuid())
     userId         String   @unique
     displayName    String?
     logoUrl        String?
-    primaryColor   String   @default("#7C3AED")
-    secondaryColor String   @default("#4F46E5")
+    primaryColor   String   @default("#E10600")
+    secondaryColor String   @default("#000000")
     backgroundColor String?
     slug           String   @unique
     createdAt      DateTime @default(now())
@@ -183,17 +195,20 @@ model FreelancerSettings {
 // ─── Enums ───────────────────────────────────────────────────────────────────
 
 enum DeliveryStatus {
+    @@schema("falcon")
     PENDING
     APPROVED
     CHANGES_REQUESTED
 }
 
 enum DeliverySource {
+    @@schema("falcon")
     FILE
     DRIVE_LINK
 }
 
 enum AuthorType {
+    @@schema("falcon")
     CLIENT
     FREELANCER
 }
@@ -201,6 +216,7 @@ enum AuthorType {
 // ─── Guest (anonymous) uploads ───────────────────────────────────────────────
 
 model GuestUpload {
+    @@schema("falcon")
     id              String         @id @default(cuid())
     filePath        String
     fileName        String
@@ -218,6 +234,7 @@ model GuestUpload {
 }
 
 model GuestComment {
+    @@schema("falcon")
     id            String     @id @default(cuid())
     guestUploadId String
     parentId      String?
@@ -236,6 +253,7 @@ model GuestComment {
 }
 
 model GuestView {
+    @@schema("falcon")
     id            String   @id @default(cuid())
     guestUploadId String
     ipAddress     String?
