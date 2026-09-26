@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useTransition } from "react";
-import Link from "next/link";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -18,7 +17,6 @@ export default function NewProjectModal({
   onClose,
 }: NewProjectModalProps) {
   const [error, setError] = useState<string | null>(null);
-  const [showUpgrade, setShowUpgrade] = useState(false);
   const [isPending, startTransition] = useTransition();
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -29,7 +27,6 @@ export default function NewProjectModal({
       const result = await createProject(formData);
       if (result?.error) {
         setError(result.error);
-        if (result.upgrade) setShowUpgrade(true);
       }
       // On success, createProject redirects to /dashboard/projects/[id]
     });
@@ -95,19 +92,9 @@ export default function NewProjectModal({
           resize="none"
         />
         {error && (
-          <div className="flex flex-col gap-1.5">
-            <p className="text-xs text-red-400" role="alert">
-              {error}
-            </p>
-            {showUpgrade && (
-              <Link
-                href="/dashboard/billing"
-                className="text-xs text-violet-400 hover:text-violet-300 underline underline-offset-2"
-              >
-                Fazer upgrade para Pro &rarr;
-              </Link>
-            )}
-          </div>
+          <p className="text-xs text-red-400" role="alert">
+            {error}
+          </p>
         )}
       </form>
     </Modal>

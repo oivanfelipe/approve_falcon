@@ -9,7 +9,6 @@ import { Clock, CheckCircle, AlertCircle, Folders, Search } from "lucide-react";
 import useLiveProjects from "@/features/projects/hooks/useLiveProjects";
 import { Input } from "@/components/ui";
 import StatCard from "@/features/dashboard/components/StatCard";
-import { formatSize } from "@/lib/utils";
 
 interface Stats {
   totalProjects: number;
@@ -32,18 +31,10 @@ interface ProjectData {
 export default function DashboardPageClient({
   stats,
   projects,
-  subscription,
   searchInputId,
 }: {
   stats: Stats;
   projects: ProjectData[];
-  subscription?: {
-    planCode: string;
-    maxProjects: number | null;
-    projectCount: number;
-    storageUsage?: number;
-    maxStorageBytes?: number | null;
-  };
   searchInputId?: string;
 }) {
   const [modalOpen, setModalOpen] = useState(false);
@@ -81,18 +72,6 @@ export default function DashboardPageClient({
       return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
     });
 
-  const atLimit =
-    subscription?.maxProjects !== null &&
-    subscription !== undefined &&
-    subscription.projectCount >= (subscription.maxProjects ?? Infinity);
-
-  const storageUsage = subscription?.storageUsage ?? 0;
-  const maxStorageBytes = subscription?.maxStorageBytes ?? null;
-  const storagePercent =
-    maxStorageBytes && maxStorageBytes > 0
-      ? Math.min(100, Math.round((storageUsage / maxStorageBytes) * 100))
-      : null;
-
   return (
     <div className="max-w-5xl mx-auto px-6 py-8 flex flex-col gap-8">
       {/* Header */}
@@ -128,38 +107,6 @@ export default function DashboardPageClient({
         </Button>
         {/* actions */}
       </div>
-      {/* Storage usage bar */}
-      {maxStorageBytes && (
-        <div className="flex flex-col gap-1">
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-white/40">Armazenamento usado:</span>
-            <span className="text-xs text-white/80 font-semibold">
-              {formatSize(storageUsage)}
-              {" / "}
-              {formatSize(maxStorageBytes)}
-            </span>
-            {storagePercent !== null && (
-              <span
-                className={`text-xs font-semibold ${storagePercent >= 90 ? "text-red-400" : storagePercent >= 75 ? "text-yellow-400" : "text-white/40"}`}
-              >
-                {storagePercent}%
-              </span>
-            )}
-          </div>
-          <div className="w-full h-2 bg-white/[0.08] rounded-lg overflow-hidden">
-            <div
-              className={`h-2 rounded-lg transition-all duration-300 ${
-                storagePercent !== null && storagePercent >= 90
-                  ? "bg-red-500"
-                  : storagePercent !== null && storagePercent >= 75
-                    ? "bg-yellow-400"
-                    : "bg-emerald-400"
-              }`}
-              style={{ width: `${storagePercent ?? 0}%` }}
-            />
-          </div>
-        </div>
-      )}
       {/* Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <StatCard
@@ -223,24 +170,6 @@ export default function DashboardPageClient({
           ))}
         </div>
       </div>
-
-      {/* Plan limit banner */}
-      {atLimit && (
-        <div className="flex items-center justify-between gap-4 p-4 rounded-xl bg-yellow-500/[0.06] border border-yellow-500/20">
-          <div>
-            <p className="text-sm font-semibold text-yellow-400">
-              Limite de projetos atingido
-            </p>
-            <p className="text-xs text-white/50 mt-0.5">
-              Você usou todos os {subscription?.maxProjects} projetos do plano
-              Free.
-            </p>
-          </div>
-          <Button variant="primary" href="/dashboard/billing" size="sm">
-            Fazer upgrade para Pro
-          </Button>
-        </div>
-      )}
 
       {/* Projects grid */}
       {filteredProjects.length > 0 ? (

@@ -1,9 +1,8 @@
 import { Resend } from "resend";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
-const FROM = process.env.RESEND_FROM ?? "ApproveFlow <noreply@approveflow.app>";
-const BASE_URL =
-  process.env.NEXT_PUBLIC_APP_URL ?? "https://approveflow-two.vercel.app";
+const FROM = process.env.RESEND_FROM ?? "Approve Falcon <noreply@example.com>";
+const BASE_URL = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 
 type Locale = "pt" | "en";
 
@@ -20,7 +19,7 @@ function htmlWrapper(body: string) {
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>ApproveFlow</title>
+  <title>Approve Falcon</title>
 </head>
 <body style="margin:0;padding:0;background:#f4f4f5;font-family:Arial,Helvetica,sans-serif">
   <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f5;padding:32px 16px">
@@ -35,8 +34,8 @@ function htmlWrapper(body: string) {
           <tr>
             <td style="background:#f9f9fb;padding:16px 40px;border-top:1px solid #ececee">
               <p style="margin:0;font-size:12px;color:#9ca3af;line-height:1.6">
-                This email was sent by <strong>ApproveFlow</strong>.<br />
-                You received this because a file was shared with you via ApproveFlow.<br />
+                This email was sent by <strong>Approve Falcon</strong>.<br />
+                You received this because a file was shared with you via Approve Falcon.<br />
                 If you did not expect this email, you can safely ignore it.
               </p>
             </td>
@@ -59,9 +58,9 @@ function escapeHtml(value: string) {
 }
 
 const UNSUBSCRIBE_HEADERS = {
-  "List-Unsubscribe": `<mailto:contato@joaogustavoribeiro.com.br?subject=unsubscribe>`,
+  "List-Unsubscribe": `<mailto:${process.env.RESEND_FROM?.match(/<(.+)>/)?.[1] ?? "noreply@example.com"}?subject=unsubscribe>`,
   "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
-  "X-Entity-Ref-ID": "approveflow-notification",
+  "X-Entity-Ref-ID": "approve-falcon-notification",
 };
 
 // ─── Send new review link to client ──────────────────────────────────────────
@@ -132,8 +131,8 @@ export async function sendNewReviewEmail(opts: {
 
   const text =
     locale === "pt"
-      ? `Olá ${opts.clientName},\n\nUm novo arquivo está pronto para a sua revisão.\n\nProjeto: ${opts.projectName}\nVersão: ${versionLabel}\n\n${t.textCta}\n${url}\n\n${t.textFooter}\n\n— ApproveFlow`
-      : `Hi ${opts.clientName},\n\nA new file is ready for your review.\n\nProject: ${opts.projectName}\nVersion: ${versionLabel}\n\n${t.textCta}\n${url}\n\n${t.textFooter}\n\n— ApproveFlow`;
+      ? `Olá ${opts.clientName},\n\nUm novo arquivo está pronto para a sua revisão.\n\nProjeto: ${opts.projectName}\nVersão: ${versionLabel}\n\n${t.textCta}\n${url}\n\n${t.textFooter}\n\n— Approve Falcon`
+      : `Hi ${opts.clientName},\n\nA new file is ready for your review.\n\nProject: ${opts.projectName}\nVersion: ${versionLabel}\n\n${t.textCta}\n${url}\n\n${t.textFooter}\n\n— Approve Falcon`;
 
   await resend.emails.send({
     from: FROM,
@@ -165,7 +164,7 @@ export async function sendApprovalEmail(opts: {
           body: `<strong>${opts.signerName}</strong> aprovou a entrega de <strong>${opts.projectName}</strong>.`,
           sub: "Acesse seu painel para ver os detalhes da aprovação.",
           cta: "Ir para o Painel",
-          text: `Entrega aprovada\n\n${opts.signerName} aprovou a entrega de ${opts.projectName}.\n\nVer detalhes:\n${BASE_URL}/dashboard\n\n— ApproveFlow`,
+          text: `Entrega aprovada\n\n${opts.signerName} aprovou a entrega de ${opts.projectName}.\n\nVer detalhes:\n${BASE_URL}/dashboard\n\n— Approve Falcon`,
         }
       : {
           subject: `${opts.projectName} was approved by ${opts.signerName}`,
@@ -173,7 +172,7 @@ export async function sendApprovalEmail(opts: {
           body: `<strong>${opts.signerName}</strong> approved the delivery for <strong>${opts.projectName}</strong>.`,
           sub: "Log in to your dashboard to see the approval details.",
           cta: "Go to Dashboard",
-          text: `Delivery approved\n\n${opts.signerName} approved the delivery for ${opts.projectName}.\n\nView details:\n${BASE_URL}/dashboard\n\n— ApproveFlow`,
+          text: `Delivery approved\n\n${opts.signerName} approved the delivery for ${opts.projectName}.\n\nView details:\n${BASE_URL}/dashboard\n\n— Approve Falcon`,
         };
 
   const body = `
@@ -215,7 +214,7 @@ export async function sendChangesRequestedEmail(opts: {
           body: `Seu cliente solicitou alterações em <strong>${opts.projectName}</strong>.`,
           sub: "Revise os comentários e envie uma nova versão quando estiver pronto.",
           cta: "Ver Comentários",
-          text: `Alterações solicitadas\n\nSeu cliente solicitou alterações em ${opts.projectName}.\n\nVer comentários:\n${url}\n\n— ApproveFlow`,
+          text: `Alterações solicitadas\n\nSeu cliente solicitou alterações em ${opts.projectName}.\n\nVer comentários:\n${url}\n\n— Approve Falcon`,
         }
       : {
           subject: `Changes requested on ${opts.projectName}`,
@@ -223,7 +222,7 @@ export async function sendChangesRequestedEmail(opts: {
           body: `Your client requested changes on <strong>${opts.projectName}</strong>.`,
           sub: "Review the comments and upload a new version when ready.",
           cta: "View Comments",
-          text: `Changes requested\n\nYour client requested changes on ${opts.projectName}.\n\nView comments:\n${url}\n\n— ApproveFlow`,
+          text: `Changes requested\n\nYour client requested changes on ${opts.projectName}.\n\nView comments:\n${url}\n\n— Approve Falcon`,
         };
 
   const body = `
@@ -280,8 +279,8 @@ export async function sendCommentNotificationEmail(opts: {
           cta: "Abrir Projeto",
           text:
             count > 1
-              ? `${count} novas mensagens do cliente\n\nVocê tem ${count} mensagens não lidas em ${opts.projectName}.\n\nÚltima mensagem de ${opts.authorName}:\n"${opts.comment}"\n\nAbrir projeto:\n${reviewUrl}\n\n— ApproveFlow`
-              : `Nova mensagem do cliente\n\n${opts.authorName} enviou uma mensagem no projeto ${opts.projectName}:\n\n"${opts.comment}"\n\nAbrir projeto:\n${reviewUrl}\n\n— ApproveFlow`,
+              ? `${count} novas mensagens do cliente\n\nVocê tem ${count} mensagens não lidas em ${opts.projectName}.\n\nÚltima mensagem de ${opts.authorName}:\n"${opts.comment}"\n\nAbrir projeto:\n${reviewUrl}\n\n— Approve Falcon`
+              : `Nova mensagem do cliente\n\n${opts.authorName} enviou uma mensagem no projeto ${opts.projectName}:\n\n"${opts.comment}"\n\nAbrir projeto:\n${reviewUrl}\n\n— Approve Falcon`,
         }
       : {
           subject:
@@ -302,8 +301,8 @@ export async function sendCommentNotificationEmail(opts: {
           cta: "Open Project",
           text:
             count > 1
-              ? `${count} new client messages\n\nYou have ${count} unread messages on ${opts.projectName}.\n\nLatest message from ${opts.authorName}:\n"${opts.comment}"\n\nOpen project:\n${reviewUrl}\n\n— ApproveFlow`
-              : `New client message\n\n${opts.authorName} sent a message on ${opts.projectName}:\n\n"${opts.comment}"\n\nOpen project:\n${reviewUrl}\n\n— ApproveFlow`,
+              ? `${count} new client messages\n\nYou have ${count} unread messages on ${opts.projectName}.\n\nLatest message from ${opts.authorName}:\n"${opts.comment}"\n\nOpen project:\n${reviewUrl}\n\n— Approve Falcon`
+              : `New client message\n\n${opts.authorName} sent a message on ${opts.projectName}:\n\n"${opts.comment}"\n\nOpen project:\n${reviewUrl}\n\n— Approve Falcon`,
         };
 
   const countBadgeHtml = t.countBadge

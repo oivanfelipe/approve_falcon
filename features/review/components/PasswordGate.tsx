@@ -28,7 +28,7 @@ export default function PasswordGate({
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
   const primaryColor = branding?.primaryColor ?? DEFAULT_PRIMARY_COLOR;
-  const displayName = branding?.displayName ?? "ApproveFlow";
+  const displayName = branding?.displayName ?? "Approve Falcon";
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

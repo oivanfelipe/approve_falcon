@@ -5,7 +5,7 @@ import Sidebar from "@/features/dashboard/components/Sidebar";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Dashboard — ApproveFlow",
+  title: "Dashboard — Approve Falcon",
 };
 
 export default async function DashboardLayout({

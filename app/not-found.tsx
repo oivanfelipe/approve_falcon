@@ -5,7 +5,7 @@ import { Container } from "@/components/ui/Container";
 import { Button } from "@/components/ui/Button";
 
 export const metadata: Metadata = {
-  title: "404 — Page Not Found · ApproveFlow",
+  title: "404 — Page Not Found · Approve Falcon",
   description: "The page you were looking for doesn't exist.",
 };
 
@@ -19,7 +19,7 @@ export default function NotFound() {
             <Link
               href="/"
               className="flex items-center gap-2 focus-visible:outline-none"
-              aria-label="ApproveFlow home"
+              aria-label="Approve Falcon home"
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
@@ -31,7 +31,7 @@ export default function NotFound() {
               />
               <span className="text-[15px] font-semibold tracking-tight">
                 <span className="text-white">Approve</span>
-                <span className="gradient-text">Flow</span>
+                <span className="gradient-text">Falcon</span>
               </span>
             </Link>
           </div>
@@ -75,25 +75,10 @@ export default function NotFound() {
 
             {/* Actions */}
             <div className="flex flex-wrap items-center justify-center gap-3">
-              <Button variant="primary" size="md" href="/">
-                Back to home
-              </Button>
-              <Button variant="secondary" size="md" href="/login">
+              <Button variant="primary" size="md" href="/dashboard">
                 Go to dashboard
               </Button>
             </div>
-
-            {/* Subtle help line */}
-            <p className="text-xs text-white/25 mt-2">
-              If you believe this is a mistake,{" "}
-              <Link
-                href="/contact"
-                className="text-white/40 hover:text-white/60 underline underline-offset-2 transition-colors duration-150"
-              >
-                contact support
-              </Link>
-              .
-            </p>
           </div>
         </Container>
       </main>

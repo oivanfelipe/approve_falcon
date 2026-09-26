@@ -14,7 +14,6 @@ import {
   hexToRgba,
   getBrandTextColor,
 } from "@/lib/freelancer-branding-shared";
-import type { SubscriptionInfo } from "@/features/billing/subscription";
 
 export interface CommentData {
   id: string;
@@ -51,7 +50,6 @@ interface CommentSystemProps {
   onOpenPin?: (commentId: string) => void;
   openCommentId?: string | null;
   primaryColor?: string;
-  subscription?: SubscriptionInfo | null;
 }
 
 function timeAgo(dateStr: string): string {

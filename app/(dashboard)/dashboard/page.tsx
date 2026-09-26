@@ -2,12 +2,11 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma/client";
-import { getSubscriptionInfo } from "@/features/billing/subscription";
 import type { Metadata } from "next";
 import DashboardPageClient from "@/app/(dashboard)/dashboard/DashboardPageClient";
 
 export const metadata: Metadata = {
-  title: "Projects — ApproveFlow",
+  title: "Projetos — Approve Falcon",
 };
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -34,48 +33,25 @@ export default async function DashboardPage() {
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
 
-  const [projects, subscriptionInfo, storageUsage] = await Promise.all([
-    prisma.project.findMany({
-      where: { userId: session.user.id },
-      orderBy: { updatedAt: "desc" },
-      include: {
-        deliveries: {
-          orderBy: { createdAt: "desc" },
-          select: {
-            id: true,
-            status: true,
-            createdAt: true,
-            views: {
-              orderBy: { createdAt: "desc" },
-              take: 1,
-              select: { createdAt: true },
-            },
+  const projects = (await prisma.project.findMany({
+    where: { userId: session.user.id },
+    orderBy: { updatedAt: "desc" },
+    include: {
+      deliveries: {
+        orderBy: { createdAt: "desc" },
+        select: {
+          id: true,
+          status: true,
+          createdAt: true,
+          views: {
+            orderBy: { createdAt: "desc" },
+            take: 1,
+            select: { createdAt: true },
           },
         },
       },
-    }) as Promise<ProjectRow[]>,
-    getSubscriptionInfo(session.user.id),
-    prisma.delivery.aggregate({
-      _sum: { fileSize: true },
-      where: {
-        project: { userId: session.user.id },
-      },
-    }),
-  ]);
-
-  // Get plan storage limit from PLANS
-  // Import PLANS here to avoid circular import issues
-  const { PLANS } = await import("@/features/billing/plans");
-  const planDef = PLANS[subscriptionInfo.planCode] ?? PLANS["free"];
-  const maxStorageBytes = planDef.maxStorageBytes ?? null;
-
-  const subscription = {
-    planCode: subscriptionInfo.planCode,
-    maxProjects: subscriptionInfo.maxProjects,
-    projectCount: subscriptionInfo.projectCount,
-    storageUsage: storageUsage._sum.fileSize ?? 0,
-    maxStorageBytes,
-  };
+    },
+  })) as ProjectRow[];
 
   const totalProjects = projects.length;
   let totalPending = 0;
@@ -118,7 +94,6 @@ export default async function DashboardPage() {
     <DashboardPageClient
       stats={{ totalProjects, totalPending, totalApproved, totalChanges }}
       projects={projectData}
-      subscription={subscription}
       searchInputId="dashboard-search-input"
     />
   );

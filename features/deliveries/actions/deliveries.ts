@@ -8,7 +8,6 @@ import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { z } from "zod";
 import bcrypt from "bcryptjs";
-import { canUploadVersion, canUploadFile } from "@/features/billing/limits";
 import { sendNewReviewEmail } from "@/lib/email";
 import { getFreelancerBrandingByUserId } from "@/lib/freelancer-branding";
 import { isGoogleDriveUrl } from "@/lib/google-drive";
@@ -65,7 +64,6 @@ export async function getUploadUrl(
   fileName: string,
   contentType: string,
   projectId: string,
-  fileSize: number,
 ): Promise<
   | { signedUrl: string; token: string; path: string; error?: never }
   | { error: string }
@@ -78,12 +76,6 @@ export async function getUploadUrl(
     select: { id: true },
   });
   if (!project) return { error: "Project not found" };
-
-  const versionCheck = await canUploadVersion(session.user.id, projectId);
-  if (!versionCheck.allowed) return { error: versionCheck.reason! };
-
-  const storageCheck = await canUploadFile(session.user.id, fileSize);
-  if (!storageCheck.allowed) return { error: storageCheck.reason! };
 
   const ext = fileName.split(".").pop() ?? "bin";
   const ts = Date.now();
@@ -140,21 +132,6 @@ export async function createDelivery(
     },
   });
   if (!project) return { error: "Project not found" };
-
-  const versionCheck = await canUploadVersion(session.user.id, projectId);
-  if (!versionCheck.allowed) {
-    const planCode = versionCheck.reason?.includes("Free plan")
-      ? "free"
-      : undefined;
-    let message = versionCheck.reason || "Limite de versões atingido.";
-    if (planCode === "free") {
-      message =
-        "Você atingiu o limite de versões do plano gratuito (3 versões). Faça upgrade para continuar.";
-    }
-    return {
-      error: JSON.stringify({ code: "VERSION_LIMIT_REACHED", message }),
-    };
-  }
 
   const versionNumber = project._count.deliveries + 1;
   const reviewToken = generateReviewToken();

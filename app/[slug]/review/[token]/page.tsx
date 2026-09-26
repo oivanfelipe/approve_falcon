@@ -24,8 +24,8 @@ export async function generateMetadata({
 
   return {
     title: delivery
-      ? `Review: ${delivery.project?.name ?? "Review"} - ApproveFlow`
-      : "Review - ApproveFlow",
+      ? `Review: ${delivery.project?.name ?? "Review"} - Approve Falcon`
+      : "Review - Approve Falcon",
     robots: { index: false },
   };
 }
@@ -48,14 +48,8 @@ export default async function BrandedReviewPage({
   const pageData = await loadReviewPageData(token);
   if (!pageData) notFound();
 
-  const {
-    delivery,
-    signedUrl,
-    initialComments,
-    allDeliveries,
-    branding,
-    subscription,
-  } = pageData;
+  const { delivery, signedUrl, initialComments, allDeliveries, branding } =
+    pageData;
 
   if (!branding?.slug || branding.slug !== slug) {
     notFound();
@@ -137,7 +131,6 @@ export default async function BrandedReviewPage({
       freelancerDisplayName={delivery.project.user?.name ?? null}
       branding={branding}
       reviewPathSlug={slug}
-      subscription={subscription}
     />
   );
 }

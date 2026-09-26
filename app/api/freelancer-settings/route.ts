@@ -10,7 +10,6 @@ import {
   normalizeSlug,
   saveFreelancerBranding,
 } from "@/lib/freelancer-branding";
-import { getSubscriptionInfo } from "@/features/billing/subscription";
 import { validateSlugOrThrow } from "@/lib/freelancer-branding-shared";
 
 const settingsSchema = z.object({
@@ -35,20 +34,6 @@ export async function PUT(request: Request) {
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  // Only users on the 'studio' plan may update freelancer branding
-  try {
-    const sub = await getSubscriptionInfo(session.user.id);
-    if (sub.planCode !== "studio") {
-      return NextResponse.json({ error: "Upgrade required" }, { status: 403 });
-    }
-  } catch (err) {
-    // If we cannot determine subscription, deny to be safe
-    return NextResponse.json(
-      { error: "Unable to verify subscription" },
-      { status: 403 },
-    );
   }
 
   const body = await request.json().catch(() => ({}));

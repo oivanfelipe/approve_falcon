@@ -22,8 +22,8 @@ export async function generateMetadata({
 
   return {
     title: upload
-      ? `Review: ${upload.fileName} — ApproveFlow`
-      : "Review — ApproveFlow",
+      ? `Review: ${upload.fileName} — Approve Falcon`
+      : "Review — Approve Falcon",
     robots: { index: false },
   };
 }
@@ -61,15 +61,9 @@ export default async function GuestReviewPage({ params }: PageProps) {
           </div>
           <h1 className="text-xl font-bold text-white mb-2">Link expired</h1>
           <p className="text-sm text-white/50 mb-6">
-            This guest review link has expired. Create a free account for
-            permanent review links.
+            This guest review link has expired. Contact the sender for a new
+            link.
           </p>
-          <a
-            href="/design-review-tool"
-            className="inline-block px-5 py-2.5 rounded-xl text-sm font-semibold text-white bg-violet-600 hover:bg-violet-500 transition-colors"
-          >
-            Create a new review link
-          </a>
         </div>
       </div>
     );

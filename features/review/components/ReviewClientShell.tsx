@@ -23,7 +23,6 @@ import {
   hexToRgba,
   type FreelancerBranding,
 } from "@/lib/freelancer-branding-shared";
-import type { SubscriptionInfo } from "@/features/billing/subscription";
 
 // Types
 
@@ -59,7 +58,6 @@ interface ReviewClientShellProps {
   freelancerDisplayName?: string | null;
   branding?: FreelancerBranding | null;
   reviewPathSlug?: string | null;
-  subscription?: SubscriptionInfo | null;
 }
 
 // Status badge map
@@ -152,21 +150,14 @@ export default function ReviewClientShell({
   freelancerDisplayName,
   branding,
   reviewPathSlug,
-  subscription,
 }: ReviewClientShellProps) {
   const isDriveLink = sourceType === "DRIVE_LINK";
   const isImage = !isDriveLink && (mimeType?.startsWith("image/") ?? false);
-  const isStudio = subscription?.planCode === "studio";
-  const primaryColor = isStudio
-    ? (branding?.primaryColor ?? DEFAULT_PRIMARY_COLOR)
-    : DEFAULT_PRIMARY_COLOR;
-  const secondaryColor = isStudio
-    ? (branding?.secondaryColor ?? DEFAULT_SECONDARY_COLOR)
-    : DEFAULT_SECONDARY_COLOR;
-  const brandName = isStudio
-    ? (branding?.displayName ?? freelancerDisplayName ?? "ApproveFlow")
-    : "ApproveFlow";
-  const brandLogo = isStudio ? branding?.logoUrl : null;
+  const primaryColor = branding?.primaryColor ?? DEFAULT_PRIMARY_COLOR;
+  const secondaryColor = branding?.secondaryColor ?? DEFAULT_SECONDARY_COLOR;
+  const brandName =
+    branding?.displayName ?? freelancerDisplayName ?? "Approve Falcon";
+  const brandLogo = branding?.logoUrl ?? null;
 
   const [status, setStatus] = useState<Status>(initialStatus);
   const [comments, setComments] = useState<CommentData[]>(initialComments);
@@ -320,7 +311,6 @@ export default function ReviewClientShell({
                   openCommentId={openPinCommentId}
                   scrollable
                   primaryColor={primaryColor}
-                  subscription={subscription}
                 />
               </div>
             </div>
@@ -394,19 +384,13 @@ export default function ReviewClientShell({
         </aside>
       </div>
 
-      {/* Viral footer */}
+      {/* Footer */}
       <footer className="shrink-0 py-2.5 text-center border-t border-white/[0.04]">
         <p className="text-[11px] text-white/20">
           Revisão via{" "}
-          <a
-            href="https://approveflow.app"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="transition-colors"
-            style={{ color: hexToRgba(secondaryColor, 0.72) }}
-          >
+          <span style={{ color: hexToRgba(secondaryColor, 0.72) }}>
             {brandName}
-          </a>
+          </span>
         </p>
       </footer>
     </div>

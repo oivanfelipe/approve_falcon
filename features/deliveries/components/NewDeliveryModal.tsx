@@ -128,7 +128,6 @@ export default function NewDeliveryModal({
           selectedFile.name,
           selectedFile.type,
           projectId,
-          selectedFile.size,
         );
 
         if ("error" in urlResult) throw new Error(urlResult.error);

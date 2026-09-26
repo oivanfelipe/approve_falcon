@@ -201,26 +201,9 @@ export default function GuestReviewShell({
         </aside>
       </div>
 
-      {/* ── Viral footer ────────────────────────────────────────────────────── */}
+      {/* ── Footer ───────────────────────────────────────────────────────────── */}
       <footer className="shrink-0 py-3 px-4 text-center border-t border-white/[0.04]">
-        <p className="text-[11px] text-white/25">
-          Review powered by{" "}
-          <a
-            href="https://approveflow.app"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-violet-400/60 hover:text-violet-400 transition-colors"
-          >
-            ApproveFlow
-          </a>
-          {" · "}
-          <a
-            href="/design-review-tool"
-            className="text-violet-400/60 hover:text-violet-400 transition-colors"
-          >
-            Create your own review link
-          </a>
-        </p>
+        <p className="text-[11px] text-white/25">Review powered by Approve Falcon</p>
       </footer>
     </div>
   );

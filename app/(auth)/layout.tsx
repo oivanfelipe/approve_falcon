@@ -2,7 +2,7 @@ import React from "react";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Sign in — ApproveFlow",
+  title: "Sign in — Approve Falcon",
 };
 
 export default function AuthLayout({

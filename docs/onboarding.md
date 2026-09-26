@@ -1,22 +1,27 @@
-# ApproveFlow — Onboarding para Desenvolvedores
+# Approve Falcon — Onboarding para Desenvolvedores
 
-Bem-vindo ao ApproveFlow. Este guia explica como o projeto está organizado,
+Bem-vindo ao Approve Falcon. Este guia explica como o projeto está organizado,
 o que cada parte faz e como adicionar código novo corretamente.
+
+Uso interno — sem billing, sem páginas públicas de marketing.
 
 ---
 
-## O que é o ApproveFlow?
+## O que é o Approve Falcon?
 
-Um SaaS para freelancers enviarem arquivos a clientes e coletarem aprovações ou
-pedidos de alteração — tudo via link compartilhável, sem o cliente precisar de conta.
+Uma ferramenta para times/agências enviarem criativos a clientes e coletarem
+aprovações ou pedidos de alteração — tudo via link compartilhável, sem o
+cliente precisar de conta.
 
 **Fluxo principal:**
 
-1. Freelancer cria um **Projeto** (nome do cliente, e-mail)
-2. Freelancer faz upload de um arquivo → uma **Entrega** é criada com um token único de revisão
-3. Um link como `approveflow.app/review/{token}` é compartilhado com o cliente
-4. Cliente visualiza o arquivo, deixa comentários, clica em **Aprovar** ou **Solicitar Alterações**
-5. Freelancer vê a atualização de status ao vivo no dashboard
+1. Alguém do time cria um **Projeto** (nome do cliente, e-mail)
+2. Faz upload de um arquivo **ou** cola um link do Google Drive → uma
+   **Entrega** é criada com um token único de revisão
+3. Um link como `seu-dominio.com/review/{token}` é compartilhado com o cliente
+4. Cliente visualiza o criativo, deixa comentários, clica em **Aprovar** ou
+   **Solicitar Alterações**
+5. O time vê a atualização de status ao vivo no dashboard
 
 ---
 
@@ -33,10 +38,7 @@ cp .env.example .env.local
 # 3. Aplicar migrações do banco
 npx prisma migrate dev
 
-# 4. Seedar os planos (Free / Pro / Studio)
-npm run db:seed
-
-# 5. Iniciar servidor de desenvolvimento
+# 4. Iniciar servidor de desenvolvimento
 npm run dev
 ```
 
@@ -45,7 +47,7 @@ Abra http://localhost:3000.
 **Outros comandos úteis:**
 
 | Comando             | Finalidade                      |
-| ------------------- | ------------------------------- |
+| ------------------- | -------------------------------- |
 | `npm run build`     | Build de produção               |
 | `npx tsc --noEmit`  | Verificação de tipos TypeScript |
 | `npm run lint`      | ESLint                          |
@@ -70,12 +72,6 @@ SUPABASE_SERVICE_ROLE_KEY=
 SUPABASE_STORAGE_BUCKET=deliveries
 NEXT_PUBLIC_SUPABASE_BUCKET=deliveries
 
-# Stripe (cobrança)
-STRIPE_SECRET_KEY=
-STRIPE_WEBHOOK_SECRET=
-STRIPE_PRICE_PRO=
-STRIPE_PRICE_STUDIO=
-
 # Resend (e-mail transacional)
 RESEND_API_KEY=
 RESEND_FROM=
@@ -90,7 +86,7 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 
 ```
 app/           → Next.js App Router — roteamento, layouts e composição de páginas apenas
-components/    → UI compartilhada e sem domínio (design system + layout de marketing)
+components/    → UI compartilhada e sem domínio (design system)
 features/      → TODA a lógica de domínio, componentes e actions (uma pasta por domínio)
 lib/           → Infraestrutura apenas (Prisma, Supabase, geração de tokens, utils)
 prisma/        → Schema e migrações do banco
@@ -113,29 +109,17 @@ Cada domínio é autocontido em `features/{domain}/`:
 features/
   auth/
     actions/auth.ts           ← server action registerUser()
-  billing/
-    plans.ts                  ← constante PLANS — fonte da verdade para limites de plano
-    limits.ts                 ← canCreateProject(), canUploadVersion(), etc.
-    subscription.ts           ← getSubscriptionInfo(userId)
-    providers/stripe.ts       ← singleton do cliente Stripe
   dashboard/
     components/Sidebar.tsx    ← navegação do app autenticado
   deliveries/
     actions/deliveries.ts     ← getUploadUrl(), createDelivery()
     components/
-      NewDeliveryModal.tsx
+      NewDeliveryModal.tsx    ← tabs "Enviar arquivo" / "Link do Google Drive"
       UploadZone.tsx
   guest-review/
     components/
       GuestReviewShell.tsx    ← página de revisão para visitantes não autenticados
-      GuestUploader.tsx       ← widget de upload para páginas SEO/ferramentas
-  marketing/
-    context/lang-context.tsx  ← contexto de alternância de idioma pt/en
-    components/
-      LandingPage.tsx         ← composição da página inicial
-      Hero.tsx, Features.tsx, HowItWorks.tsx, Pricing.tsx, CTA.tsx
-      ToolLandingPage.tsx     ← template de página de ferramenta SEO (EN)
-      ToolLandingPagePT.tsx   ← template de página de ferramenta SEO (PT)
+      GuestUploader.tsx
   projects/
     actions/projects.ts       ← createProject(), updateProject(), deleteProject()
     components/
@@ -149,6 +133,7 @@ features/
       ImageWithComments.tsx   ← comentários fixados em imagens
       PasswordGate.tsx        ← prompt de proteção por senha
       FilePreview.tsx         ← visualizador de PDF / imagem / vídeo
+      DriveEmbed.tsx          ← prévia embutida de criativos do Google Drive
       VersionSwitcher.tsx     ← alternância entre versões de entrega
 ```
 
@@ -166,12 +151,10 @@ componentes `*PageClient.tsx` que gerenciam interatividade.
 | ------------------------------------------ | -------------------------------------------------- |
 | `app/(auth)/login/`                        | Página de login                                    |
 | `app/(dashboard)/dashboard/`               | Dashboard principal (lista de projetos)            |
-| `app/(dashboard)/dashboard/billing/`       | Cobrança / gerenciamento de plano                  |
 | `app/(dashboard)/dashboard/projects/[id]/` | Detalhe de projeto                                 |
 | `app/review/[token]/`                      | Página pública de revisão (autenticação via token) |
 | `app/guest-review/[token]/`                | Página de revisão para visitantes                  |
-| `app/api/`                                 | Rotas REST (webhooks + endpoints públicos)         |
-| `app/(marketing)/`                         | Página inicial + páginas SEO                       |
+| `app/api/`                                 | Rotas REST (endpoints públicos)                    |
 
 ### Padrão `*PageClient.tsx`
 
@@ -186,7 +169,6 @@ Regra: `page.tsx` nunca tem `useState`. `*PageClient.tsx` nunca consulta o banco
 
 ### `app/api/` — quando usar
 
-- **Webhooks** — `POST /api/billing/webhook/stripe`
 - **Endpoints públicos não autenticados** — `/api/review/[token]/view`
 - **Polling em tempo real** — `GET /api/projects/[id]`
 - **Mutações de componentes cliente** — aprovar, comentar, solicitar alterações
@@ -213,18 +195,15 @@ Primitivos do design system. Sem lógica de negócio.
 | `Badge`             | `default` \| `brand` \| `success` \| `warning` \| `error` \| `info` |
 | `Modal`             | Portal seguro para SSR, controlado via prop `isOpen`                |
 | `Input`, `Textarea` | Ref encaminhada, estado de erro                                     |
+| `Tabs`              | `Tabs.List` / `Tabs.Tab` / `Tabs.Panel` — usado no seletor de origem do criativo |
 
 Importe via barrel: `import { Button, Card } from "@/components/ui"`.
-
-### `components/layout/`
-
-Layout do site de marketing — `Header.tsx` e `Footer.tsx`.
 
 ---
 
 ## `lib/` — Apenas Infraestrutura
 
-Infraestrutura pura. Sem lógica de domínio, sem templates de e-mail, sem definições de plano.
+Infraestrutura pura. Sem lógica de domínio, sem templates de e-mail.
 
 | Arquivo                   | Exportações                                                                |
 | ------------------------- | -------------------------------------------------------------------------- |
@@ -232,8 +211,9 @@ Infraestrutura pura. Sem lógica de domínio, sem templates de e-mail, sem defin
 | `lib/supabase/server.ts`  | `uploadFile()`, `getSignedUrl()`, `getSignedUploadUrl()`                   |
 | `lib/supabase/browser.ts` | `supabaseClient` — cliente Supabase para o browser                         |
 | `lib/tokens.ts`           | `generateReviewToken()`, `generateOtpCode()` — utilitários de criptografia |
-| `lib/utils.ts`            | `cn()` — utilitário de merge de classes Tailwind                           |
+| `lib/utils.ts`            | `cn()`, `formatSize()` — utilitários gerais                                |
 | `lib/email.ts`            | Cliente Resend + helpers de e-mail transacional                            |
+| `lib/google-drive.ts`     | `parseDriveLink()`, `isGoogleDriveUrl()` — parsing de links do Drive        |
 
 ---
 
@@ -248,18 +228,6 @@ Autenticação via NextAuth v5 + adaptador Prisma.
 - `auth()` de `@/auth` — chame em qualquer Server Component para obter a sessão
 - Registro de usuário: `features/auth/actions/auth.ts` → `registerUser()`
 
-### billing
-
-Assinaturas Stripe + limites de funcionalidades por plano.
-
-- `features/billing/plans.ts` — **fonte da verdade** para definições de plano (Free/Pro/Studio)
-- `features/billing/limits.ts` — `canCreateProject()`, `canUploadVersion()`, `canUploadFile()`
-- `features/billing/subscription.ts` — `getSubscriptionInfo(userId)` usado em todas as páginas do dashboard
-- `features/billing/providers/stripe.ts` — singleton do SDK Stripe
-- Handler de webhook: `app/api/billing/webhook/stripe/route.ts`
-
-**Nunca hardcode limites de plano na UI.** Sempre leia de `PLANS` em `features/billing/plans.ts`.
-
 ### projects
 
 Um `Project` pertence a um `User` e tem `clientName` + `clientEmail` opcional.
@@ -271,12 +239,13 @@ Cada projeto contém múltiplas versões de `Delivery`.
 
 ### deliveries
 
-Uma `Delivery` é um arquivo enviado — uma versão do projeto.
+Uma `Delivery` é um criativo enviado — uma versão do projeto. Pode ser um
+arquivo (`sourceType: FILE`, armazenado no Supabase Storage) ou um link do
+Google Drive (`sourceType: DRIVE_LINK`, apenas a URL é salva).
 Cada entrega tem um `reviewToken` único que vira o link compartilhável.
 
 - Actions: `features/deliveries/actions/deliveries.ts`
 - Componentes: `features/deliveries/components/`
-- Arquivos armazenados no bucket `deliveries` do Supabase Storage
 - Status: `PENDING` → `APPROVED` ou `CHANGES_REQUESTED`
 
 ### review
@@ -295,15 +264,6 @@ Visitantes não autenticados (clientes sem conta) podem fazer upload de arquivos
 - Componentes: `features/guest-review/components/`
 - Rotas de API: `app/api/guest/`
 - Ponto de entrada: `app/guest-review/[token]/page.tsx`
-
-### marketing
-
-Página inicial + páginas de ferramentas SEO (bilíngue EN + PT).
-
-- Todos os componentes: `features/marketing/components/`
-- Contexto de idioma: `features/marketing/context/lang-context.tsx`
-- Ponto de entrada: `app/(marketing)/page.tsx`
-- Páginas SEO: `app/client-approval-tool/`, `app/pt/*/`, etc.
 
 ### dashboard
 
@@ -345,23 +305,16 @@ O shell autenticado que envolve todas as páginas do dashboard.
 1. Crie `features/{domain}/components/MeuComponente.tsx`
 2. Importe-o na página ou shell relevante
 
-### Novo plano de cobrança
-
-1. Adicione o objeto do plano em `PLANS` em `features/billing/plans.ts`
-2. Adicione a linha `Plan` em `prisma/seed.ts`
-3. Execute `npm run db:seed`
-4. Crie o Preço no dashboard do Stripe e defina a env var `STRIPE_PRICE_*`
-
 ---
 
 ## Server Actions vs Rotas de API
 
-| Use Server Action quando…                                   | Use Rota de API quando…                                           |
-| ----------------------------------------------------------- | ----------------------------------------------------------------- |
-| Mutando dados de um formulário ou botão                     | Recebendo webhooks externos (Stripe, etc.)                        |
-| CRUD simples com verificação de autenticação                | Endpoint chamado por hooks de tempo real ou serviços externos     |
+| Use Server Action quando…                                   | Use Rota de API quando…                                        |
+| ------------------------------------------------------------ | --------------------------------------------------------------- |
+| Mutando dados de um formulário ou botão                     | Recebendo webhooks externos                                     |
+| CRUD simples com verificação de autenticação                | Endpoint chamado por hooks de tempo real ou serviços externos   |
 | Quer revalidação automática do Next.js via `revalidatePath` | Endpoint público não autenticado (ex: `/api/review/[token]/view`) |
-|                                                             | Polling do cliente para atualizações ao vivo                      |
+|                                                               | Polling do cliente para atualizações ao vivo                    |
 
 **Regra geral:** Server Actions para mutações autenticadas de usuário.
 Rotas de API para webhooks, endpoints públicos e polling em tempo real.
@@ -371,7 +324,7 @@ Rotas de API para webhooks, endpoints públicos e polling em tempo real.
 ## Convenções de Nomenclatura
 
 | O quê                         | Convenção                | Exemplo                        |
-| ----------------------------- | ------------------------ | ------------------------------ |
+| ----------------------------- | ------------------------ | ------------------------------- |
 | Componentes                   | PascalCase               | `ProjectCard.tsx`              |
 | Componentes cliente de página | `{Pagina}PageClient.tsx` | `DashboardPageClient.tsx`      |
 | Arquivos de server action     | camelCase                | `projects.ts`, `deliveries.ts` |
@@ -388,12 +341,11 @@ Rotas de API para webhooks, endpoints públicos e polling em tempo real.
 ```
 User           → id, name, email, password, locale
 Project        → id, name, clientName, clientEmail, userId
-Delivery       → id, projectId, reviewToken, status, versionNumber, fileName, filePath, mimeType
+Delivery       → id, projectId, reviewToken, status, versionNumber, sourceType,
+                  fileName, filePath, mimeType, driveUrl
 Comment        → id, deliveryId, content, authorName, xPosition, yPosition
 View           → id, deliveryId, createdAt
 Approval       → id, deliveryId, userId, status
-Subscription   → id, userId, planCode, stripeCustomerId, stripeSubscriptionId, status
-Plan           → id, code, name, maxProjects, maxVersionsPerProject, maxStorageBytes
 GuestUpload    → id, reviewToken, claimToken, filePath, fileName, mimeType, status, expiresAt
 GuestComment   → id, guestUploadId, content, authorName, authorType, xPosition, yPosition
 GuestView      → id, guestUploadId, ipAddress, userAgent
@@ -405,4 +357,3 @@ GuestView      → id, guestUploadId, ipAddress, userAgent
 
 - [Prisma Studio](http://localhost:5555) — execute `npx prisma studio`
 - [Supabase Dashboard](https://supabase.com/dashboard) — armazenamento de arquivos
-- [Stripe Dashboard](https://dashboard.stripe.com) — assinaturas

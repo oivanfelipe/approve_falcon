@@ -17,15 +17,9 @@ const SLUG_REGEX = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const RESERVED_SLUGS = new Set([
   "api",
   "dashboard",
-  "design-review-tool",
-  "client-approval-tool",
-  "website-review-tool",
-  "logo-feedback-tool",
-  "ui-feedback-tool",
   "review",
   "guest-review",
   "login",
-  "pt",
 ]);
 
 export function normalizeSlug(input: string) {

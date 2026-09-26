@@ -1,7 +1,6 @@
 import { prisma } from "@/lib/prisma/client";
 import { getSignedUrl } from "@/lib/supabase/server";
 import { getFreelancerBrandingByUserId } from "@/lib/freelancer-branding";
-import { getSubscriptionInfo } from "@/features/billing/subscription";
 import type { CommentData } from "@/features/review/components/CommentSystem";
 
 type Status = "PENDING" | "APPROVED" | "CHANGES_REQUESTED";
@@ -252,16 +251,11 @@ export async function loadReviewPageData(token: string) {
     createdAt: item.createdAt.toISOString(),
   }));
 
-  const subscription = delivery.project.user?.id
-    ? await getSubscriptionInfo(delivery.project.user.id)
-    : null;
-
   return {
     delivery,
     signedUrl,
     initialComments,
     allDeliveries,
     branding,
-    subscription,
   };
 }

@@ -2,7 +2,6 @@
 /* eslint-disable @next/next/no-img-element */
 
 import React, { useMemo, useRef, useState, useTransition } from "react";
-import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
@@ -20,16 +19,14 @@ import {
 interface SettingsPageClientProps {
   initialSettings: FreelancerBranding;
   fallbackName: string;
-  subscriptionPlan?: string;
 }
 
 export default function SettingsPageClient({
   initialSettings,
   fallbackName,
-  subscriptionPlan,
 }: SettingsPageClientProps) {
   const [displayName, setDisplayName] = useState(
-    initialSettings.displayName === "ApproveFlow"
+    initialSettings.displayName === "Approve Falcon"
       ? fallbackName
       : initialSettings.displayName,
   );
@@ -90,14 +87,6 @@ export default function SettingsPageClient({
     startSaving(async () => {
       setError("");
       setSuccess("");
-
-      // Block saving if user does not have 'studio' plan
-      if (subscriptionPlan !== "studio") {
-        setError(
-          "Upgrade para o plano Studio para editar estas configurações.",
-        );
-        return;
-      }
 
       const response = await fetch("/api/freelancer-settings", {
         method: "PUT",
@@ -264,7 +253,7 @@ export default function SettingsPageClient({
                 Link compartilhado
               </p>
               <p className="mt-2 font-mono text-sm text-white/80">
-                {`approveflow.com${previewPath}`}
+                {`seu-dominio.com${previewPath}`}
               </p>
               <p className="mt-2 text-xs text-white/40">
                 O formato branded preserva o token da review e usa o seu slug
@@ -284,23 +273,9 @@ export default function SettingsPageClient({
             )}
 
             <div className="flex flex-wrap items-center gap-3">
-              {subscriptionPlan === "studio" ? (
-                <Button type="submit" size="sm" loading={isSaving}>
-                  Salvar configurações
-                </Button>
-              ) : (
-                <div className="flex items-center gap-3">
-                  <p className="text-sm text-white/60">
-                    Estas configurações estão disponíveis apenas para usuários
-                    com o plano <strong>Studio</strong>.
-                  </p>
-                  <Link href="/dashboard/billing">
-                    <Button size="sm" variant="primary">
-                      Fazer upgrade
-                    </Button>
-                  </Link>
-                </div>
-              )}
+              <Button type="submit" size="sm" loading={isSaving}>
+                Salvar configurações
+              </Button>
             </div>
           </form>
         </Card>

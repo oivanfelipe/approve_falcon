@@ -58,7 +58,7 @@ async function resolveBranding(row: SettingsRow | null) {
       row?.displayName?.trim() ||
       row?.userName?.trim() ||
       row?.userEmail ||
-      "ApproveFlow",
+      "Approve Falcon",
     logoUrl,
     logoPath: row?.logoUrl ?? null,
     primaryColor,

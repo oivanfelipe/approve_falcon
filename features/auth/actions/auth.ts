@@ -38,24 +38,13 @@ export async function registerUser(
 
   const hash = await bcrypt.hash(parsed.data.password, 12);
 
-  const user = await prisma.user.create({
+  await prisma.user.create({
     data: {
       name: parsed.data.name,
       email: parsed.data.email,
       password: hash,
     },
   });
-
-  // Assign Free plan subscription to every new user
-  const freePlan = await prisma.plan.findUnique({
-    where: { code: "free" },
-    select: { id: true },
-  });
-  if (freePlan) {
-    await prisma.subscription.create({
-      data: { userId: user.id, planId: freePlan.id, status: "ACTIVE" },
-    });
-  }
 
   // Determine redirect target (from form `next` or default)
   const next = (formData.get("next") as string) || null;

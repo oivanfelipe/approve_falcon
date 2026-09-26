@@ -1,7 +1,7 @@
-# ApproveFlow -- Technical Architecture Guide
+# Approve Falcon -- Technical Architecture Guide
 
-This document describes the technical architecture for the ApproveFlow
-SaaS MVP.
+This document describes the technical architecture for the Approve Falcon
+internal creative-approval tool.
 
 Topics covered:
 
@@ -95,7 +95,7 @@ Public review links must be **impossible to guess**.
 
 Example link:
 
-    https://approveflow.com/review/8f4K2jLmPq7xTz1QW
+    https://seu-dominio.com/review/8f4K2jLmPq7xTz1QW
 
 ## Security Requirements
 

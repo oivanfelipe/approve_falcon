@@ -39,27 +39,6 @@ const navItems: NavItem[] = [
     ),
   },
   {
-    label: "Faturamento",
-    href: "/dashboard/billing",
-    isActive: (p) => p.startsWith("/dashboard/billing"),
-    icon: (
-      <svg
-        width="16"
-        height="16"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        aria-hidden="true"
-      >
-        <rect x="1" y="4" width="22" height="16" rx="2" ry="2" />
-        <line x1="1" y1="10" x2="23" y2="10" />
-      </svg>
-    ),
-  },
-  {
     label: "Configurações",
     href: "/dashboard/settings",
     isActive: (p) => p.startsWith("/dashboard/settings"),
@@ -96,7 +75,7 @@ function SidebarLogo() {
       />
       <span className="text-sm font-semibold tracking-tight">
         <span className="text-white">Approve</span>
-        <span className="gradient-text">Flow</span>
+        <span className="gradient-text">Falcon</span>
       </span>
     </Link>
   );

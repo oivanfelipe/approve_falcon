@@ -165,7 +165,7 @@ export default function LoginPage() {
         />
         <span className="text-lg font-bold tracking-tight">
           <span className="text-white">Approve</span>
-          <span className="gradient-text">Flow</span>
+          <span className="gradient-text">Falcon</span>
         </span>
       </Link>
 
@@ -193,17 +193,6 @@ export default function LoginPage() {
 
         {activeTab === "signin" ? <SignInForm next={next} /> : <RegisterForm next={next} />}
       </div>
-
-      <p className="text-center text-xs text-white/25">
-        By continuing you agree to our{" "}
-        <Link
-          href="/"
-          className="text-violet-400/70 hover:text-violet-400 transition-colors"
-        >
-          Terms of Service
-        </Link>
-        .
-      </p>
     </div>
   );
 }

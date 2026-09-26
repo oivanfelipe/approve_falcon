@@ -7,7 +7,7 @@ import { getFreelancerBrandingByUserId } from "@/lib/freelancer-branding";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Project — ApproveFlow",
+  title: "Projeto — Approve Falcon",
 };
 
 interface PageProps {

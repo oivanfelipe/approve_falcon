@@ -25,13 +25,13 @@ export async function generateMetadata({
       select: { project: { select: { name: true } } },
     });
   } catch {
-    return { title: "Review - ApproveFlow" };
+    return { title: "Review - Approve Falcon" };
   }
 
-  if (!delivery) return { title: "Review - ApproveFlow" };
+  if (!delivery) return { title: "Review - Approve Falcon" };
 
   return {
-    title: `Review: ${delivery.project?.name ?? "Review"} - ApproveFlow`,
+    title: `Review: ${delivery.project?.name ?? "Review"} - Approve Falcon`,
     robots: { index: false },
   };
 }
@@ -51,14 +51,8 @@ export default async function ReviewPage({ params, searchParams }: PageProps) {
   const pageData = await loadReviewPageData(token);
   if (!pageData) notFound();
 
-  const {
-    delivery,
-    signedUrl,
-    initialComments,
-    allDeliveries,
-    branding,
-    subscription,
-  } = pageData;
+  const { delivery, signedUrl, initialComments, allDeliveries, branding } =
+    pageData;
 
   if (delivery.expiresAt && delivery.expiresAt < new Date()) {
     return (
@@ -136,7 +130,6 @@ export default async function ReviewPage({ params, searchParams }: PageProps) {
       freelancerDisplayName={delivery.project.user?.name ?? null}
       branding={branding}
       reviewPathSlug={branding?.slug ?? null}
-      subscription={subscription}
     />
   );
 }
