@@ -1,0 +1,303 @@
+// This is your Prisma schema file
+// Prisma 7 — connection URLs moved to prisma.config.ts
+// Learn more: https://pris.ly/d/prisma7-client-config
+
+generator client {
+    provider = "prisma-client-js"
+}
+
+datasource db {
+    provider = "postgresql"
+}
+
+// ─── NextAuth required models ────────────────────────────────────────────────
+
+model User {
+    id            String    @id @default(cuid())
+    name          String?
+    email         String    @unique
+    emailVerified DateTime?
+    image         String?
+    password      String? // hashed — null for OAuth users
+    locale        String    @default("pt") // "pt" or "en" — detected from browser
+    createdAt     DateTime  @default(now())
+    updatedAt     DateTime  @updatedAt
+
+    accounts     Account[]
+    sessions     Session[]
+    projects     Project[]
+    subscription Subscription?
+    freelancerSettings FreelancerSettings?
+}
+
+model Account {
+    id                String   @id @default(cuid())
+    userId            String
+    type              String
+    provider          String
+    providerAccountId String
+    refresh_token     String?  @db.Text
+    access_token      String?  @db.Text
+    expires_at        Int?
+    token_type        String?
+    scope             String?
+    id_token          String?  @db.Text
+    session_state     String?
+    createdAt         DateTime @default(now())
+    updatedAt         DateTime @updatedAt
+
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    @@unique([provider, providerAccountId])
+}
+
+model Session {
+    id           String   @id @default(cuid())
+    sessionToken String   @unique
+    userId       String
+    expires      DateTime
+    createdAt    DateTime @default(now())
+    updatedAt    DateTime @updatedAt
+
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+    identifier String
+    token      String
+    expires    DateTime
+
+    @@unique([identifier, token])
+}
+
+// ─── ApproveFlow domain models ───────────────────────────────────────────────
+
+model Project {
+    id          String   @id @default(cuid())
+    userId      String
+    name        String
+    clientName  String
+    clientEmail String?
+    description String?
+    createdAt   DateTime @default(now())
+    updatedAt   DateTime @updatedAt
+
+    user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+    deliveries Delivery[]
+}
+
+model Delivery {
+    id            String         @id @default(cuid())
+    projectId     String
+    versionNumber Int
+    label         String? // e.g. "Color adjustments"
+    sourceType    DeliverySource @default(FILE)
+    filePath      String? // Supabase Storage path — null when sourceType is DRIVE_LINK
+    fileName      String
+    fileSize      Int? // bytes — null when sourceType is DRIVE_LINK
+    mimeType      String? // null when sourceType is DRIVE_LINK
+    driveUrl      String? // Google Drive share link — set when sourceType is DRIVE_LINK
+    reviewToken   String         @unique
+    status        DeliveryStatus @default(PENDING)
+    expiresAt     DateTime?
+    requiresEmail Boolean        @default(false)
+    allowDownload Boolean        @default(true)
+    password      String? // optional link password (hashed)
+    createdAt     DateTime       @default(now())
+    updatedAt     DateTime       @updatedAt
+
+    project               Project                @relation(fields: [projectId], references: [id], onDelete: Cascade)
+    comments             Comment[]
+    views                View[]
+    approval             Approval?
+    chatNotificationState ChatNotificationState?
+}
+
+model ChatNotificationState {
+    id                     String    @id @default(cuid())
+    deliveryId             String    @unique
+    hasPendingNotification Boolean   @default(false)
+    unreadCount            Int       @default(0)
+    lastNotifiedAt         DateTime?
+    createdAt              DateTime  @default(now())
+    updatedAt              DateTime  @updatedAt
+
+    delivery Delivery @relation(fields: [deliveryId], references: [id], onDelete: Cascade)
+}
+
+model Comment {
+    id          String     @id @default(cuid())
+    deliveryId  String
+    parentId    String?
+    authorType  AuthorType
+    authorName  String
+    authorEmail String?
+    content     String     @db.Text
+    audioUrl    String?
+    // Normalized image coordinates (0–1). null = general comment
+    xPosition   Float?
+    yPosition   Float?
+    resolvedAt  DateTime?
+    createdAt   DateTime   @default(now())
+
+    delivery Delivery @relation(fields: [deliveryId], references: [id], onDelete: Cascade)
+    parent   Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: SetNull)
+    replies  Comment[] @relation("CommentReplies")
+}
+
+model View {
+    id         String   @id @default(cuid())
+    deliveryId String
+    ipAddress  String?
+    userAgent  String?
+    createdAt  DateTime @default(now())
+
+    delivery Delivery @relation(fields: [deliveryId], references: [id], onDelete: Cascade)
+}
+
+model Approval {
+    id          String   @id @default(cuid())
+    deliveryId  String   @unique
+    signerName  String
+    signerEmail String?
+    ipAddress   String?
+    createdAt   DateTime @default(now())
+
+    delivery Delivery @relation(fields: [deliveryId], references: [id], onDelete: Cascade)
+}
+
+model FreelancerSettings {
+    id             String   @id @default(cuid())
+    userId         String   @unique
+    displayName    String?
+    logoUrl        String?
+    primaryColor   String   @default("#7C3AED")
+    secondaryColor String   @default("#4F46E5")
+    backgroundColor String?
+    slug           String   @unique
+    createdAt      DateTime @default(now())
+    updatedAt      DateTime @updatedAt
+
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// ─── Enums ───────────────────────────────────────────────────────────────────
+
+enum DeliveryStatus {
+    PENDING
+    APPROVED
+    CHANGES_REQUESTED
+}
+
+enum DeliverySource {
+    FILE
+    DRIVE_LINK
+}
+
+enum AuthorType {
+    CLIENT
+    FREELANCER
+}
+
+// ─── Billing ─────────────────────────────────────────────────────────────────
+
+enum SubscriptionStatus {
+    ACTIVE
+    PENDING
+    PAST_DUE
+    CANCELLED
+    INACTIVE
+}
+
+/// Static plan definitions. Seeded once; never deleted.
+model Plan {
+    id          String   @id @default(cuid())
+    code        String   @unique // "free" | "pro" | "studio"
+    name        String
+    priceBrl    Float    @default(0)
+    interval    String   @default("monthly")
+    maxProjects Int? // null = unlimited
+    active      Boolean  @default(true)
+    createdAt   DateTime @default(now())
+
+    subscriptions Subscription[]
+}
+
+/// One subscription record per user at all times.
+model Subscription {
+    id                     String             @id @default(cuid())
+    userId                 String             @unique
+    planId                 String
+    status                 SubscriptionStatus @default(ACTIVE)
+    /// "mercadopago" or null for free
+    provider               String?
+    /// MP preapproval id — unique constraint for idempotent upserts
+    providerSubscriptionId String?            @unique
+    providerCustomerId     String?
+    currentPeriodStart     DateTime?
+    currentPeriodEnd       DateTime?
+    cancelAtPeriodEnd      Boolean            @default(false)
+    createdAt              DateTime           @default(now())
+    updatedAt              DateTime           @updatedAt
+
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+    plan Plan @relation(fields: [planId], references: [id])
+}
+
+/// Immutable log of every billing webhook / event received.
+model BillingEvent {
+    id          String   @id @default(cuid())
+    userId      String?
+    provider    String
+    eventType   String
+    externalId  String?
+    payloadJson Json
+    createdAt   DateTime @default(now())
+}
+
+// ─── Guest (anonymous) uploads ───────────────────────────────────────────────
+
+model GuestUpload {
+    id              String         @id @default(cuid())
+    filePath        String
+    fileName        String
+    fileSize        Int
+    mimeType        String
+    reviewToken     String         @unique
+    claimToken      String         @unique
+    status          DeliveryStatus @default(PENDING)
+    expiresAt       DateTime
+    claimedByUserId String?
+    createdAt       DateTime       @default(now())
+
+    comments GuestComment[]
+    views    GuestView[]
+}
+
+model GuestComment {
+    id            String     @id @default(cuid())
+    guestUploadId String
+    parentId      String?
+    authorType    AuthorType @default(CLIENT)
+    authorName    String
+    content       String     @db.Text
+    audioUrl      String?
+    xPosition     Float?
+    yPosition     Float?
+    resolvedAt    DateTime?
+    createdAt     DateTime   @default(now())
+
+    guestUpload GuestUpload @relation(fields: [guestUploadId], references: [id], onDelete: Cascade)
+    parent      GuestComment?  @relation("GuestCommentReplies", fields: [parentId], references: [id], onDelete: SetNull)
+    replies     GuestComment[] @relation("GuestCommentReplies")
+}
+
+model GuestView {
+    id            String   @id @default(cuid())
+    guestUploadId String
+    ipAddress     String?
+    userAgent     String?
+    createdAt     DateTime @default(now())
+
+    guestUpload GuestUpload @relation(fields: [guestUploadId], references: [id], onDelete: Cascade)
+}
