@@ -1,5 +1,18 @@
 ﻿import type { Metadata } from "next";
+import { Archivo, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
+
+const archivo = Archivo({
+  subsets: ["latin"],
+  variable: "--font-archivo",
+  weight: ["400", "500", "600", "700", "800", "900"],
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  variable: "--font-jetbrains-mono",
+  weight: ["400", "500", "700"],
+});
 
 export const metadata: Metadata = {
   title: "Approve Falcon",
@@ -24,7 +37,7 @@ export default function RootLayout({
   return (
     <html lang="pt-BR" suppressHydrationWarning>
       <body
-        className="font-sans antialiased bg-canvas text-white"
+        className={`${archivo.variable} ${jetbrainsMono.variable} font-sans antialiased bg-canvas text-white`}
         suppressHydrationWarning
       >
         {children}

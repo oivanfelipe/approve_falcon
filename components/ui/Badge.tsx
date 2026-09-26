@@ -9,7 +9,11 @@ type BadgeVariant =
   | "success"
   | "warning"
   | "error"
-  | "info";
+  | "info"
+  // Falcon design system — used on screens already migrated
+  | "falconNeutral"
+  | "falconDone"
+  | "falconAlert";
 
 type BadgeSize = "sm" | "md";
 
@@ -31,6 +35,9 @@ const variantClasses: Record<BadgeVariant, string> = {
   warning: "bg-amber-500/[0.12] text-amber-400 border-amber-500/25",
   error: "bg-red-500/[0.12] text-red-400 border-red-500/25",
   info: "bg-blue-500/[0.12] text-blue-400 border-blue-500/25",
+  falconNeutral: "rounded-md! bg-white text-black/70 border-black/45",
+  falconDone: "rounded-md! bg-black text-white border-black",
+  falconAlert: "rounded-md! bg-[#e10600] text-white border-black",
 };
 
 const dotClasses: Record<BadgeVariant, string> = {
@@ -40,6 +47,9 @@ const dotClasses: Record<BadgeVariant, string> = {
   warning: "bg-amber-400",
   error: "bg-red-400",
   info: "bg-blue-400",
+  falconNeutral: "bg-black/40",
+  falconDone: "bg-white",
+  falconAlert: "bg-white",
 };
 
 const sizeClasses: Record<BadgeSize, string> = {

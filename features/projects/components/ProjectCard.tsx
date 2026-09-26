@@ -3,7 +3,7 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/Badge";
 import { cn } from "@/lib/utils";
 import type { BadgeVariant } from "@/components/ui/Badge";
-import { Building, Rocket } from "lucide-react";
+import { Rocket } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -27,9 +27,9 @@ const statusLabel: Record<string, string> = {
 };
 
 const statusVariant: Record<string, BadgeVariant> = {
-  PENDING: "warning",
-  APPROVED: "success",
-  CHANGES_REQUESTED: "error",
+  PENDING: "falconNeutral",
+  APPROVED: "falconDone",
+  CHANGES_REQUESTED: "falconAlert",
 };
 
 function timeAgo(date: Date): string {
@@ -54,50 +54,50 @@ export default function ProjectCard({
   updatedAt,
   lastViewedAt,
 }: ProjectCardProps) {
-  const variant = latestStatus ? statusVariant[latestStatus] : "default";
+  const variant = latestStatus ? statusVariant[latestStatus] : "falconNeutral";
   const label = latestStatus ? statusLabel[latestStatus] : "Sem entregas";
 
   return (
     <Link
       href={`/dashboard/projects/${id}`}
       className={cn(
-        "group flex flex-col gap-4 p-5 rounded-2xl",
-        "bg-[#0d0d1e] border border-white/[0.06]",
-        "hover:border-violet-500/25 hover:bg-[#111122]",
-        "transition-all duration-200",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/60",
+        "group flex flex-col gap-4 p-5",
+        "bg-white border-2 border-black shadow-hard-sm",
+        "hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[6px_6px_0_0_#000]",
+        "transition-all duration-150",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#e10600]/60",
       )}
     >
       {/* Header */}
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
-          <h3 className="text-sm font-semibold text-white/90 truncate group-hover:text-white transition-colors">
-            {name}
-          </h3>
-          <p className="text-xs text-white/45 mt-0.5 truncate">{clientName}</p>
+          <h3 className="text-sm font-bold text-black truncate">{name}</h3>
+          <p className="text-xs text-black/50 mt-0.5 truncate">{clientName}</p>
         </div>
-        <Badge variant={variant} dot size="sm">
+        <Badge variant={variant} size="sm">
           {label}
         </Badge>
       </div>
 
       {/* Stats row */}
-      <div className="flex flex-col gap-1.5 pt-3 border-t border-white/[0.05]">
+      <div className="flex flex-col gap-1.5 pt-3 border-t-2 border-black/10">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-1 text-xs text-white/35">
+          <div className="flex items-center gap-1 text-xs font-mono text-black/45">
             <Rocket className="w-3 h-3" />
             {totalDeliveries} vers{totalDeliveries !== 1 ? "ões" : "ão"}
           </div>
-          <span className="text-[10px] text-white/25">
+          <span className="text-[10px] font-mono text-black/35">
             {timeAgo(updatedAt)}
           </span>
         </div>
         {lastViewedAt ? (
-          <span className="text-[10px] text-violet-400/60">
+          <span className="text-[10px] font-mono text-black/45">
             Visto {timeAgo(lastViewedAt)}
           </span>
         ) : (
-          <span className="text-[10px] text-white/20">Não visualizado</span>
+          <span className="text-[10px] font-mono text-black/30">
+            Não visualizado
+          </span>
         )}
       </div>
     </Link>

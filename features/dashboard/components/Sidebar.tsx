@@ -73,9 +73,9 @@ function SidebarLogo() {
         height={28}
         className="shrink-0"
       />
-      <span className="text-sm font-semibold tracking-tight">
+      <span className="text-sm font-extrabold uppercase tracking-tight">
         <span className="text-white">Approve</span>
-        <span className="gradient-text">Falcon</span>
+        <span className="text-[#e10600]">Falcon</span>
       </span>
     </Link>
   );
@@ -92,7 +92,7 @@ export default function Sidebar({ userName, userEmail }: SidebarProps) {
   const pathname = usePathname();
 
   return (
-    <aside className="w-60 shrink-0 flex flex-col h-full border-r border-white/[0.06] bg-[#080814]">
+    <aside className="w-60 shrink-0 flex flex-col h-full bg-black">
       <SidebarLogo />
 
       {/* Nav */}
@@ -106,20 +106,19 @@ export default function Sidebar({ userName, userEmail }: SidebarProps) {
                 <Link
                   href={href}
                   className={cn(
-                    "flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-all duration-150",
-                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/60",
+                    "flex items-center gap-2.5 px-3 py-2 text-sm font-semibold uppercase tracking-wide transition-all duration-150",
+                    "border-l-[3px]",
+                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#e10600]/60",
                     active
-                      ? "bg-violet-500/[0.12] text-violet-300 border border-violet-500/20"
-                      : "text-white/55 hover:text-white/90 hover:bg-white/[0.05]",
+                      ? "bg-white/10 text-white border-l-[#e10600]"
+                      : "text-white/55 border-l-transparent hover:text-white hover:bg-white/[0.06]",
                   )}
                   aria-current={active ? "page" : undefined}
                 >
                   <span
                     className={cn(
                       "shrink-0 transition-colors",
-                      active
-                        ? "text-violet-400"
-                        : "text-white/40 group-hover:text-white/70",
+                      active ? "text-[#e10600]" : "text-white/40",
                     )}
                   >
                     {icon}
@@ -133,25 +132,25 @@ export default function Sidebar({ userName, userEmail }: SidebarProps) {
       </nav>
 
       {/* User + sign out */}
-      <div className="p-3 border-t border-white/[0.06]">
-        <div className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-white/[0.03]">
-          <div className="w-7 h-7 rounded-full bg-gradient-to-br from-violet-600 to-indigo-600 flex items-center justify-center text-[11px] font-bold text-white shrink-0">
+      <div className="p-3 border-t border-white/10">
+        <div className="flex items-center gap-2.5 px-3 py-2.5 bg-white/[0.04]">
+          <div className="w-7 h-7 shrink-0 flex items-center justify-center text-[11px] font-extrabold text-black bg-white">
             {userName?.[0]?.toUpperCase() ?? "?"}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-xs font-medium text-white/80 truncate">
+            <p className="text-xs font-semibold text-white truncate">
               {userName ?? "User"}
             </p>
-            <p className="text-[10px] text-white/35 truncate">
+            <p className="text-[10px] text-white/40 truncate">
               {userEmail ?? ""}
             </p>
           </div>
           <button
             onClick={() => signOut({ callbackUrl: "/login" })}
             className={cn(
-              "shrink-0 p-1.5 rounded-lg text-white/30 hover:text-white/70",
-              "hover:bg-white/[0.06] transition-colors",
-              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/50",
+              "shrink-0 p-1.5 text-white/40 hover:text-white",
+              "hover:bg-white/10 transition-colors",
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#e10600]/60",
             )}
             aria-label="Sign out"
             title="Sign out"

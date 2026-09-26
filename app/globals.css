@@ -16,7 +16,8 @@
 
 /* Dynamic tokens that reference CSS variables set by next/font */
 @theme inline {
-  --font-sans: var(--font-inter), system-ui, -apple-system, sans-serif;
+  --font-sans: var(--font-archivo), system-ui, -apple-system, sans-serif;
+  --font-mono: var(--font-jetbrains-mono), "SF Mono", Consolas, monospace;
 }
 
 /* ─── Base ───────────────────────────────────────────────────────────────────── */
@@ -94,5 +95,13 @@ body {
       transparent 1px
     );
     background-size: 28px 28px;
+  }
+
+  /* Falcon design system — solid offset "poster" shadow, no blur/gradient */
+  .shadow-hard {
+    box-shadow: 6px 6px 0 0 #000000;
+  }
+  .shadow-hard-sm {
+    box-shadow: 4px 4px 0 0 #000000;
   }
 }

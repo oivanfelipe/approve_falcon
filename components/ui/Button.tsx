@@ -13,7 +13,9 @@ type ButtonVariant =
   | "ghost"
   | "outline"
   | "danger"
-  | "success";
+  | "success"
+  | "falconPrimary"
+  | "falconSecondary";
 type ButtonSize = "sm" | "md" | "lg";
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -29,32 +31,48 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 
 // ─── Variant & size maps ──────────────────────────────────────────────────────
 
+// Radius lives on the variant (not the size) so the falcon-* variants can opt
+// out of the pill shape without fighting the old variants' classes in the
+// generated CSS, where declaration order — not className order — wins.
 const variantClasses: Record<ButtonVariant, string> = {
   primary:
-    "bg-gradient-to-r from-violet-600 to-indigo-600 text-white " +
+    "rounded-full bg-gradient-to-r from-violet-600 to-indigo-600 text-white " +
     "hover:from-violet-500 hover:to-indigo-500 " +
     "shadow-lg shadow-violet-900/30 border border-violet-500/20",
   secondary:
-    "bg-white/[0.06] text-white/90 border border-white/10 " +
+    "rounded-full bg-white/[0.06] text-white/90 border border-white/10 " +
     "hover:bg-white/[0.10] hover:border-white/20",
   ghost:
-    "text-white/70 hover:text-white hover:bg-white/[0.06] border border-transparent",
+    "rounded-full text-white/70 hover:text-white hover:bg-white/[0.06] border border-transparent",
   outline:
-    "border border-violet-500/40 text-violet-400 " +
+    "rounded-full border border-violet-500/40 text-violet-400 " +
     "hover:border-violet-400/70 hover:bg-violet-500/[0.08] hover:text-violet-300",
   danger:
-    "bg-red-500/10 text-red-400 border border-red-500/30 " +
+    "rounded-full bg-red-500/10 text-red-400 border border-red-500/30 " +
     "hover:bg-red-500/20 hover:border-red-400/60",
   success:
-    "bg-gradient-to-r from-emerald-600 to-teal-600 text-white " +
+    "rounded-full bg-gradient-to-r from-emerald-600 to-teal-600 text-white " +
     "hover:from-emerald-500 hover:to-teal-500 " +
     "shadow-lg shadow-emerald-900/30 border border-emerald-500/20",
+  // Falcon design system (preto/branco/vermelho, sombra sólida deslocada) —
+  // used on the screens already migrated; the rest keep the variants above
+  // until the full rollout.
+  falconPrimary:
+    "rounded-md bg-[#e10600] text-white border-2 border-black " +
+    "uppercase tracking-wide font-extrabold! " +
+    "shadow-[4px_4px_0_0_#000] hover:shadow-[2px_2px_0_0_#000] " +
+    "hover:translate-x-[2px] hover:translate-y-[2px]",
+  falconSecondary:
+    "rounded-md bg-white text-black border-2 border-black " +
+    "uppercase tracking-wide font-extrabold! " +
+    "shadow-[4px_4px_0_0_#000] hover:shadow-[2px_2px_0_0_#000] " +
+    "hover:translate-x-[2px] hover:translate-y-[2px]",
 };
 
 const sizeClasses: Record<ButtonSize, string> = {
-  sm: "h-8 px-3.5 text-xs rounded-full gap-1.5",
-  md: "h-11 px-3 text-sm rounded-full gap-2",
-  lg: "h-12 px-7 text-base rounded-full gap-2.5",
+  sm: "h-8 px-3.5 text-xs gap-1.5",
+  md: "h-11 px-3 text-sm gap-2",
+  lg: "h-12 px-7 text-base gap-2.5",
 };
 
 const spinnerSizes: Record<ButtonSize, number> = {
