@@ -1,14 +1,23 @@
 import "server-only";
 import { createClient } from "@supabase/supabase-js";
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 const bucket = process.env.SUPABASE_STORAGE_BUCKET ?? "deliveries";
 
-// Service-role client — server-side only (bypass RLS)
-export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
-  auth: { persistSession: false },
-});
+let supabaseAdminClient: ReturnType<typeof createClient> | null = null;
+
+// Service-role client — server-side only (bypass RLS). Instantiated lazily so
+// a missing env var only breaks the request that needs it, not the entire
+// build (createClient throws immediately if the URL/key are undefined).
+export function getSupabaseAdmin() {
+  if (!supabaseAdminClient) {
+    supabaseAdminClient = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      { auth: { persistSession: false } },
+    );
+  }
+  return supabaseAdminClient;
+}
 
 // ─── Storage helpers ─────────────────────────────────────────────────────────
 
@@ -21,7 +30,7 @@ export async function uploadFile(
   buffer: Buffer,
   contentType: string,
 ): Promise<string> {
-  const { error } = await supabaseAdmin.storage
+  const { error } = await getSupabaseAdmin().storage
     .from(bucket)
     .upload(path, buffer, {
       contentType,
@@ -41,7 +50,7 @@ export async function getSignedUrl(
   path: string,
   expiresIn = 60 * 60 * 2,
 ): Promise<string> {
-  const { data, error } = await supabaseAdmin.storage
+  const { data, error } = await getSupabaseAdmin().storage
     .from(bucket)
     .createSignedUrl(path, expiresIn);
 
@@ -55,7 +64,7 @@ export async function getSignedUrl(
  * without routing the bytes through Next.js.
  */
 export async function getSignedUploadUrl(path: string) {
-  const { data, error } = await supabaseAdmin.storage
+  const { data, error } = await getSupabaseAdmin().storage
     .from(bucket)
     .createSignedUploadUrl(path);
 
@@ -69,7 +78,7 @@ export async function getSignedUploadUrl(path: string) {
  * Delete a file from Supabase Storage.
  */
 export async function deleteFile(path: string): Promise<void> {
-  const { error } = await supabaseAdmin.storage.from(bucket).remove([path]);
+  const { error } = await getSupabaseAdmin().storage.from(bucket).remove([path]);
 
   if (error) throw new Error(`Storage delete failed: ${error.message}`);
 }
