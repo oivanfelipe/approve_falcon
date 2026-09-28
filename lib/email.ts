@@ -1,6 +1,17 @@
 import { Resend } from "resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+let resendClient: Resend | null = null;
+
+// Instantiated lazily so a missing RESEND_API_KEY only breaks the request
+// that actually tries to send an email, not the entire build (the Resend
+// constructor throws immediately if the key is undefined).
+function resend() {
+  if (!resendClient) {
+    resendClient = new Resend(process.env.RESEND_API_KEY);
+  }
+  return resendClient;
+}
+
 const FROM = process.env.RESEND_FROM ?? "Approve Falcon <noreply@example.com>";
 const BASE_URL = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 
@@ -134,7 +145,7 @@ export async function sendNewReviewEmail(opts: {
       ? `Olá ${opts.clientName},\n\nUm novo arquivo está pronto para a sua revisão.\n\nProjeto: ${opts.projectName}\nVersão: ${versionLabel}\n\n${t.textCta}\n${url}\n\n${t.textFooter}\n\n— Approve Falcon`
       : `Hi ${opts.clientName},\n\nA new file is ready for your review.\n\nProject: ${opts.projectName}\nVersion: ${versionLabel}\n\n${t.textCta}\n${url}\n\n${t.textFooter}\n\n— Approve Falcon`;
 
-  await resend.emails.send({
+  await resend().emails.send({
     from: FROM,
     to: opts.to,
     subject: t.subject,
@@ -183,7 +194,7 @@ export async function sendApprovalEmail(opts: {
       ${t.cta}
     </a>`;
 
-  await resend.emails.send({
+  await resend().emails.send({
     from: FROM,
     to: opts.to,
     subject: t.subject,
@@ -233,7 +244,7 @@ export async function sendChangesRequestedEmail(opts: {
       ${t.cta}
     </a>`;
 
-  await resend.emails.send({
+  await resend().emails.send({
     from: FROM,
     to: opts.to,
     subject: t.subject,
@@ -325,7 +336,7 @@ export async function sendCommentNotificationEmail(opts: {
       ${t.cta}
     </a>`;
 
-  await resend.emails.send({
+  await resend().emails.send({
     from: FROM,
     to: opts.to,
     subject: t.subject,
