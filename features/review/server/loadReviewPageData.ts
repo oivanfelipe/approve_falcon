@@ -63,7 +63,7 @@ export async function loadReviewPageData(token: string) {
     SELECT EXISTS (
       SELECT 1
       FROM information_schema.columns
-      WHERE table_schema = 'public'
+      WHERE table_schema = 'falcon'
         AND table_name = 'Comment'
         AND column_name = 'resolvedAt'
     ) as "exists"
@@ -73,7 +73,7 @@ export async function loadReviewPageData(token: string) {
     SELECT EXISTS (
       SELECT 1
       FROM information_schema.columns
-      WHERE table_schema = 'public'
+      WHERE table_schema = 'falcon'
         AND table_name = 'Comment'
         AND column_name = 'audioUrl'
     ) as "exists"
@@ -83,7 +83,7 @@ export async function loadReviewPageData(token: string) {
     SELECT EXISTS (
       SELECT 1
       FROM information_schema.columns
-      WHERE table_schema = 'public'
+      WHERE table_schema = 'falcon'
         AND table_name = 'Comment'
         AND column_name = 'parentId'
     ) as "exists"
@@ -110,7 +110,7 @@ export async function loadReviewPageData(token: string) {
               "yPosition",
               "resolvedAt",
               "createdAt"
-            FROM "Comment"
+            FROM "falcon"."Comment"
             WHERE "deliveryId" = ${delivery.id}
             ORDER BY "createdAt" ASC
           `
@@ -125,7 +125,7 @@ export async function loadReviewPageData(token: string) {
               "yPosition",
               "resolvedAt",
               "createdAt"
-            FROM "Comment"
+            FROM "falcon"."Comment"
             WHERE "deliveryId" = ${delivery.id}
             ORDER BY "createdAt" ASC
           `;
@@ -142,7 +142,7 @@ export async function loadReviewPageData(token: string) {
               "yPosition",
               "resolvedAt",
               "createdAt"
-            FROM "Comment"
+            FROM "falcon"."Comment"
             WHERE "deliveryId" = ${delivery.id}
             ORDER BY "createdAt" ASC
           `
@@ -156,7 +156,7 @@ export async function loadReviewPageData(token: string) {
               "yPosition",
               "resolvedAt",
               "createdAt"
-            FROM "Comment"
+            FROM "falcon"."Comment"
             WHERE "deliveryId" = ${delivery.id}
             ORDER BY "createdAt" ASC
           `;
@@ -176,7 +176,7 @@ export async function loadReviewPageData(token: string) {
               "yPosition",
               NULL::timestamp as "resolvedAt",
               "createdAt"
-            FROM "Comment"
+            FROM "falcon"."Comment"
             WHERE "deliveryId" = ${delivery.id}
             ORDER BY "createdAt" ASC
           `
@@ -191,7 +191,7 @@ export async function loadReviewPageData(token: string) {
               "yPosition",
               NULL::timestamp as "resolvedAt",
               "createdAt"
-            FROM "Comment"
+            FROM "falcon"."Comment"
             WHERE "deliveryId" = ${delivery.id}
             ORDER BY "createdAt" ASC
           `;
@@ -208,7 +208,7 @@ export async function loadReviewPageData(token: string) {
               "yPosition",
               NULL::timestamp as "resolvedAt",
               "createdAt"
-            FROM "Comment"
+            FROM "falcon"."Comment"
             WHERE "deliveryId" = ${delivery.id}
             ORDER BY "createdAt" ASC
           `
@@ -222,7 +222,7 @@ export async function loadReviewPageData(token: string) {
               "yPosition",
               NULL::timestamp as "resolvedAt",
               "createdAt"
-            FROM "Comment"
+            FROM "falcon"."Comment"
             WHERE "deliveryId" = ${delivery.id}
             ORDER BY "createdAt" ASC
           `;

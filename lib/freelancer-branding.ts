@@ -82,8 +82,8 @@ export async function getFreelancerBrandingByUserId(userId: string) {
         fs."slug",
         u."name" as "userName",
         u."email" as "userEmail"
-      FROM "FreelancerSettings" fs
-      INNER JOIN "User" u ON u."id" = fs."userId"
+      FROM "falcon"."FreelancerSettings" fs
+      INNER JOIN "falcon"."User" u ON u."id" = fs."userId"
       WHERE fs."userId" = ${userId}
       LIMIT 1
     `;
@@ -100,8 +100,8 @@ export async function getFreelancerBrandingByUserId(userId: string) {
         fs."slug",
         u."name" as "userName",
         u."email" as "userEmail"
-      FROM "FreelancerSettings" fs
-      INNER JOIN "User" u ON u."id" = fs."userId"
+      FROM "falcon"."FreelancerSettings" fs
+      INNER JOIN "falcon"."User" u ON u."id" = fs."userId"
       WHERE fs."userId" = ${userId}
       LIMIT 1
     `;
@@ -117,7 +117,7 @@ export async function getFreelancerBrandingByUserId(userId: string) {
       u."id" as "userId",
       u."name" as "userName",
       u."email" as "userEmail"
-    FROM "User" u
+    FROM "falcon"."User" u
     WHERE u."id" = ${userId}
     LIMIT 1
   `;
@@ -155,8 +155,8 @@ export async function getFreelancerBrandingBySlug(slug: string) {
         fs."slug",
         u."name" as "userName",
         u."email" as "userEmail"
-      FROM "FreelancerSettings" fs
-      INNER JOIN "User" u ON u."id" = fs."userId"
+      FROM "falcon"."FreelancerSettings" fs
+      INNER JOIN "falcon"."User" u ON u."id" = fs."userId"
       WHERE fs."slug" = ${normalizedSlug}
       LIMIT 1
     `;
@@ -173,8 +173,8 @@ export async function getFreelancerBrandingBySlug(slug: string) {
         fs."slug",
         u."name" as "userName",
         u."email" as "userEmail"
-      FROM "FreelancerSettings" fs
-      INNER JOIN "User" u ON u."id" = fs."userId"
+      FROM "falcon"."FreelancerSettings" fs
+      INNER JOIN "falcon"."User" u ON u."id" = fs."userId"
       WHERE fs."slug" = ${normalizedSlug}
       LIMIT 1
     `;
@@ -188,7 +188,7 @@ export async function getFreelancerBrandingBySlug(slug: string) {
 export async function ensureUniqueSlug(slug: string, userId: string) {
   const [existing] = await prisma.$queryRaw<Array<{ userId: string }>>`
     SELECT "userId"
-    FROM "FreelancerSettings"
+    FROM "falcon"."FreelancerSettings"
     WHERE "slug" = ${slug}
     LIMIT 1
   `;
@@ -201,7 +201,7 @@ export async function ensureUniqueSlug(slug: string, userId: string) {
 export async function getFreelancerLogoPath(userId: string) {
   const [row] = await prisma.$queryRaw<Array<{ logoUrl: string | null }>>`
     SELECT "logoUrl"
-    FROM "FreelancerSettings"
+    FROM "falcon"."FreelancerSettings"
     WHERE "userId" = ${userId}
     LIMIT 1
   `;
@@ -220,7 +220,7 @@ export async function saveFreelancerBranding(input: {
 }) {
   try {
     await prisma.$executeRaw`
-      INSERT INTO "FreelancerSettings" (
+      INSERT INTO "falcon"."FreelancerSettings" (
         "id",
         "userId",
         "displayName",
@@ -257,7 +257,7 @@ export async function saveFreelancerBranding(input: {
   } catch (err: unknown) {
     // Fallback insert/update that omits backgroundColor when the DB doesn't have the column yet.
     await prisma.$executeRaw`
-      INSERT INTO "FreelancerSettings" (
+      INSERT INTO "falcon"."FreelancerSettings" (
         "id",
         "userId",
         "displayName",
