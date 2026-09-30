@@ -9,7 +9,14 @@ import DriveEmbed from "@/features/review/components/DriveEmbed";
 import ApprovalPanel from "@/features/review/components/ApprovalPanel";
 import { cn } from "@/lib/utils";
 import type { CalendarPageData, CalendarDelivery } from "@/features/calendar/server/loadCalendarPageData";
-import { WEEKDAYS, monthLabel, dayKey, buildMonthGrid } from "@/features/calendar/lib/monthGrid";
+import {
+  WEEKDAYS,
+  monthLabel,
+  dayKey,
+  scheduledDayKey,
+  formatScheduledDate,
+  buildMonthGrid,
+} from "@/features/calendar/lib/monthGrid";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -51,7 +58,7 @@ function DayDetailModal({
       isOpen
       onClose={onClose}
       size="lg"
-      title={date.toLocaleDateString("pt-BR", {
+      title={formatScheduledDate(date, "pt-BR", {
         weekday: "long",
         day: "2-digit",
         month: "long",
@@ -104,7 +111,7 @@ export default function CalendarClientShell({ data }: CalendarClientShellProps) 
     const map = new Map<string, CalendarDelivery>();
     for (const d of data.deliveries) {
       if (!d.scheduledAt) continue;
-      map.set(dayKey(new Date(d.scheduledAt)), d);
+      map.set(scheduledDayKey(new Date(d.scheduledAt)), d);
     }
     return map;
   }, [data.deliveries]);
