@@ -44,6 +44,7 @@ export default async function ProjectDetailPage({ params }: PageProps) {
     id: d.id,
     versionNumber: d.versionNumber,
     label: d.label,
+    scheduledAt: d.scheduledAt,
     fileName: d.fileName,
     fileSize: d.fileSize,
     mimeType: d.mimeType,

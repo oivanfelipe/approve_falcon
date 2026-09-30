@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import React, { useState, useTransition } from "react";
+import React, { useState, useEffect, useTransition } from "react";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -23,6 +23,7 @@ interface NewDeliveryModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: (reviewToken: string) => void;
+  initialScheduledAt?: string;
 }
 
 type Step = "upload" | "uploading" | "done" | "error";
@@ -78,6 +79,7 @@ export default function NewDeliveryModal({
   isOpen,
   onClose,
   onSuccess,
+  initialScheduledAt,
 }: NewDeliveryModalProps) {
   const [step, setStep] = useState<Step>("upload");
   const [sourceMode, setSourceMode] = useState<SourceMode>("file");
@@ -85,7 +87,11 @@ export default function NewDeliveryModal({
   const [driveUrl, setDriveUrl] = useState("");
   const [driveName, setDriveName] = useState("");
   const [label, setLabel] = useState("");
-  const [scheduledAt, setScheduledAt] = useState("");
+  const [scheduledAt, setScheduledAt] = useState(initialScheduledAt ?? "");
+
+  useEffect(() => {
+    if (isOpen) setScheduledAt(initialScheduledAt ?? "");
+  }, [isOpen, initialScheduledAt]);
   const [password, setPassword] = useState("");
   const [allowDownload, setAllowDownload] = useState(true);
   const [reviewToken, setReviewToken] = useState("");

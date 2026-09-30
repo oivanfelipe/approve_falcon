@@ -9,6 +9,7 @@ import DriveEmbed from "@/features/review/components/DriveEmbed";
 import ApprovalPanel from "@/features/review/components/ApprovalPanel";
 import { cn } from "@/lib/utils";
 import type { CalendarPageData, CalendarDelivery } from "@/features/calendar/server/loadCalendarPageData";
+import { WEEKDAYS, monthLabel, dayKey, buildMonthGrid } from "@/features/calendar/lib/monthGrid";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -31,32 +32,6 @@ const statusDot: Record<Status, string> = {
   APPROVED: "bg-black",
   CHANGES_REQUESTED: "bg-[#e10600]",
 };
-
-const WEEKDAYS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
-
-function monthLabel(date: Date): string {
-  return date
-    .toLocaleDateString("pt-BR", { month: "long", year: "numeric" })
-    .replace(/^./, (c) => c.toUpperCase());
-}
-
-function dayKey(date: Date): string {
-  return `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
-}
-
-function buildMonthGrid(monthDate: Date): Date[] {
-  const year = monthDate.getFullYear();
-  const month = monthDate.getMonth();
-  const firstOfMonth = new Date(year, month, 1);
-  const startOffset = firstOfMonth.getDay(); // 0 = Sunday
-  const gridStart = new Date(year, month, 1 - startOffset);
-
-  return Array.from({ length: 42 }, (_, i) => {
-    const d = new Date(gridStart);
-    d.setDate(gridStart.getDate() + i);
-    return d;
-  });
-}
 
 // ─── Day detail modal ─────────────────────────────────────────────────────────
 
