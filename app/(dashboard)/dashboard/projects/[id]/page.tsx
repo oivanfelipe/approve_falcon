@@ -64,6 +64,7 @@ export default async function ProjectDetailPage({ params }: PageProps) {
       clientEmail={project.clientEmail}
       deliveries={deliveries}
       freelancerSlug={branding.slug}
+      calendarToken={project.calendarToken}
     />
   );
 }

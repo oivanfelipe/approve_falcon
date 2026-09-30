@@ -85,6 +85,7 @@ export default function NewDeliveryModal({
   const [driveUrl, setDriveUrl] = useState("");
   const [driveName, setDriveName] = useState("");
   const [label, setLabel] = useState("");
+  const [scheduledAt, setScheduledAt] = useState("");
   const [password, setPassword] = useState("");
   const [allowDownload, setAllowDownload] = useState(true);
   const [reviewToken, setReviewToken] = useState("");
@@ -105,6 +106,7 @@ export default function NewDeliveryModal({
     setDriveUrl("");
     setDriveName("");
     setLabel("");
+    setScheduledAt("");
     setPassword("");
     setAllowDownload(true);
     setReviewToken("");
@@ -147,6 +149,7 @@ export default function NewDeliveryModal({
         const result = await createDelivery({
           projectId,
           label: label.trim() || undefined,
+          scheduledAt: scheduledAt || undefined,
           sourceType: "FILE",
           filePath: urlResult.path,
           fileName: selectedFile.name,
@@ -180,6 +183,7 @@ export default function NewDeliveryModal({
         const result = await createDelivery({
           projectId,
           label: label.trim() || undefined,
+          scheduledAt: scheduledAt || undefined,
           sourceType: "DRIVE_LINK",
           driveUrl: trimmedDriveUrl,
           fileName: driveName.trim() || label.trim() || "Criativo do Google Drive",
@@ -286,6 +290,14 @@ export default function NewDeliveryModal({
             value={label}
             onChange={(e) => setLabel(e.target.value)}
             hint="Exibido no histórico de versões do cliente"
+          />
+
+          <Input
+            type="date"
+            label="Data de publicação (opcional)"
+            value={scheduledAt}
+            onChange={(e) => setScheduledAt(e.target.value)}
+            hint="Se preenchida, esta peça aparece no link de calendário do projeto"
           />
 
           <Input
