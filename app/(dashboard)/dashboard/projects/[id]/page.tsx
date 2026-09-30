@@ -20,7 +20,7 @@ export default async function ProjectDetailPage({ params }: PageProps) {
   if (!session?.user?.id) redirect("/login");
 
   const project = await prisma.project.findFirst({
-    where: { id, userId: session.user.id },
+    where: { id, userId: session.user.ownerId },
     include: {
       deliveries: {
         orderBy: { versionNumber: "desc" },
@@ -38,7 +38,7 @@ export default async function ProjectDetailPage({ params }: PageProps) {
 
   if (!project) notFound();
 
-  const branding = await getFreelancerBrandingByUserId(session.user.id);
+  const branding = await getFreelancerBrandingByUserId(session.user.ownerId);
 
   const deliveries = project.deliveries.map((d) => ({
     id: d.id,

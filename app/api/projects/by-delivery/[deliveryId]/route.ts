@@ -16,7 +16,7 @@ export async function GET(
   const delivery = await prisma.delivery.findFirst({
     where: {
       id: deliveryId,
-      project: { userId: session.user.id },
+      project: { userId: session.user.ownerId },
     },
     select: { projectId: true },
   });

@@ -29,6 +29,10 @@ model User {
     sessions     Session[]
     projects     Project[]
     freelancerSettings FreelancerSettings?
+
+    teamMembershipsAsOwner  TeamMembership[] @relation("TeamOwnerMemberships")
+    teamMembershipsAsMember TeamMembership[] @relation("TeamUserMemberships")
+    teamInvitesSent         TeamInvite[]     @relation("TeamOwnerInvites")
 }
 
 model Account {
@@ -194,6 +198,36 @@ model FreelancerSettings {
     user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
+model TeamMembership {
+    @@schema("falcon")
+    id        String   @id @default(cuid())
+    ownerId   String // the organization: the account owner's User.id
+    userId    String // the team member's own login
+    role      TeamRole @default(EDITOR)
+    createdAt DateTime @default(now())
+
+    owner User @relation("TeamOwnerMemberships", fields: [ownerId], references: [id], onDelete: Cascade)
+    user  User @relation("TeamUserMemberships", fields: [userId], references: [id], onDelete: Cascade)
+
+    @@unique([ownerId, userId])
+}
+
+model TeamInvite {
+    @@schema("falcon")
+    id        String           @id @default(cuid())
+    ownerId   String
+    email     String
+    role      TeamRole         @default(EDITOR)
+    token     String           @unique
+    status    TeamInviteStatus @default(PENDING)
+    createdAt DateTime         @default(now())
+    expiresAt DateTime?
+
+    owner User @relation("TeamOwnerInvites", fields: [ownerId], references: [id], onDelete: Cascade)
+
+    @@unique([ownerId, email])
+}
+
 // ─── Enums ───────────────────────────────────────────────────────────────────
 
 enum DeliveryStatus {
@@ -213,6 +247,19 @@ enum AuthorType {
     @@schema("falcon")
     CLIENT
     FREELANCER
+}
+
+enum TeamRole {
+    @@schema("falcon")
+    ADMIN
+    EDITOR
+}
+
+enum TeamInviteStatus {
+    @@schema("falcon")
+    PENDING
+    ACCEPTED
+    REVOKED
 }
 
 // ─── Guest (anonymous) uploads ───────────────────────────────────────────────

@@ -34,7 +34,7 @@ export default async function DashboardPage() {
   if (!session?.user?.id) redirect("/login");
 
   const projects = (await prisma.project.findMany({
-    where: { userId: session.user.id },
+    where: { userId: session.user.ownerId },
     orderBy: { updatedAt: "desc" },
     include: {
       deliveries: {

@@ -15,7 +15,7 @@ type Tab = "signin" | "register";
 
 // ─── Sign in form ─────────────────────────────────────────────────────────────
 
-function SignInForm({ next }: { next?: string }) {
+function SignInForm({ next, email }: { next?: string; email?: string }) {
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
@@ -47,6 +47,7 @@ function SignInForm({ next }: { next?: string }) {
         type="email"
         placeholder="you@example.com"
         autoComplete="email"
+        defaultValue={email}
         required
         fullWidth
       />
@@ -79,7 +80,7 @@ function SignInForm({ next }: { next?: string }) {
 
 // ─── Register form ────────────────────────────────────────────────────────────
 
-function RegisterForm({ next }: { next?: string }) {
+function RegisterForm({ next, email }: { next?: string; email?: string }) {
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
@@ -114,6 +115,7 @@ function RegisterForm({ next }: { next?: string }) {
         type="email"
         placeholder="you@example.com"
         autoComplete="email"
+        defaultValue={email}
         required
         fullWidth
       />
@@ -151,6 +153,7 @@ export default function LoginPage() {
   const [activeTab, setActiveTab] = useState<Tab>("signin");
   const searchParams = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '');
   const next = searchParams.get("next") ?? undefined;
+  const email = searchParams.get("email") ?? undefined;
 
   return (
     <div className="w-full max-w-sm flex flex-col gap-8">
@@ -185,7 +188,11 @@ export default function LoginPage() {
           ))}
         </div>
 
-        {activeTab === "signin" ? <SignInForm next={next} /> : <RegisterForm next={next} />}
+        {activeTab === "signin" ? (
+          <SignInForm next={next} email={email} />
+        ) : (
+          <RegisterForm next={next} email={email} />
+        )}
       </div>
     </div>
   );

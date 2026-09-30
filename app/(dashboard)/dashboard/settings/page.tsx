@@ -12,7 +12,7 @@ export default async function SettingsPage() {
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
 
-  const branding = await getFreelancerBrandingByUserId(session.user.id);
+  const branding = await getFreelancerBrandingByUserId(session.user.ownerId);
 
   return (
     <SettingsPageClient

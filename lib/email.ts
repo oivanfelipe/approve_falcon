@@ -345,3 +345,61 @@ export async function sendCommentNotificationEmail(opts: {
     headers: UNSUBSCRIBE_HEADERS,
   });
 }
+
+// ─── Notify an invited teammate ───────────────────────────────────────────────
+
+export async function sendTeamInviteEmail(opts: {
+  to: string;
+  inviterName: string;
+  role: "ADMIN" | "EDITOR";
+  token: string;
+  locale?: Locale;
+}) {
+  const locale = opts.locale ?? "pt";
+  const url = `${BASE_URL}/invite/${opts.token}`;
+  const roleLabel =
+    locale === "pt"
+      ? opts.role === "ADMIN"
+        ? "Administrador"
+        : "Editor"
+      : opts.role === "ADMIN"
+        ? "Admin"
+        : "Editor";
+
+  const t =
+    locale === "pt"
+      ? {
+          subject: `${opts.inviterName} convidou você para o time no Approve Falcon`,
+          greeting: "Você foi convidado!",
+          intro: `${opts.inviterName} convidou você para entrar no time no Approve Falcon como ${roleLabel}.`,
+          cta: "Aceitar convite",
+          footer: "Se você não esperava este convite, pode ignorar este e-mail.",
+        }
+      : {
+          subject: `${opts.inviterName} invited you to their team on Approve Falcon`,
+          greeting: "You've been invited!",
+          intro: `${opts.inviterName} invited you to join their team on Approve Falcon as ${roleLabel}.`,
+          cta: "Accept invite",
+          footer: "If you weren't expecting this invite, you can ignore this email.",
+        };
+
+  const body = `
+    <p style="margin:0 0 4px;font-size:22px;font-weight:700;color:#111">${t.greeting}</p>
+    <p style="margin:4px 0 24px;font-size:15px;color:#555">${t.intro}</p>
+
+    <a href="${url}" style="display:inline-block;background:#7c3aed;color:#ffffff;text-decoration:none;padding:13px 28px;border-radius:8px;font-size:14px;font-weight:600">
+      ${t.cta}
+    </a>
+
+    <p style="margin:28px 0 0;font-size:12px;color:#9ca3af">${t.footer}</p>`;
+
+  const text = `${t.intro}\n\n${t.cta}:\n${url}\n\n${t.footer}\n\n— Approve Falcon`;
+
+  await resend().emails.send({
+    from: FROM,
+    to: opts.to,
+    subject: t.subject,
+    html: htmlWrapper(body),
+    text,
+  });
+}
