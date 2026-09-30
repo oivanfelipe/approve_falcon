@@ -7,6 +7,8 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import NewDeliveryModal from "@/features/deliveries/components/NewDeliveryModal";
 import CalendarLinkButton from "@/features/calendar/components/CalendarLinkButton";
+import DashboardCalendarView from "@/features/calendar/components/DashboardCalendarView";
+import { Tabs } from "@/components/ui/Tabs";
 import type { BadgeVariant } from "@/components/ui/Badge";
 import { Copy } from "lucide-react";
 import { getPublicReviewPath } from "@/lib/freelancer-branding-shared";
@@ -17,6 +19,7 @@ interface DeliveryRow {
   id: string;
   versionNumber: number;
   label: string | null;
+  scheduledAt: Date | null;
   fileName: string;
   fileSize: number | null;
   mimeType: string | null;
@@ -137,6 +140,13 @@ export default function ProjectDetailClient({
 }: ProjectDetailClientProps) {
   const [liveDeliveries, setLiveDeliveries] = useState(initialDeliveries);
   const [uploadOpen, setUploadOpen] = useState(false);
+  const [uploadInitialDate, setUploadInitialDate] = useState<string | undefined>();
+  const [viewMode, setViewMode] = useState<"list" | "calendar">("list");
+
+  const openUpload = (dateInputValue?: string) => {
+    setUploadInitialDate(dateInputValue);
+    setUploadOpen(true);
+  };
 
   // ─── Supabase Realtime + refetch helper ────────────────────────────────────
   const refetch = React.useCallback(async () => {
@@ -149,6 +159,7 @@ export default function ProjectDetailClient({
           ...d,
           createdAt: new Date(d.createdAt),
           lastViewedAt: d.lastViewedAt ? new Date(d.lastViewedAt) : null,
+          scheduledAt: d.scheduledAt ? new Date(d.scheduledAt) : null,
         })),
       );
     } catch {
@@ -252,7 +263,7 @@ export default function ProjectDetailClient({
             <Button
               variant="primary"
               size="sm"
-              onClick={() => setUploadOpen(true)}
+              onClick={() => openUpload()}
               leftIcon={
                 <svg
                   width="14"
@@ -277,6 +288,22 @@ export default function ProjectDetailClient({
         </div>
       </div>
 
+      {/* View toggle */}
+      <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as "list" | "calendar")}>
+        <Tabs.List>
+          <Tabs.Tab value="list">List</Tabs.Tab>
+          <Tabs.Tab value="calendar">Calendar</Tabs.Tab>
+        </Tabs.List>
+
+        <Tabs.Panel value="calendar" className="mt-4">
+          <DashboardCalendarView
+            deliveries={liveDeliveries}
+            freelancerSlug={freelancerSlug}
+            onEmptyDayClick={(dateInputValue) => openUpload(dateInputValue)}
+          />
+        </Tabs.Panel>
+
+        <Tabs.Panel value="list" className="mt-4">
       {/* Deliveries */}
       {liveDeliveries.length > 0 ? (
         <div className="flex flex-col gap-3">
@@ -416,21 +443,27 @@ export default function ProjectDetailClient({
           <Button
             variant="primary"
             size="sm"
-            onClick={() => setUploadOpen(true)}
+            onClick={() => openUpload()}
           >
             Upload version
           </Button>
         </div>
       )}
+        </Tabs.Panel>
+      </Tabs>
 
       <NewDeliveryModal
         projectId={projectId}
         freelancerSlug={freelancerSlug}
         isOpen={uploadOpen}
-        onClose={() => setUploadOpen(false)}
+        onClose={() => {
+          setUploadOpen(false);
+          setUploadInitialDate(undefined);
+        }}
         onSuccess={() => {
           refetch();
         }}
+        initialScheduledAt={uploadInitialDate}
       />
     </div>
   );
