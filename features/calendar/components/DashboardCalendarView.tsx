@@ -11,6 +11,8 @@ import {
   WEEKDAYS,
   monthLabel,
   dayKey,
+  scheduledDayKey,
+  formatScheduledDate,
   buildMonthGrid,
   toDateInputValue,
 } from "@/features/calendar/lib/monthGrid";
@@ -73,7 +75,7 @@ export default function DashboardCalendarView({
     const map = new Map<string, CalendarDeliveryRow>();
     for (const d of deliveries) {
       if (!d.scheduledAt) continue;
-      map.set(dayKey(new Date(d.scheduledAt)), d);
+      map.set(scheduledDayKey(new Date(d.scheduledAt)), d);
     }
     return map;
   }, [deliveries]);
@@ -168,7 +170,7 @@ export default function DashboardCalendarView({
           title={selectedDelivery.label ?? `Version ${selectedDelivery.versionNumber}`}
           description={
             selectedDelivery.scheduledAt
-              ? new Date(selectedDelivery.scheduledAt).toLocaleDateString("en-US", {
+              ? formatScheduledDate(new Date(selectedDelivery.scheduledAt), "en-US", {
                   weekday: "long",
                   day: "2-digit",
                   month: "long",

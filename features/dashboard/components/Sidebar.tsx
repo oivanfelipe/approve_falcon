@@ -59,6 +59,29 @@ const navItems: NavItem[] = [
       </svg>
     ),
   },
+  {
+    label: "Time",
+    href: "/dashboard/team",
+    isActive: (p) => p.startsWith("/dashboard/team"),
+    icon: (
+      <svg
+        width="16"
+        height="16"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+      >
+        <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
+        <circle cx="9" cy="7" r="4" />
+        <path d="M23 21v-2a4 4 0 00-3-3.87" />
+        <path d="M16 3.13a4 4 0 010 7.75" />
+      </svg>
+    ),
+  },
 ];
 
 // ─── Logo ─────────────────────────────────────────────────────────────────────
@@ -80,10 +103,14 @@ function SidebarLogo() {
 interface SidebarProps {
   userName?: string | null;
   userEmail?: string | null;
+  isAdmin?: boolean;
 }
 
-export default function Sidebar({ userName, userEmail }: SidebarProps) {
+export default function Sidebar({ userName, userEmail, isAdmin }: SidebarProps) {
   const pathname = usePathname();
+  const visibleNavItems = isAdmin
+    ? navItems
+    : navItems.filter((item) => item.href !== "/dashboard/team");
 
   return (
     <aside className="w-60 shrink-0 flex flex-col h-full bg-black">
@@ -92,7 +119,7 @@ export default function Sidebar({ userName, userEmail }: SidebarProps) {
       {/* Nav */}
       <nav className="flex-1 px-3 py-2" aria-label="Dashboard navigation">
         <ul className="flex flex-col gap-0.5 list-none" role="list">
-          {navItems.map(({ label, href, isActive: checkActive, icon }) => {
+          {visibleNavItems.map(({ label, href, isActive: checkActive, icon }) => {
             const active = checkActive(pathname);
 
             return (

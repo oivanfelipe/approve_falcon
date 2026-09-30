@@ -14,7 +14,7 @@ export async function GET(
   const { id } = await params;
 
   const project = await prisma.project.findFirst({
-    where: { id, userId: session.user.id },
+    where: { id, userId: session.user.ownerId },
     include: {
       deliveries: {
         orderBy: { createdAt: "desc" },

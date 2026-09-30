@@ -22,7 +22,7 @@ const updateProjectSchema = createProjectSchema.partial();
 async function requireAuth() {
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
-  return session.user.id;
+  return session.user.ownerId;
 }
 
 // ─── Actions ──────────────────────────────────────────────────────────────────

@@ -37,12 +37,12 @@ export async function POST(request: Request) {
   }
 
   const extension = file.name.split(".").pop()?.toLowerCase() || "png";
-  const storagePath = `${session.user.id}/branding/${Date.now()}-${randomUUID()}.${extension}`;
+  const storagePath = `${session.user.ownerId}/branding/${Date.now()}-${randomUUID()}.${extension}`;
   const buffer = Buffer.from(await file.arrayBuffer());
 
   await uploadFile(storagePath, buffer, file.type);
 
-  const currentLogoPath = await getFreelancerLogoPath(session.user.id);
+  const currentLogoPath = await getFreelancerLogoPath(session.user.ownerId);
   if (currentLogoPath) {
     deleteFile(currentLogoPath).catch(() => {});
   }

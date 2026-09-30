@@ -26,7 +26,7 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const branding = await getFreelancerBrandingByUserId(session.user.id);
+  const branding = await getFreelancerBrandingByUserId(session.user.ownerId);
   return NextResponse.json(branding);
 }
 
@@ -50,7 +50,7 @@ export async function PUT(request: Request) {
 
   try {
     validateSlugOrThrow(slug);
-    await ensureUniqueSlug(slug, session.user.id);
+    await ensureUniqueSlug(slug, session.user.ownerId);
   } catch (error) {
     return NextResponse.json(
       {
@@ -64,7 +64,7 @@ export async function PUT(request: Request) {
   }
 
   await saveFreelancerBranding({
-    userId: session.user.id,
+    userId: session.user.ownerId,
     displayName: parsed.data.displayName || null,
     logoUrl: parsed.data.logoUrl || null,
     primaryColor: normalizeHexColor(
@@ -78,6 +78,6 @@ export async function PUT(request: Request) {
     slug,
   });
 
-  const branding = await getFreelancerBrandingByUserId(session.user.id);
+  const branding = await getFreelancerBrandingByUserId(session.user.ownerId);
   return NextResponse.json(branding);
 }

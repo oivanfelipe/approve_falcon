@@ -73,14 +73,14 @@ export async function getUploadUrl(
   if (!session?.user?.id) return { error: "Not authenticated" };
 
   const project = await prisma.project.findFirst({
-    where: { id: projectId, userId: session.user.id },
+    where: { id: projectId, userId: session.user.ownerId },
     select: { id: true },
   });
   if (!project) return { error: "Project not found" };
 
   const ext = fileName.split(".").pop() ?? "bin";
   const ts = Date.now();
-  const path = `${session.user.id}/${projectId}/${ts}.${ext}`;
+  const path = `${session.user.ownerId}/${projectId}/${ts}.${ext}`;
 
   try {
     const data = await getSignedUploadUrl(path);
@@ -124,7 +124,7 @@ export async function createDelivery(
   } = parsed.data;
 
   const project = await prisma.project.findFirst({
-    where: { id: projectId, userId: session.user.id },
+    where: { id: projectId, userId: session.user.ownerId },
     select: {
       id: true,
       name: true,
@@ -166,7 +166,7 @@ export async function createDelivery(
   });
 
   if (project.clientEmail) {
-    const branding = await getFreelancerBrandingByUserId(session.user.id);
+    const branding = await getFreelancerBrandingByUserId(session.user.ownerId);
     sendNewReviewEmail({
       to: project.clientEmail,
       projectName: project.name,
@@ -189,7 +189,7 @@ export async function deleteDelivery(
   if (!session?.user?.id) return { error: "Not authenticated" };
 
   const delivery = await prisma.delivery.findFirst({
-    where: { id: deliveryId, project: { userId: session.user.id } },
+    where: { id: deliveryId, project: { userId: session.user.ownerId } },
     select: {
       id: true,
       filePath: true,

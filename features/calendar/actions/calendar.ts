@@ -11,7 +11,7 @@ export async function getOrCreateCalendarToken(
   if (!session?.user?.id) return { error: "Not authenticated" };
 
   const project = await prisma.project.findFirst({
-    where: { id: projectId, userId: session.user.id },
+    where: { id: projectId, userId: session.user.ownerId },
     select: { id: true, calendarToken: true },
   });
   if (!project) return { error: "Project not found" };
