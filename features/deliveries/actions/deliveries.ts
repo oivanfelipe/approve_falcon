@@ -28,6 +28,7 @@ const createDeliverySchema = z
   .object({
     projectId: z.string().cuid(),
     label: z.string().max(100).optional(),
+    scheduledAt: z.string().optional(),
     sourceType: z.enum(["FILE", "DRIVE_LINK"]).default("FILE"),
     filePath: z.string().min(1).optional(),
     fileName: z.string().min(1),
@@ -109,6 +110,7 @@ export async function createDelivery(
   const {
     projectId,
     label,
+    scheduledAt,
     sourceType,
     filePath,
     fileName,
@@ -148,6 +150,7 @@ export async function createDelivery(
       projectId,
       versionNumber,
       label: label || null,
+      scheduledAt: scheduledAt ? new Date(scheduledAt) : null,
       sourceType,
       filePath: sourceType === "FILE" ? filePath : null,
       fileName,

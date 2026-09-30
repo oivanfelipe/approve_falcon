@@ -78,14 +78,15 @@ model VerificationToken {
 
 model Project {
     @@schema("falcon")
-    id          String   @id @default(cuid())
-    userId      String
-    name        String
-    clientName  String
-    clientEmail String?
-    description String?
-    createdAt   DateTime @default(now())
-    updatedAt   DateTime @updatedAt
+    id            String   @id @default(cuid())
+    userId        String
+    name          String
+    clientName    String
+    clientEmail   String?
+    description   String?
+    calendarToken String?  @unique // public token for the shareable content-calendar link
+    createdAt     DateTime @default(now())
+    updatedAt     DateTime @updatedAt
 
     user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
     deliveries Delivery[]
@@ -97,6 +98,7 @@ model Delivery {
     projectId     String
     versionNumber Int
     label         String? // e.g. "Color adjustments"
+    scheduledAt   DateTime? // publish date shown on the project's content calendar
     sourceType    DeliverySource @default(FILE)
     filePath      String? // Supabase Storage path — null when sourceType is DRIVE_LINK
     fileName      String

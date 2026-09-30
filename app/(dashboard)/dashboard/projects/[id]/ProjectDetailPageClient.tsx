@@ -6,6 +6,7 @@ import { supabaseClient } from "@/lib/supabase/browser";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import NewDeliveryModal from "@/features/deliveries/components/NewDeliveryModal";
+import CalendarLinkButton from "@/features/calendar/components/CalendarLinkButton";
 import type { BadgeVariant } from "@/components/ui/Badge";
 import { Copy } from "lucide-react";
 import { getPublicReviewPath } from "@/lib/freelancer-branding-shared";
@@ -35,6 +36,7 @@ interface ProjectDetailClientProps {
   clientEmail: string | null | undefined;
   deliveries: DeliveryRow[];
   freelancerSlug?: string | null;
+  calendarToken?: string | null;
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -131,6 +133,7 @@ export default function ProjectDetailClient({
   clientEmail,
   deliveries: initialDeliveries,
   freelancerSlug,
+  calendarToken,
 }: ProjectDetailClientProps) {
   const [liveDeliveries, setLiveDeliveries] = useState(initialDeliveries);
   const [uploadOpen, setUploadOpen] = useState(false);
@@ -241,30 +244,36 @@ export default function ProjectDetailClient({
               )}
             </p>
           </div>
-          <Button
-            variant="primary"
-            size="sm"
-            onClick={() => setUploadOpen(true)}
-            leftIcon={
-              <svg
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden="true"
-              >
-                <polyline points="16 16 12 12 8 16" />
-                <line x1="12" y1="12" x2="12" y2="21" />
-                <path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3" />
-              </svg>
-            }
-          >
-            Upload version
-          </Button>
+          <div className="flex items-center gap-2 shrink-0">
+            <CalendarLinkButton
+              projectId={projectId}
+              initialToken={calendarToken}
+            />
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => setUploadOpen(true)}
+              leftIcon={
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <polyline points="16 16 12 12 8 16" />
+                  <line x1="12" y1="12" x2="12" y2="21" />
+                  <path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3" />
+                </svg>
+              }
+            >
+              Upload version
+            </Button>
+          </div>
         </div>
       </div>
 
