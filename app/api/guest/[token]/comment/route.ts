@@ -74,7 +74,7 @@ export async function POST(
   if (parentId) {
     try {
       await prisma.$executeRaw`
-        UPDATE "GuestComment"
+        UPDATE "falcon"."GuestComment"
         SET "parentId" = ${parentId}
         WHERE id = ${comment.id}
       `;

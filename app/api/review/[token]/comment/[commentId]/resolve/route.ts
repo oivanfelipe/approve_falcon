@@ -77,7 +77,7 @@ export async function PATCH(
     SELECT EXISTS (
       SELECT 1
       FROM information_schema.columns
-      WHERE table_schema = 'public'
+      WHERE table_schema = 'falcon'
         AND table_name = 'Comment'
         AND column_name = 'resolvedAt'
     ) as "exists"
@@ -94,7 +94,7 @@ export async function PATCH(
   }
 
   await prisma.$executeRaw`
-    UPDATE "Comment"
+    UPDATE "falcon"."Comment"
     SET "resolvedAt" = ${parsed.data.resolved ? new Date() : null}
     WHERE "id" = ${existingComment.id}
   `;
@@ -122,7 +122,7 @@ export async function PATCH(
       "yPosition",
       "resolvedAt",
       "createdAt"
-    FROM "Comment"
+    FROM "falcon"."Comment"
     WHERE "id" = ${existingComment.id}
     LIMIT 1
   `;

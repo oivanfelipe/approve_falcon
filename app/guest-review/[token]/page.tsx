@@ -102,7 +102,7 @@ export default async function GuestReviewPage({ params }: PageProps) {
     SELECT EXISTS (
       SELECT 1
       FROM information_schema.columns
-      WHERE table_schema = 'public'
+      WHERE table_schema = 'falcon'
         AND table_name = 'GuestComment'
         AND column_name = 'resolvedAt'
     ) as "exists"
@@ -114,7 +114,7 @@ export default async function GuestReviewPage({ params }: PageProps) {
     SELECT EXISTS (
       SELECT 1
       FROM information_schema.columns
-      WHERE table_schema = 'public'
+      WHERE table_schema = 'falcon'
         AND table_name = 'GuestComment'
         AND column_name = 'audioUrl'
     ) as "exists"
@@ -126,7 +126,7 @@ export default async function GuestReviewPage({ params }: PageProps) {
     SELECT EXISTS (
       SELECT 1
       FROM information_schema.columns
-      WHERE table_schema = 'public'
+      WHERE table_schema = 'falcon'
         AND table_name = 'GuestComment'
         AND column_name = 'parentId'
     ) as "exists"
@@ -164,7 +164,7 @@ export default async function GuestReviewPage({ params }: PageProps) {
           "yPosition",
           "resolvedAt",
           "createdAt"
-        FROM "GuestComment"
+        FROM "falcon"."GuestComment"
         WHERE "guestUploadId" = ${upload.id}
         ORDER BY "createdAt" ASC
       `
@@ -179,7 +179,7 @@ export default async function GuestReviewPage({ params }: PageProps) {
           "yPosition",
           "resolvedAt",
           "createdAt"
-        FROM "GuestComment"
+        FROM "falcon"."GuestComment"
         WHERE "guestUploadId" = ${upload.id}
         ORDER BY "createdAt" ASC
       `;
@@ -196,7 +196,7 @@ export default async function GuestReviewPage({ params }: PageProps) {
           "yPosition",
           "resolvedAt",
           "createdAt"
-        FROM "GuestComment"
+        FROM "falcon"."GuestComment"
         WHERE "guestUploadId" = ${upload.id}
         ORDER BY "createdAt" ASC
       `
@@ -210,7 +210,7 @@ export default async function GuestReviewPage({ params }: PageProps) {
           "yPosition",
           "resolvedAt",
           "createdAt"
-        FROM "GuestComment"
+        FROM "falcon"."GuestComment"
         WHERE "guestUploadId" = ${upload.id}
         ORDER BY "createdAt" ASC
       `;
@@ -230,7 +230,7 @@ export default async function GuestReviewPage({ params }: PageProps) {
           "yPosition",
           NULL::timestamp as "resolvedAt",
           "createdAt"
-        FROM "GuestComment"
+        FROM "falcon"."GuestComment"
         WHERE "guestUploadId" = ${upload.id}
         ORDER BY "createdAt" ASC
       `
@@ -245,7 +245,7 @@ export default async function GuestReviewPage({ params }: PageProps) {
           "yPosition",
           NULL::timestamp as "resolvedAt",
           "createdAt"
-        FROM "GuestComment"
+        FROM "falcon"."GuestComment"
         WHERE "guestUploadId" = ${upload.id}
         ORDER BY "createdAt" ASC
       `;
@@ -262,7 +262,7 @@ export default async function GuestReviewPage({ params }: PageProps) {
           "yPosition",
           NULL::timestamp as "resolvedAt",
           "createdAt"
-        FROM "GuestComment"
+        FROM "falcon"."GuestComment"
         WHERE "guestUploadId" = ${upload.id}
         ORDER BY "createdAt" ASC
       `
@@ -276,7 +276,7 @@ export default async function GuestReviewPage({ params }: PageProps) {
           "yPosition",
           NULL::timestamp as "resolvedAt",
           "createdAt"
-        FROM "GuestComment"
+        FROM "falcon"."GuestComment"
         WHERE "guestUploadId" = ${upload.id}
         ORDER BY "createdAt" ASC
       `;
