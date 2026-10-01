@@ -4,6 +4,7 @@ import React, { useState, useEffect, useTransition } from "react";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { Textarea } from "@/components/ui/Textarea";
 import { Tabs } from "@/components/ui/Tabs";
 import UploadZone from "@/features/deliveries/components/UploadZone";
 import {
@@ -88,6 +89,7 @@ export default function NewDeliveryModal({
   const [driveName, setDriveName] = useState("");
   const [label, setLabel] = useState("");
   const [scheduledAt, setScheduledAt] = useState(initialScheduledAt ?? "");
+  const [copyText, setCopyText] = useState("");
 
   useEffect(() => {
     if (isOpen) setScheduledAt(initialScheduledAt ?? "");
@@ -113,6 +115,7 @@ export default function NewDeliveryModal({
     setDriveName("");
     setLabel("");
     setScheduledAt("");
+    setCopyText("");
     setPassword("");
     setAllowDownload(true);
     setReviewToken("");
@@ -156,6 +159,7 @@ export default function NewDeliveryModal({
           projectId,
           label: label.trim() || undefined,
           scheduledAt: scheduledAt || undefined,
+          copyText: copyText.trim() || undefined,
           sourceType: "FILE",
           filePath: urlResult.path,
           fileName: selectedFile.name,
@@ -190,6 +194,7 @@ export default function NewDeliveryModal({
           projectId,
           label: label.trim() || undefined,
           scheduledAt: scheduledAt || undefined,
+          copyText: copyText.trim() || undefined,
           sourceType: "DRIVE_LINK",
           driveUrl: trimmedDriveUrl,
           fileName: driveName.trim() || label.trim() || "Criativo do Google Drive",
@@ -289,6 +294,16 @@ export default function NewDeliveryModal({
               </div>
             </Tabs.Panel>
           </Tabs>
+
+          <Textarea
+            label="Copy / legenda (opcional)"
+            placeholder="Texto que o cliente vai ler e aprovar antes do criativo…"
+            value={copyText}
+            onChange={(e) => setCopyText(e.target.value)}
+            rows={3}
+            fullWidth
+            hint="Se preenchida, o cliente só vê o criativo depois de aprovar essa copy"
+          />
 
           <Input
             label="Rótulo da versão (opcional)"
