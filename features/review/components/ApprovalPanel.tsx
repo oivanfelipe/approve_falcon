@@ -16,6 +16,19 @@ interface ApprovalPanelProps {
   onStatusChange: (status: Status) => void;
   /** API base path. Default: "/api/review" */
   apiBase?: string;
+  /** Prefixes the approve/request-changes endpoint names, e.g. "copy-" to
+   *  hit "copy-approve" instead of "approve" — lets the same panel drive a
+   *  different approval stage on the same delivery. */
+  actionPrefix?: string;
+  /** Overrides the copy on the idle panel and confirm buttons for a
+   *  non-creative approval stage (e.g. approving a caption/copy first). */
+  labels?: {
+    heading?: string;
+    approveButton?: string;
+    approveConfirmTitle?: string;
+    requestButton?: string;
+    requestConfirmTitle?: string;
+  };
 }
 
 type Panel =
@@ -152,6 +165,8 @@ export default function ApprovalPanel({
   status,
   onStatusChange,
   apiBase = "/api/review",
+  actionPrefix = "",
+  labels,
 }: ApprovalPanelProps) {
   const [panel, setPanel] = useState<Panel>("idle");
   const [signerName, setSignerName] = useState("");
@@ -171,7 +186,7 @@ export default function ApprovalPanel({
     setFormError("");
 
     startTransition(async () => {
-      const res = await fetch(`${apiBase}/${token}/approve`, {
+      const res = await fetch(`${apiBase}/${token}/${actionPrefix}approve`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -199,7 +214,7 @@ export default function ApprovalPanel({
     setFormError("");
 
     startTransition(async () => {
-      const res = await fetch(`${apiBase}/${token}/request-changes`, {
+      const res = await fetch(`${apiBase}/${token}/${actionPrefix}request-changes`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -248,7 +263,7 @@ export default function ApprovalPanel({
       {panel === "idle" && (
         <div className="flex flex-col gap-3">
           <p className="text-xs text-black/50 uppercase tracking-wider font-bold font-mono">
-            Decisão de revisão
+            {labels?.heading ?? "Decisão de revisão"}
           </p>
           <Button
             variant="primary"
@@ -256,7 +271,7 @@ export default function ApprovalPanel({
             onClick={() => setPanel("approving")}
             leftIcon={<Check className="w-4 h-4" />}
           >
-            Aprovar esta versão
+            {labels?.approveButton ?? "Aprovar esta versão"}
           </Button>
           <Button
             variant="secondary"
@@ -264,7 +279,7 @@ export default function ApprovalPanel({
             onClick={() => setPanel("requesting")}
             leftIcon={<Edit className="w-4 h-4" />}
           >
-            Solicitar alterações
+            {labels?.requestButton ?? "Solicitar alterações"}
           </Button>
         </div>
       )}
@@ -273,7 +288,7 @@ export default function ApprovalPanel({
       {panel === "approving" && (
         <div className="flex flex-col gap-4 p-4 bg-white border-2 border-black">
           <p className="text-sm font-extrabold uppercase text-black">
-            Confirmar aprovação
+            {labels?.approveConfirmTitle ?? "Confirmar aprovação"}
           </p>
           <Input
             label="Seu nome"
@@ -323,7 +338,7 @@ export default function ApprovalPanel({
       {panel === "requesting" && (
         <div className="flex flex-col gap-4 p-4 bg-white border-2 border-[#e10600]">
           <p className="text-sm font-extrabold uppercase text-[#e10600]">
-            Solicitar alterações
+            {labels?.requestConfirmTitle ?? "Solicitar alterações"}
           </p>
           <Input
             label="Seu nome"

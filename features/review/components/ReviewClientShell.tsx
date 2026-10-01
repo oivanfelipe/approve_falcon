@@ -47,6 +47,8 @@ interface ReviewClientShellProps {
   driveUrl?: string | null;
   allowDownload: boolean;
   initialStatus: Status;
+  copyText?: string | null;
+  initialCopyStatus?: Status;
   versionNumber: number;
   label: string | null;
   projectName: string;
@@ -139,6 +141,8 @@ export default function ReviewClientShell({
   driveUrl,
   allowDownload,
   initialStatus,
+  copyText,
+  initialCopyStatus = "APPROVED",
   versionNumber,
   label,
   projectName,
@@ -160,6 +164,8 @@ export default function ReviewClientShell({
   const brandLogo = branding?.logoUrl ?? null;
 
   const [status, setStatus] = useState<Status>(initialStatus);
+  const [copyStatus, setCopyStatus] = useState<Status>(initialCopyStatus);
+  const creativeRevealed = copyStatus === "APPROVED" || !copyText;
   const [comments, setComments] = useState<CommentData[]>(initialComments);
   const [showChat, setShowChat] = useState(false);
   const [openPinCommentId, setOpenPinCommentId] = useState<string | null>(null);
@@ -201,8 +207,16 @@ export default function ReviewClientShell({
               Cliente: {clientName}
             </span>
           </div>
-          <Badge variant={statusVariant[status]} dot size="sm">
-            {statusLabel[status]}
+          <Badge
+            variant={statusVariant[creativeRevealed ? status : copyStatus]}
+            dot
+            size="sm"
+          >
+            {creativeRevealed
+              ? statusLabel[status]
+              : copyStatus === "CHANGES_REQUESTED"
+                ? "Alterações na copy"
+                : "Aguardando aprovação da copy"}
           </Badge>
         </div>
       </header>
@@ -227,7 +241,21 @@ export default function ReviewClientShell({
             </span>
           </div>
 
-          {isDriveLink && driveUrl ? (
+          {!creativeRevealed ? (
+            <div className="border-2 border-black p-6 bg-white">
+              <p className="text-xs font-mono font-bold uppercase tracking-wider text-black/40 mb-3">
+                Copy / legenda
+              </p>
+              <p className="text-sm text-black whitespace-pre-wrap leading-relaxed">
+                {copyText}
+              </p>
+              {copyStatus === "CHANGES_REQUESTED" && (
+                <p className="mt-5 text-xs text-black/50">
+                  Alterações solicitadas na copy — aguardando uma nova versão.
+                </p>
+              )}
+            </div>
+          ) : isDriveLink && driveUrl ? (
             <DriveEmbed
               driveUrl={driveUrl}
               fileName={fileName}
@@ -309,11 +337,27 @@ export default function ReviewClientShell({
             <div className="flex flex-col gap-6 p-5 h-full">
               {!isFreelancerPreview && (
                 <>
-                  <ApprovalPanel
-                    token={token}
-                    status={status}
-                    onStatusChange={setStatus}
-                  />
+                  {creativeRevealed ? (
+                    <ApprovalPanel
+                      token={token}
+                      status={status}
+                      onStatusChange={setStatus}
+                    />
+                  ) : (
+                    <ApprovalPanel
+                      token={token}
+                      status={copyStatus}
+                      onStatusChange={setCopyStatus}
+                      actionPrefix="copy-"
+                      labels={{
+                        heading: "Decisão sobre a copy",
+                        approveButton: "Aprovar copy",
+                        approveConfirmTitle: "Confirmar aprovação da copy",
+                        requestButton: "Solicitar alterações na copy",
+                        requestConfirmTitle: "Solicitar alterações na copy",
+                      }}
+                    />
+                  )}
                   <hr className="border-black/10" />
                 </>
               )}
