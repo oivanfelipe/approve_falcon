@@ -103,6 +103,8 @@ model Delivery {
     versionNumber Int
     label         String? // e.g. "Color adjustments"
     scheduledAt   DateTime? // publish date shown on the project's content calendar
+    copyText      String? // caption/theme text — approved before the creative is revealed
+    copyStatus    DeliveryStatus @default(PENDING)
     sourceType    DeliverySource @default(FILE)
     filePath      String? // Supabase Storage path — null when sourceType is DRIVE_LINK
     fileName      String
@@ -110,7 +112,7 @@ model Delivery {
     mimeType      String? // null when sourceType is DRIVE_LINK
     driveUrl      String? // Google Drive share link — set when sourceType is DRIVE_LINK
     reviewToken   String         @unique
-    status        DeliveryStatus @default(PENDING)
+    status        DeliveryStatus @default(PENDING) // creative approval — gated behind copyStatus === APPROVED
     expiresAt     DateTime?
     requiresEmail Boolean        @default(false)
     allowDownload Boolean        @default(true)

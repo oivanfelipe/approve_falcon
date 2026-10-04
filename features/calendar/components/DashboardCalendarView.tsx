@@ -1,12 +1,14 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import { Modal } from "@/components/ui/Modal";
 import { Badge } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/Button";
 import type { BadgeVariant } from "@/components/ui/Badge";
 import { cn } from "@/lib/utils";
 import { getPublicReviewPath } from "@/lib/freelancer-branding-shared";
+import { deleteDelivery } from "@/features/deliveries/actions/deliveries";
 import {
   WEEKDAYS,
   monthLabel,
@@ -70,6 +72,9 @@ export default function DashboardCalendarView({
   const [selectedDelivery, setSelectedDelivery] = useState<CalendarDeliveryRow | null>(
     null,
   );
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
+  const [isDeleting, startDeleteTransition] = useTransition();
 
   const deliveriesByDay = useMemo(() => {
     const map = new Map<string, CalendarDeliveryRow>();
@@ -81,6 +86,25 @@ export default function DashboardCalendarView({
   }, [deliveries]);
 
   const grid = useMemo(() => buildMonthGrid(monthDate), [monthDate]);
+
+  const closeModal = () => {
+    setSelectedDelivery(null);
+    setConfirmingDelete(false);
+    setDeleteError("");
+  };
+
+  const handleDelete = () => {
+    if (!selectedDelivery) return;
+    setDeleteError("");
+    startDeleteTransition(async () => {
+      const result = await deleteDelivery(selectedDelivery.id);
+      if (result.error) {
+        setDeleteError(result.error);
+        return;
+      }
+      closeModal();
+    });
+  };
 
   return (
     <div className="flex flex-col gap-4">
@@ -166,7 +190,7 @@ export default function DashboardCalendarView({
       {selectedDelivery && (
         <Modal
           isOpen
-          onClose={() => setSelectedDelivery(null)}
+          onClose={closeModal}
           title={selectedDelivery.label ?? `Version ${selectedDelivery.versionNumber}`}
           description={
             selectedDelivery.scheduledAt
@@ -191,6 +215,53 @@ export default function DashboardCalendarView({
             >
               Open review page
             </Link>
+
+            {confirmingDelete ? (
+              <div className="flex flex-col gap-3 p-4 bg-white border-2 border-[#e10600]">
+                <p className="text-sm font-extrabold uppercase text-[#e10600]">
+                  Delete this post?
+                </p>
+                <p className="text-xs text-black/50">
+                  This permanently removes the post and its review link. This
+                  can&apos;t be undone.
+                </p>
+                {deleteError && (
+                  <p className="text-xs font-medium text-[#e10600]" role="alert">
+                    {deleteError}
+                  </p>
+                )}
+                <div className="flex gap-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setConfirmingDelete(false);
+                      setDeleteError("");
+                    }}
+                    disabled={isDeleting}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    variant="danger"
+                    size="sm"
+                    onClick={handleDelete}
+                    loading={isDeleting}
+                  >
+                    Confirm delete
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setConfirmingDelete(true)}
+                fullWidth
+              >
+                Delete post
+              </Button>
+            )}
           </div>
         </Modal>
       )}

@@ -44,14 +44,19 @@ const statusDot: Record<Status, string> = {
 
 function DayDetailModal({
   delivery,
+  copyStatus,
   onClose,
   onStatusChange,
+  onCopyStatusChange,
 }: {
   delivery: CalendarDelivery;
+  copyStatus: Status;
   onClose: () => void;
   onStatusChange: (status: Status) => void;
+  onCopyStatusChange: (status: Status) => void;
 }) {
   const date = new Date(delivery.scheduledAt!);
+  const creativeRevealed = copyStatus === "APPROVED" || !delivery.copyText;
 
   return (
     <Modal
@@ -67,7 +72,16 @@ function DayDetailModal({
     >
       <div className="flex flex-col gap-6">
         <div className="border-2 border-black">
-          {delivery.sourceType === "DRIVE_LINK" && delivery.driveUrl ? (
+          {!creativeRevealed ? (
+            <div className="p-6">
+              <p className="text-xs font-mono font-bold uppercase tracking-wider text-black/40 mb-3">
+                Copy / legenda
+              </p>
+              <p className="text-sm text-black whitespace-pre-wrap leading-relaxed">
+                {delivery.copyText}
+              </p>
+            </div>
+          ) : delivery.sourceType === "DRIVE_LINK" && delivery.driveUrl ? (
             <DriveEmbed
               driveUrl={delivery.driveUrl}
               fileName={delivery.fileName}
@@ -87,11 +101,27 @@ function DayDetailModal({
           )}
         </div>
 
-        <ApprovalPanel
-          token={delivery.reviewToken}
-          status={delivery.status as Status}
-          onStatusChange={onStatusChange}
-        />
+        {creativeRevealed ? (
+          <ApprovalPanel
+            token={delivery.reviewToken}
+            status={delivery.status as Status}
+            onStatusChange={onStatusChange}
+          />
+        ) : (
+          <ApprovalPanel
+            token={delivery.reviewToken}
+            status={copyStatus}
+            onStatusChange={onCopyStatusChange}
+            actionPrefix="copy-"
+            labels={{
+              heading: "Decisão sobre a copy",
+              approveButton: "Aprovar copy",
+              approveConfirmTitle: "Confirmar aprovação da copy",
+              requestButton: "Solicitar alterações na copy",
+              requestConfirmTitle: "Solicitar alterações na copy",
+            }}
+          />
+        )}
       </div>
     </Modal>
   );
@@ -105,6 +135,7 @@ export default function CalendarClientShell({ data }: CalendarClientShellProps) 
     return new Date(today.getFullYear(), today.getMonth(), 1);
   });
   const [statuses, setStatuses] = useState<Record<string, Status>>({});
+  const [copyStatuses, setCopyStatuses] = useState<Record<string, Status>>({});
   const [openDeliveryId, setOpenDeliveryId] = useState<string | null>(null);
 
   const deliveriesByDay = useMemo(() => {
@@ -176,8 +207,15 @@ export default function CalendarClientShell({ data }: CalendarClientShellProps) 
           {grid.map((date) => {
             const inMonth = date.getMonth() === monthDate.getMonth();
             const delivery = deliveriesByDay.get(dayKey(date));
+            const copyStatus = delivery
+              ? copyStatuses[delivery.id] ?? (delivery.copyStatus as Status)
+              : null;
+            const creativeRevealed =
+              !delivery || copyStatus === "APPROVED" || !delivery.copyText;
             const status = delivery
-              ? statuses[delivery.id] ?? (delivery.status as Status)
+              ? creativeRevealed
+                ? statuses[delivery.id] ?? (delivery.status as Status)
+                : copyStatus
               : null;
 
             return (
@@ -229,9 +267,15 @@ export default function CalendarClientShell({ data }: CalendarClientShellProps) 
       {openDelivery && (
         <DayDetailModal
           delivery={openDelivery}
+          copyStatus={
+            copyStatuses[openDelivery.id] ?? (openDelivery.copyStatus as Status)
+          }
           onClose={() => setOpenDeliveryId(null)}
           onStatusChange={(status) =>
             setStatuses((prev) => ({ ...prev, [openDelivery.id]: status }))
+          }
+          onCopyStatusChange={(status) =>
+            setCopyStatuses((prev) => ({ ...prev, [openDelivery.id]: status }))
           }
         />
       )}

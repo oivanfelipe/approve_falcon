@@ -19,6 +19,8 @@ export async function loadCalendarPageData(token: string) {
           versionNumber: true,
           label: true,
           status: true,
+          copyText: true,
+          copyStatus: true,
           scheduledAt: true,
           sourceType: true,
           filePath: true,
