@@ -125,6 +125,7 @@ export default async function ReviewPage({ params, searchParams }: PageProps) {
       initialCopyStatus={
         delivery.copyStatus as "PENDING" | "APPROVED" | "CHANGES_REQUESTED"
       }
+      scheduledAt={delivery.scheduledAt}
       versionNumber={delivery.versionNumber}
       label={delivery.label}
       projectName={delivery.project.name}

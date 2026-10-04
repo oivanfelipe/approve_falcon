@@ -10,13 +10,15 @@ import CommentSystem, {
   type CommentData,
 } from "@/features/review/components/CommentSystem";
 import ImageWithComments from "@/features/review/components/ImageWithComments";
+import TextWithComments from "@/features/review/components/TextWithComments";
 import FilePreview from "@/features/review/components/FilePreview";
 import DriveEmbed from "@/features/review/components/DriveEmbed";
 import VersionSwitcher from "@/features/review/components/VersionSwitcher";
+import { formatScheduledDate } from "@/features/calendar/lib/monthGrid";
 import { cn } from "@/lib/utils";
 import type { BadgeVariant } from "@/components/ui/Badge";
 import { Button } from "@/components/ui";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, Calendar } from "lucide-react";
 import {
   DEFAULT_PRIMARY_COLOR,
   DEFAULT_SECONDARY_COLOR,
@@ -49,6 +51,7 @@ interface ReviewClientShellProps {
   initialStatus: Status;
   copyText?: string | null;
   initialCopyStatus?: Status;
+  scheduledAt?: string | Date | null;
   versionNumber: number;
   label: string | null;
   projectName: string;
@@ -143,6 +146,7 @@ export default function ReviewClientShell({
   initialStatus,
   copyText,
   initialCopyStatus = "APPROVED",
+  scheduledAt,
   versionNumber,
   label,
   projectName,
@@ -166,6 +170,7 @@ export default function ReviewClientShell({
   const [status, setStatus] = useState<Status>(initialStatus);
   const [copyStatus, setCopyStatus] = useState<Status>(initialCopyStatus);
   const creativeRevealed = copyStatus === "APPROVED" || !copyText;
+  const scheduledDate = scheduledAt ? new Date(scheduledAt) : null;
   const [comments, setComments] = useState<CommentData[]>(initialComments);
   const [showChat, setShowChat] = useState(false);
   const [openPinCommentId, setOpenPinCommentId] = useState<string | null>(null);
@@ -236,6 +241,16 @@ export default function ReviewClientShell({
               v{versionNumber}
             </span>
             {label && <span className="text-xs text-black/50">{label}</span>}
+            {scheduledDate && (
+              <span className="inline-flex items-center gap-1 text-xs font-semibold text-black/60">
+                <Calendar className="w-3.5 h-3.5" />
+                {formatScheduledDate(scheduledDate, "pt-BR", {
+                  day: "2-digit",
+                  month: "short",
+                  year: "numeric",
+                })}
+              </span>
+            )}
             <span className="text-xs text-black/40 truncate ml-auto">
               {fileName}
             </span>
@@ -246,9 +261,18 @@ export default function ReviewClientShell({
               <p className="text-xs font-mono font-bold uppercase tracking-wider text-black/40 mb-3">
                 Copy / legenda
               </p>
-              <p className="text-sm text-black whitespace-pre-wrap leading-relaxed">
-                {copyText}
-              </p>
+              <TextWithComments
+                text={copyText ?? ""}
+                comments={comments}
+                pinnedCommentNumbers={pinnedCommentNumbers}
+                token={token}
+                onCommentAdded={(c) => setComments((prev) => [...prev, c])}
+                onPinClick={(id) => {
+                  setShowChat(true);
+                  setOpenPinCommentId(id);
+                }}
+                primaryColor={primaryColor}
+              />
               {copyStatus === "CHANGES_REQUESTED" && (
                 <p className="mt-5 text-xs text-black/50">
                   Alterações solicitadas na copy — aguardando uma nova versão.
