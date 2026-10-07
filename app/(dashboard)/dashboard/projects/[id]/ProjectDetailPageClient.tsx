@@ -434,6 +434,7 @@ export default function ProjectDetailClient({
             deliveries={liveDeliveries}
             freelancerSlug={freelancerSlug}
             onEmptyDayClick={(dateInputValue) => openUpload(dateInputValue)}
+            onAttachCreative={(deliveryId) => setAttachingId(deliveryId)}
           />
         </Tabs.Panel>
 

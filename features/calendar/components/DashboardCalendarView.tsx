@@ -30,12 +30,16 @@ interface CalendarDeliveryRow {
   scheduledAt: Date | null;
   status: Status;
   reviewToken: string;
+  fileName?: string | null;
+  theme?: string | null;
+  copyStatus?: Status;
 }
 
 interface DashboardCalendarViewProps {
   deliveries: CalendarDeliveryRow[];
   freelancerSlug?: string | null;
   onEmptyDayClick: (dateInputValue: string) => void;
+  onAttachCreative?: (deliveryId: string) => void;
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -64,6 +68,7 @@ export default function DashboardCalendarView({
   deliveries,
   freelancerSlug,
   onEmptyDayClick,
+  onAttachCreative,
 }: DashboardCalendarViewProps) {
   const [monthDate, setMonthDate] = useState(() => {
     const today = new Date();
@@ -191,7 +196,11 @@ export default function DashboardCalendarView({
         <Modal
           isOpen
           onClose={closeModal}
-          title={selectedDelivery.label ?? `Version ${selectedDelivery.versionNumber}`}
+          title={
+            selectedDelivery.theme ??
+            selectedDelivery.label ??
+            `Version ${selectedDelivery.versionNumber}`
+          }
           description={
             selectedDelivery.scheduledAt
               ? formatScheduledDate(new Date(selectedDelivery.scheduledAt), "en-US", {
@@ -204,9 +213,28 @@ export default function DashboardCalendarView({
           size="sm"
         >
           <div className="flex flex-col gap-4">
-            <Badge variant={statusVariant[selectedDelivery.status]} className="w-fit">
-              {statusLabel[selectedDelivery.status]}
-            </Badge>
+            <div className="flex items-center gap-2 flex-wrap">
+              {selectedDelivery.copyStatus && (
+                <Badge variant={statusVariant[selectedDelivery.copyStatus]} size="sm">
+                  Copy: {statusLabel[selectedDelivery.copyStatus]}
+                </Badge>
+              )}
+              <Badge variant={statusVariant[selectedDelivery.status]} size="sm">
+                Art: {statusLabel[selectedDelivery.status]}
+              </Badge>
+            </div>
+
+            {!selectedDelivery.fileName && onAttachCreative && (
+              <Button
+                variant="outline"
+                size="sm"
+                fullWidth
+                onClick={() => onAttachCreative(selectedDelivery.id)}
+              >
+                Subir arte
+              </Button>
+            )}
+
             <Link
               href={getPublicReviewPath(selectedDelivery.reviewToken, freelancerSlug)}
               target="_blank"
