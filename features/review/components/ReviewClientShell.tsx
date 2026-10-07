@@ -50,6 +50,12 @@ interface ReviewClientShellProps {
   allowDownload: boolean;
   initialStatus: Status;
   copyText?: string | null;
+  planNumber?: string | null;
+  theme?: string | null;
+  format?: string | null;
+  product?: string | null;
+  objective?: string | null;
+  artCopy?: string | null;
   initialCopyStatus?: Status;
   scheduledAt?: string | Date | null;
   versionNumber: number;
@@ -145,6 +151,12 @@ export default function ReviewClientShell({
   allowDownload,
   initialStatus,
   copyText,
+  planNumber,
+  theme,
+  format,
+  product,
+  objective,
+  artCopy,
   initialCopyStatus = "APPROVED",
   scheduledAt,
   versionNumber,
@@ -169,7 +181,9 @@ export default function ReviewClientShell({
 
   const [status, setStatus] = useState<Status>(initialStatus);
   const [copyStatus, setCopyStatus] = useState<Status>(initialCopyStatus);
-  const creativeRevealed = copyStatus === "APPROVED" || !copyText;
+  const hasCopyContent = Boolean(copyText || artCopy || theme || objective);
+  const creativeRevealed = copyStatus === "APPROVED" || !hasCopyContent;
+  const hasCreativeFile = Boolean(driveUrl || signedUrl);
   const scheduledDate = scheduledAt ? new Date(scheduledAt) : null;
   const [comments, setComments] = useState<CommentData[]>(initialComments);
   const [showChat, setShowChat] = useState(false);
@@ -257,27 +271,77 @@ export default function ReviewClientShell({
           </div>
 
           {!creativeRevealed ? (
-            <div className="border-2 border-black p-6 bg-white">
-              <p className="text-xs font-mono font-bold uppercase tracking-wider text-black/40 mb-3">
-                Copy / legenda
-              </p>
-              <TextWithComments
-                text={copyText ?? ""}
-                comments={comments}
-                pinnedCommentNumbers={pinnedCommentNumbers}
-                token={token}
-                onCommentAdded={(c) => setComments((prev) => [...prev, c])}
-                onPinClick={(id) => {
-                  setShowChat(true);
-                  setOpenPinCommentId(id);
-                }}
-                primaryColor={primaryColor}
-              />
+            <div className="border-2 border-black p-6 bg-white flex flex-col gap-5">
+              {(theme || format || product || objective) && (
+                <div className="flex flex-col gap-2 pb-4 border-b border-black/10">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {planNumber && (
+                      <span className="font-mono text-xs font-bold text-white bg-black px-1.5 py-0.5">
+                        {planNumber}
+                      </span>
+                    )}
+                    {theme && (
+                      <span className="text-sm font-bold text-black">
+                        {theme}
+                      </span>
+                    )}
+                    {format && (
+                      <span className="text-xs font-mono text-black/40">
+                        {format}
+                      </span>
+                    )}
+                    {product && (
+                      <span className="text-xs text-black/40">{product}</span>
+                    )}
+                  </div>
+                  {objective && (
+                    <p className="text-xs text-black/50">{objective}</p>
+                  )}
+                </div>
+              )}
+
+              {artCopy && (
+                <div>
+                  <p className="text-xs font-mono font-bold uppercase tracking-wider text-black/40 mb-2">
+                    Copy da arte
+                  </p>
+                  <p className="text-sm text-black whitespace-pre-wrap leading-relaxed">
+                    {artCopy}
+                  </p>
+                </div>
+              )}
+
+              {copyText && (
+                <div>
+                  <p className="text-xs font-mono font-bold uppercase tracking-wider text-black/40 mb-2">
+                    Legenda e CTA
+                  </p>
+                  <TextWithComments
+                    text={copyText}
+                    comments={comments}
+                    pinnedCommentNumbers={pinnedCommentNumbers}
+                    token={token}
+                    onCommentAdded={(c) => setComments((prev) => [...prev, c])}
+                    onPinClick={(id) => {
+                      setShowChat(true);
+                      setOpenPinCommentId(id);
+                    }}
+                    primaryColor={primaryColor}
+                  />
+                </div>
+              )}
+
               {copyStatus === "CHANGES_REQUESTED" && (
-                <p className="mt-5 text-xs text-black/50">
-                  Alterações solicitadas na copy — aguardando uma nova versão.
+                <p className="text-xs text-black/50">
+                  Alterações solicitadas — aguardando uma nova versão.
                 </p>
               )}
+            </div>
+          ) : !hasCreativeFile ? (
+            <div className="border-2 border-black p-6 bg-white text-center">
+              <p className="text-sm text-black/50">
+                Copy aprovada. Aguardando a arte ser enviada pelo time.
+              </p>
             </div>
           ) : isDriveLink && driveUrl ? (
             <DriveEmbed

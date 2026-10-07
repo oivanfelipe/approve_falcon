@@ -37,6 +37,12 @@ export async function GET(
       status: true,
       reviewToken: true,
       createdAt: true,
+      planNumber: true,
+      theme: true,
+      format: true,
+      product: true,
+      copyStatus: true,
+      copyText: true,
       _count: {
         select: { comments: true, views: true },
       },
@@ -63,6 +69,12 @@ export async function GET(
     viewCount: d._count.views,
     createdAt: d.createdAt,
     lastViewedAt: d.views[0]?.createdAt ?? null,
+    planNumber: d.planNumber,
+    theme: d.theme,
+    format: d.format,
+    product: d.product,
+    copyStatus: d.copyStatus,
+    copyText: d.copyText,
   }));
 
   return NextResponse.json(result);

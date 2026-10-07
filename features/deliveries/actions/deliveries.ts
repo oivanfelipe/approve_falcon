@@ -220,3 +220,114 @@ export async function deleteDelivery(
   return {};
 }
 
+const attachCreativeSchema = z
+  .object({
+    deliveryId: z.string().cuid(),
+    sourceType: z.enum(["FILE", "DRIVE_LINK"]).default("FILE"),
+    filePath: z.string().min(1).optional(),
+    fileName: z.string().min(1),
+    fileSize: z.coerce.number().int().positive().optional(),
+    mimeType: z.string().min(1).optional(),
+    driveUrl: z.string().url().max(2000).optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (data.sourceType === "DRIVE_LINK") {
+      if (!data.driveUrl || !isGoogleDriveUrl(data.driveUrl)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Cole um link válido do Google Drive.",
+          path: ["driveUrl"],
+        });
+      }
+      return;
+    }
+
+    if (!data.filePath || !data.fileSize || !data.mimeType) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Arquivo inválido.",
+        path: ["filePath"],
+      });
+    }
+  });
+
+export async function attachCreativeToDelivery(
+  raw: Record<string, unknown>,
+): Promise<{ error?: string }> {
+  const session = await auth();
+  if (!session?.user?.id) return { error: "Not authenticated" };
+
+  const parsed = attachCreativeSchema.safeParse(raw);
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
+  }
+
+  const {
+    deliveryId,
+    sourceType,
+    filePath,
+    fileName,
+    fileSize,
+    mimeType,
+    driveUrl,
+  } = parsed.data;
+
+  const delivery = await prisma.delivery.findFirst({
+    where: { id: deliveryId, project: { userId: session.user.ownerId } },
+    select: { id: true, projectId: true, status: true },
+  });
+  if (!delivery) return { error: "Delivery not found" };
+
+  try {
+    assertDeliveryNotApproved(delivery);
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : "Delivery bloqueada" };
+  }
+
+  await prisma.delivery.update({
+    where: { id: deliveryId },
+    data: {
+      sourceType,
+      filePath: sourceType === "FILE" ? filePath : null,
+      fileName,
+      fileSize: sourceType === "FILE" ? fileSize : null,
+      mimeType: sourceType === "FILE" ? mimeType : null,
+      driveUrl: sourceType === "DRIVE_LINK" ? driveUrl : null,
+    },
+  });
+
+  revalidatePath(`/dashboard/projects/${delivery.projectId}`);
+  return {};
+}
+
+const scheduleDeliverySchema = z.object({
+  deliveryId: z.string().cuid(),
+  scheduledAt: z.string().min(1),
+});
+
+export async function scheduleDelivery(
+  raw: Record<string, unknown>,
+): Promise<{ error?: string }> {
+  const session = await auth();
+  if (!session?.user?.id) return { error: "Not authenticated" };
+
+  const parsed = scheduleDeliverySchema.safeParse(raw);
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
+  }
+
+  const delivery = await prisma.delivery.findFirst({
+    where: { id: parsed.data.deliveryId, project: { userId: session.user.ownerId } },
+    select: { id: true, projectId: true },
+  });
+  if (!delivery) return { error: "Delivery not found" };
+
+  await prisma.delivery.update({
+    where: { id: delivery.id },
+    data: { scheduledAt: new Date(parsed.data.scheduledAt) },
+  });
+
+  revalidatePath(`/dashboard/projects/${delivery.projectId}`);
+  return {};
+}
+

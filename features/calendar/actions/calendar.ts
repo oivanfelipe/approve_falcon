@@ -3,6 +3,8 @@
 import { prisma } from "@/lib/prisma/client";
 import { auth } from "@/auth";
 import { generateReviewToken } from "@/lib/tokens";
+import { revalidatePath } from "next/cache";
+import { z } from "zod";
 
 export async function getOrCreateCalendarToken(
   projectId: string,
@@ -25,4 +27,64 @@ export async function getOrCreateCalendarToken(
   });
 
   return { token };
+}
+
+const contentPlanEntrySchema = z.object({
+  planNumber: z.string().max(50).nullable().optional(),
+  theme: z.string().max(300).nullable().optional(),
+  format: z.string().max(100).nullable().optional(),
+  product: z.string().max(100).nullable().optional(),
+  objective: z.string().max(5000).nullable().optional(),
+  artCopy: z.string().max(5000).nullable().optional(),
+  copyText: z.string().max(5000).nullable().optional(),
+});
+
+const importContentPlanSchema = z.object({
+  projectId: z.string().cuid(),
+  entries: z.array(contentPlanEntrySchema).min(1).max(500),
+});
+
+export async function importContentPlan(
+  raw: unknown,
+): Promise<{ count?: number; error?: string }> {
+  const session = await auth();
+  if (!session?.user?.id) return { error: "Not authenticated" };
+
+  const parsed = importContentPlanSchema.safeParse(raw);
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Dados inválidos" };
+  }
+  const { projectId, entries } = parsed.data;
+
+  const project = await prisma.project.findFirst({
+    where: { id: projectId, userId: session.user.ownerId },
+    select: { id: true, _count: { select: { deliveries: true } } },
+  });
+  if (!project) return { error: "Project not found" };
+
+  let nextVersion = project._count.deliveries + 1;
+
+  await prisma.delivery.createMany({
+    data: entries.map((entry) => ({
+      projectId,
+      versionNumber: nextVersion++,
+      label: entry.theme || null,
+      planNumber: entry.planNumber || null,
+      theme: entry.theme || null,
+      format: entry.format || null,
+      product: entry.product || null,
+      objective: entry.objective || null,
+      artCopy: entry.artCopy || null,
+      copyText: entry.copyText || null,
+      copyStatus: "PENDING",
+      scheduledAt: null,
+      sourceType: "FILE",
+      fileName: null,
+      reviewToken: generateReviewToken(),
+    })),
+  });
+
+  revalidatePath(`/dashboard/projects/${projectId}`);
+
+  return { count: entries.length };
 }

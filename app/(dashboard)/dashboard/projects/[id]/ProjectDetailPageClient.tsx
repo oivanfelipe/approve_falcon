@@ -8,9 +8,11 @@ import { Button } from "@/components/ui/Button";
 import NewDeliveryModal from "@/features/deliveries/components/NewDeliveryModal";
 import CalendarLinkButton from "@/features/calendar/components/CalendarLinkButton";
 import DashboardCalendarView from "@/features/calendar/components/DashboardCalendarView";
+import ImportSpreadsheetModal from "@/features/calendar/components/ImportSpreadsheetModal";
+import { scheduleDelivery } from "@/features/deliveries/actions/deliveries";
 import { Tabs } from "@/components/ui/Tabs";
 import type { BadgeVariant } from "@/components/ui/Badge";
-import { Copy } from "lucide-react";
+import { Copy, Upload } from "lucide-react";
 import { getPublicReviewPath } from "@/lib/freelancer-branding-shared";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -20,7 +22,7 @@ interface DeliveryRow {
   versionNumber: number;
   label: string | null;
   scheduledAt: Date | null;
-  fileName: string;
+  fileName: string | null;
   fileSize: number | null;
   mimeType: string | null;
   sourceType: "FILE" | "DRIVE_LINK";
@@ -30,6 +32,12 @@ interface DeliveryRow {
   viewCount: number;
   createdAt: Date;
   lastViewedAt: Date | null;
+  planNumber: string | null;
+  theme: string | null;
+  format: string | null;
+  product: string | null;
+  copyStatus: "PENDING" | "APPROVED" | "CHANGES_REQUESTED";
+  copyText: string | null;
 }
 
 interface ProjectDetailClientProps {
@@ -127,6 +135,91 @@ function ShareButtons({
   );
 }
 
+// ─── Unscheduled row ──────────────────────────────────────────────────────────
+
+function UnscheduledRow({
+  delivery,
+  onAttach,
+  onScheduled,
+}: {
+  delivery: DeliveryRow;
+  onAttach: () => void;
+  onScheduled: () => void;
+}) {
+  const [date, setDate] = useState("");
+  const [isPending, setIsPending] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleSchedule = async () => {
+    if (!date) return;
+    setIsPending(true);
+    setError("");
+    const result = await scheduleDelivery({
+      deliveryId: delivery.id,
+      scheduledAt: date,
+    });
+    setIsPending(false);
+    if (result.error) {
+      setError(result.error);
+      return;
+    }
+    onScheduled();
+  };
+
+  return (
+    <div className="flex flex-col sm:flex-row sm:items-center gap-3 p-4 bg-white border-2 border-black shadow-hard-sm">
+      <div className="flex items-center gap-3 flex-1 min-w-0">
+        {delivery.planNumber && (
+          <span className="shrink-0 font-mono text-xs font-bold text-white bg-black px-2 py-0.5">
+            {delivery.planNumber}
+          </span>
+        )}
+        <div className="min-w-0">
+          <p className="text-sm font-semibold text-black truncate">
+            {delivery.theme ?? delivery.label ?? `Versão ${delivery.versionNumber}`}
+          </p>
+          <p className="text-xs text-black/40 truncate">
+            {[delivery.format, delivery.product].filter(Boolean).join(" · ")}
+          </p>
+        </div>
+      </div>
+
+      <div className="flex items-center gap-2 shrink-0 flex-wrap">
+        <Badge variant={statusVariant[delivery.copyStatus]} size="sm" dot>
+          Copy: {statusLabel[delivery.copyStatus]}
+        </Badge>
+
+        {!delivery.fileName && (
+          <Button variant="outline" size="sm" onClick={onAttach}>
+            Subir arte
+          </Button>
+        )}
+
+        <input
+          type="date"
+          value={date}
+          onChange={(e) => setDate(e.target.value)}
+          className="border-2 border-black px-2 py-1.5 text-xs font-mono"
+        />
+        <Button
+          variant="primary"
+          size="sm"
+          disabled={!date || isPending}
+          loading={isPending}
+          onClick={handleSchedule}
+        >
+          Agendar
+        </Button>
+        {error && (
+          <span className="text-[11px] font-medium text-[#e10600]">
+            {error}
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function ProjectDetailClient({
@@ -141,12 +234,18 @@ export default function ProjectDetailClient({
   const [liveDeliveries, setLiveDeliveries] = useState(initialDeliveries);
   const [uploadOpen, setUploadOpen] = useState(false);
   const [uploadInitialDate, setUploadInitialDate] = useState<string | undefined>();
-  const [viewMode, setViewMode] = useState<"list" | "calendar">("list");
+  const [viewMode, setViewMode] = useState<"list" | "calendar" | "unscheduled">(
+    "list",
+  );
+  const [importOpen, setImportOpen] = useState(false);
+  const [attachingId, setAttachingId] = useState<string | null>(null);
 
   const openUpload = (dateInputValue?: string) => {
     setUploadInitialDate(dateInputValue);
     setUploadOpen(true);
   };
+
+  const unscheduledDeliveries = liveDeliveries.filter((d) => !d.scheduledAt);
 
   // ─── Supabase Realtime + refetch helper ────────────────────────────────────
   const refetch = React.useCallback(async () => {
@@ -261,6 +360,14 @@ export default function ProjectDetailClient({
               initialToken={calendarToken}
             />
             <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setImportOpen(true)}
+              leftIcon={<Upload className="w-3.5 h-3.5" />}
+            >
+              Importar planilha
+            </Button>
+            <Button
               variant="primary"
               size="sm"
               onClick={() => openUpload()}
@@ -289,11 +396,38 @@ export default function ProjectDetailClient({
       </div>
 
       {/* View toggle */}
-      <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as "list" | "calendar")}>
+      <Tabs
+        value={viewMode}
+        onValueChange={(v) => setViewMode(v as "list" | "calendar" | "unscheduled")}
+      >
         <Tabs.List>
           <Tabs.Tab value="list">List</Tabs.Tab>
           <Tabs.Tab value="calendar">Calendar</Tabs.Tab>
+          <Tabs.Tab value="unscheduled">
+            Sem data
+            {unscheduledDeliveries.length > 0 && ` (${unscheduledDeliveries.length})`}
+          </Tabs.Tab>
         </Tabs.List>
+
+        <Tabs.Panel value="unscheduled" className="mt-4">
+          {unscheduledDeliveries.length > 0 ? (
+            <div className="flex flex-col gap-2">
+              {unscheduledDeliveries.map((d) => (
+                <UnscheduledRow
+                  key={d.id}
+                  delivery={d}
+                  onAttach={() => setAttachingId(d.id)}
+                  onScheduled={refetch}
+                />
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-black/40 py-10 text-center">
+              Nenhum post sem data. Importe uma planilha ou agende pelo
+              calendário.
+            </p>
+          )}
+        </Tabs.Panel>
 
         <Tabs.Panel value="calendar" className="mt-4">
           <DashboardCalendarView
@@ -464,6 +598,29 @@ export default function ProjectDetailClient({
           refetch();
         }}
         initialScheduledAt={uploadInitialDate}
+      />
+
+      {attachingId && (
+        <NewDeliveryModal
+          projectId={projectId}
+          freelancerSlug={freelancerSlug}
+          isOpen
+          attachToDeliveryId={attachingId}
+          onClose={() => setAttachingId(null)}
+          onSuccess={() => {
+            refetch();
+          }}
+        />
+      )}
+
+      <ImportSpreadsheetModal
+        projectId={projectId}
+        isOpen={importOpen}
+        onClose={() => setImportOpen(false)}
+        onSuccess={() => {
+          refetch();
+          setViewMode("unscheduled");
+        }}
       />
     </div>
   );

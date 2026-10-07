@@ -55,6 +55,12 @@ export default async function ProjectDetailPage({ params }: PageProps) {
     viewCount: d._count.views,
     createdAt: d.createdAt,
     lastViewedAt: d.views[0]?.createdAt ?? null,
+    planNumber: d.planNumber,
+    theme: d.theme,
+    format: d.format,
+    product: d.product,
+    copyStatus: d.copyStatus as "PENDING" | "APPROVED" | "CHANGES_REQUESTED",
+    copyText: d.copyText,
   }));
 
   return (

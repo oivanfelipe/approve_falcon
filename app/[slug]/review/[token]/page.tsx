@@ -114,7 +114,7 @@ export default async function BrandedReviewPage({
       token={token}
       deliveryId={delivery.id}
       signedUrl={signedUrl}
-      fileName={delivery.fileName}
+      fileName={delivery.fileName ?? "Arte"}
       mimeType={delivery.mimeType}
       sourceType={delivery.sourceType}
       driveUrl={delivery.driveUrl}
@@ -123,6 +123,12 @@ export default async function BrandedReviewPage({
         delivery.status as "PENDING" | "APPROVED" | "CHANGES_REQUESTED"
       }
       copyText={delivery.copyText}
+      planNumber={delivery.planNumber}
+      theme={delivery.theme}
+      format={delivery.format}
+      product={delivery.product}
+      objective={delivery.objective}
+      artCopy={delivery.artCopy}
       initialCopyStatus={
         delivery.copyStatus as "PENDING" | "APPROVED" | "CHANGES_REQUESTED"
       }

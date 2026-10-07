@@ -56,7 +56,11 @@ function DayDetailModal({
   onCopyStatusChange: (status: Status) => void;
 }) {
   const date = new Date(delivery.scheduledAt!);
-  const creativeRevealed = copyStatus === "APPROVED" || !delivery.copyText;
+  const hasCopyContent = Boolean(
+    delivery.copyText || delivery.artCopy || delivery.theme || delivery.objective,
+  );
+  const creativeRevealed = copyStatus === "APPROVED" || !hasCopyContent;
+  const hasCreativeFile = Boolean(delivery.driveUrl || delivery.signedUrl);
 
   return (
     <Modal
@@ -73,25 +77,72 @@ function DayDetailModal({
       <div className="flex flex-col gap-6">
         <div className="border-2 border-black">
           {!creativeRevealed ? (
-            <div className="p-6">
-              <p className="text-xs font-mono font-bold uppercase tracking-wider text-black/40 mb-3">
-                Copy / legenda
-              </p>
-              <p className="text-sm text-black whitespace-pre-wrap leading-relaxed">
-                {delivery.copyText}
-              </p>
+            <div className="p-6 flex flex-col gap-5">
+              {(delivery.theme || delivery.format || delivery.product || delivery.objective) && (
+                <div className="flex flex-col gap-2 pb-4 border-b border-black/10">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {delivery.planNumber && (
+                      <span className="font-mono text-xs font-bold text-white bg-black px-1.5 py-0.5">
+                        {delivery.planNumber}
+                      </span>
+                    )}
+                    {delivery.theme && (
+                      <span className="text-sm font-bold text-black">
+                        {delivery.theme}
+                      </span>
+                    )}
+                    {delivery.format && (
+                      <span className="text-xs font-mono text-black/40">
+                        {delivery.format}
+                      </span>
+                    )}
+                    {delivery.product && (
+                      <span className="text-xs text-black/40">{delivery.product}</span>
+                    )}
+                  </div>
+                  {delivery.objective && (
+                    <p className="text-xs text-black/50">{delivery.objective}</p>
+                  )}
+                </div>
+              )}
+
+              {delivery.artCopy && (
+                <div>
+                  <p className="text-xs font-mono font-bold uppercase tracking-wider text-black/40 mb-2">
+                    Copy da arte
+                  </p>
+                  <p className="text-sm text-black whitespace-pre-wrap leading-relaxed">
+                    {delivery.artCopy}
+                  </p>
+                </div>
+              )}
+
+              {delivery.copyText && (
+                <div>
+                  <p className="text-xs font-mono font-bold uppercase tracking-wider text-black/40 mb-2">
+                    Legenda e CTA
+                  </p>
+                  <p className="text-sm text-black whitespace-pre-wrap leading-relaxed">
+                    {delivery.copyText}
+                  </p>
+                </div>
+              )}
             </div>
+          ) : !hasCreativeFile ? (
+            <p className="p-6 text-sm text-black/50 text-center">
+              Copy aprovada. Aguardando a arte ser enviada pelo time.
+            </p>
           ) : delivery.sourceType === "DRIVE_LINK" && delivery.driveUrl ? (
             <DriveEmbed
               driveUrl={delivery.driveUrl}
-              fileName={delivery.fileName}
+              fileName={delivery.fileName ?? "Arte"}
               allowDownload={delivery.allowDownload}
             />
           ) : delivery.signedUrl && delivery.mimeType ? (
             <FilePreview
               signedUrl={delivery.signedUrl}
               mimeType={delivery.mimeType}
-              fileName={delivery.fileName}
+              fileName={delivery.fileName ?? "Arte"}
               allowDownload={delivery.allowDownload}
             />
           ) : (
@@ -211,7 +262,9 @@ export default function CalendarClientShell({ data }: CalendarClientShellProps) 
               ? copyStatuses[delivery.id] ?? (delivery.copyStatus as Status)
               : null;
             const creativeRevealed =
-              !delivery || copyStatus === "APPROVED" || !delivery.copyText;
+              !delivery ||
+              copyStatus === "APPROVED" ||
+              !(delivery.copyText || delivery.artCopy || delivery.theme || delivery.objective);
             const status = delivery
               ? creativeRevealed
                 ? statuses[delivery.id] ?? (delivery.status as Status)

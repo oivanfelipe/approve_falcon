@@ -102,12 +102,18 @@ model Delivery {
     projectId     String
     versionNumber Int
     label         String? // e.g. "Color adjustments"
-    scheduledAt   DateTime? // publish date shown on the project's content calendar
-    copyText      String? // caption/theme text — approved before the creative is revealed
+    scheduledAt   DateTime? // publish date shown on the project's content calendar — null until the team assigns a day
+    planNumber    String? // "Nº" from the content-plan spreadsheet (e.g. "01")
+    theme         String? // "Tema"
+    format        String? // "Formato" — Carrossel, Estático, Reels, etc.
+    product       String? // "Produto" — optional product/line this post is about
+    objective     String? @db.Text // "Objetivo / Pilar"
+    artCopy       String? @db.Text // "Copy da arte" — script/text that goes inside the creative, for the designer
+    copyText      String? // "Legenda e CTA" — approved before the creative is revealed
     copyStatus    DeliveryStatus @default(PENDING)
     sourceType    DeliverySource @default(FILE)
     filePath      String? // Supabase Storage path — null when sourceType is DRIVE_LINK
-    fileName      String
+    fileName      String? // null until the creative file/link is attached (e.g. right after a spreadsheet import)
     fileSize      Int? // bytes — null when sourceType is DRIVE_LINK
     mimeType      String? // null when sourceType is DRIVE_LINK
     driveUrl      String? // Google Drive share link — set when sourceType is DRIVE_LINK

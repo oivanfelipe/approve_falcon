@@ -10,6 +10,7 @@ import UploadZone from "@/features/deliveries/components/UploadZone";
 import {
   getUploadUrl,
   createDelivery,
+  attachCreativeToDelivery,
 } from "@/features/deliveries/actions/deliveries";
 import { supabaseClient } from "@/lib/supabase/browser";
 import { cn } from "@/lib/utils";
@@ -25,6 +26,8 @@ interface NewDeliveryModalProps {
   onClose: () => void;
   onSuccess: (reviewToken: string) => void;
   initialScheduledAt?: string;
+  /** When set, uploads attach the creative to this existing (text-only) delivery instead of creating a new one. */
+  attachToDeliveryId?: string;
 }
 
 type Step = "upload" | "uploading" | "done" | "error";
@@ -81,7 +84,9 @@ export default function NewDeliveryModal({
   onClose,
   onSuccess,
   initialScheduledAt,
+  attachToDeliveryId,
 }: NewDeliveryModalProps) {
+  const isAttachMode = Boolean(attachToDeliveryId);
   const [step, setStep] = useState<Step>("upload");
   const [sourceMode, setSourceMode] = useState<SourceMode>("file");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -154,27 +159,40 @@ export default function NewDeliveryModal({
 
         setProgress(75);
 
-        // 3) Create delivery record
-        const result = await createDelivery({
-          projectId,
-          label: label.trim() || undefined,
-          scheduledAt: scheduledAt || undefined,
-          copyText: copyText.trim() || undefined,
-          sourceType: "FILE",
-          filePath: urlResult.path,
-          fileName: selectedFile.name,
-          fileSize: selectedFile.size,
-          mimeType: selectedFile.type,
-          allowDownload,
-          password: password.trim() || undefined,
-        });
-
-        if (result.error) throw new Error(result.error);
+        // 3) Create or attach the delivery record
+        let token = "";
+        if (attachToDeliveryId) {
+          const result = await attachCreativeToDelivery({
+            deliveryId: attachToDeliveryId,
+            sourceType: "FILE",
+            filePath: urlResult.path,
+            fileName: selectedFile.name,
+            fileSize: selectedFile.size,
+            mimeType: selectedFile.type,
+          });
+          if (result.error) throw new Error(result.error);
+        } else {
+          const result = await createDelivery({
+            projectId,
+            label: label.trim() || undefined,
+            scheduledAt: scheduledAt || undefined,
+            copyText: copyText.trim() || undefined,
+            sourceType: "FILE",
+            filePath: urlResult.path,
+            fileName: selectedFile.name,
+            fileSize: selectedFile.size,
+            mimeType: selectedFile.type,
+            allowDownload,
+            password: password.trim() || undefined,
+          });
+          if (result.error) throw new Error(result.error);
+          token = result.reviewToken ?? "";
+        }
 
         setProgress(100);
-        setReviewToken(result.reviewToken!);
+        setReviewToken(token);
         setStep("done");
-        onSuccess(result.reviewToken!);
+        onSuccess(token);
       } catch (e) {
         setErrorMsg(e instanceof Error ? e.message : "Falha no envio");
         setStep("error");
@@ -190,24 +208,35 @@ export default function NewDeliveryModal({
       setProgress(50);
 
       try {
-        const result = await createDelivery({
-          projectId,
-          label: label.trim() || undefined,
-          scheduledAt: scheduledAt || undefined,
-          copyText: copyText.trim() || undefined,
-          sourceType: "DRIVE_LINK",
-          driveUrl: trimmedDriveUrl,
-          fileName: driveName.trim() || label.trim() || "Criativo do Google Drive",
-          allowDownload,
-          password: password.trim() || undefined,
-        });
-
-        if (result.error) throw new Error(result.error);
+        let token = "";
+        if (attachToDeliveryId) {
+          const result = await attachCreativeToDelivery({
+            deliveryId: attachToDeliveryId,
+            sourceType: "DRIVE_LINK",
+            driveUrl: trimmedDriveUrl,
+            fileName: driveName.trim() || "Criativo do Google Drive",
+          });
+          if (result.error) throw new Error(result.error);
+        } else {
+          const result = await createDelivery({
+            projectId,
+            label: label.trim() || undefined,
+            scheduledAt: scheduledAt || undefined,
+            copyText: copyText.trim() || undefined,
+            sourceType: "DRIVE_LINK",
+            driveUrl: trimmedDriveUrl,
+            fileName: driveName.trim() || label.trim() || "Criativo do Google Drive",
+            allowDownload,
+            password: password.trim() || undefined,
+          });
+          if (result.error) throw new Error(result.error);
+          token = result.reviewToken ?? "";
+        }
 
         setProgress(100);
-        setReviewToken(result.reviewToken!);
+        setReviewToken(token);
         setStep("done");
-        onSuccess(result.reviewToken!);
+        onSuccess(token);
       } catch (e) {
         setErrorMsg(e instanceof Error ? e.message : "Falha ao salvar o link");
         setStep("error");
@@ -224,8 +253,12 @@ export default function NewDeliveryModal({
     <Modal
       isOpen={isOpen}
       onClose={handleClose}
-      title="Enviar nova versão"
-      description="Envie um arquivo ou cole o link de um criativo no Google Drive para gerar um link de revisão seguro para o cliente."
+      title={isAttachMode ? "Subir a arte" : "Enviar nova versão"}
+      description={
+        isAttachMode
+          ? "Envie o arquivo ou cole o link do criativo já aprovado na copy. Ele aparece pro cliente assim que a arte for salva."
+          : "Envie um arquivo ou cole o link de um criativo no Google Drive para gerar um link de revisão seguro para o cliente."
+      }
       size="md"
       closeOnOverlayClick={step !== "uploading"}
       footer={
@@ -295,63 +328,67 @@ export default function NewDeliveryModal({
             </Tabs.Panel>
           </Tabs>
 
-          <Textarea
-            label="Copy / legenda (opcional)"
-            placeholder="Texto que o cliente vai ler e aprovar antes do criativo…"
-            value={copyText}
-            onChange={(e) => setCopyText(e.target.value)}
-            rows={3}
-            fullWidth
-            hint="Se preenchida, o cliente só vê o criativo depois de aprovar essa copy"
-          />
-
-          <Input
-            label="Rótulo da versão (opcional)"
-            placeholder="Ex.: Ajustes de cor, Versão final…"
-            value={label}
-            onChange={(e) => setLabel(e.target.value)}
-            hint="Exibido no histórico de versões do cliente"
-          />
-
-          <Input
-            type="date"
-            label="Data de publicação (opcional)"
-            value={scheduledAt}
-            onChange={(e) => setScheduledAt(e.target.value)}
-            hint="Se preenchida, esta peça aparece no link de calendário do projeto"
-          />
-
-          <Input
-            type="password"
-            label="Senha do link (opcional)"
-            placeholder="Deixar em branco para sem senha"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            hint="O cliente deve inserir esta senha para ver o arquivo"
-          />
-
-          <label className="flex items-center justify-between cursor-pointer">
-            <span className="text-sm font-medium text-black/70">
-              Permitir download pelo cliente
-            </span>
-            <button
-              type="button"
-              role="switch"
-              aria-checked={allowDownload}
-              onClick={() => setAllowDownload((v) => !v)}
-              className={cn(
-                "relative w-10 h-5.5 border-2 border-black transition-colors duration-150",
-                allowDownload ? "bg-[#e10600]" : "bg-white",
-              )}
-            >
-              <span
-                className={cn(
-                  "absolute top-0.5 left-0.5 w-4 h-4 border border-black transition-transform duration-150",
-                  allowDownload ? "translate-x-4 bg-white" : "translate-x-0 bg-black",
-                )}
+          {!isAttachMode && (
+            <>
+              <Textarea
+                label="Copy / legenda (opcional)"
+                placeholder="Texto que o cliente vai ler e aprovar antes do criativo…"
+                value={copyText}
+                onChange={(e) => setCopyText(e.target.value)}
+                rows={3}
+                fullWidth
+                hint="Se preenchida, o cliente só vê o criativo depois de aprovar essa copy"
               />
-            </button>
-          </label>
+
+              <Input
+                label="Rótulo da versão (opcional)"
+                placeholder="Ex.: Ajustes de cor, Versão final…"
+                value={label}
+                onChange={(e) => setLabel(e.target.value)}
+                hint="Exibido no histórico de versões do cliente"
+              />
+
+              <Input
+                type="date"
+                label="Data de publicação (opcional)"
+                value={scheduledAt}
+                onChange={(e) => setScheduledAt(e.target.value)}
+                hint="Se preenchida, esta peça aparece no link de calendário do projeto"
+              />
+
+              <Input
+                type="password"
+                label="Senha do link (opcional)"
+                placeholder="Deixar em branco para sem senha"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                hint="O cliente deve inserir esta senha para ver o arquivo"
+              />
+
+              <label className="flex items-center justify-between cursor-pointer">
+                <span className="text-sm font-medium text-black/70">
+                  Permitir download pelo cliente
+                </span>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={allowDownload}
+                  onClick={() => setAllowDownload((v) => !v)}
+                  className={cn(
+                    "relative w-10 h-5.5 border-2 border-black transition-colors duration-150",
+                    allowDownload ? "bg-[#e10600]" : "bg-white",
+                  )}
+                >
+                  <span
+                    className={cn(
+                      "absolute top-0.5 left-0.5 w-4 h-4 border border-black transition-transform duration-150",
+                      allowDownload ? "translate-x-4 bg-white" : "translate-x-0 bg-black",
+                    )}
+                  />
+                </button>
+              </label>
+            </>
+          )}
         </div>
       )}
 
@@ -421,13 +458,19 @@ export default function NewDeliveryModal({
               </svg>
             </div>
             <div>
-              <p className="text-sm font-bold text-black">Envio concluído!</p>
+              <p className="text-sm font-bold text-black">
+                {isAttachMode ? "Arte enviada!" : "Envio concluído!"}
+              </p>
               <p className="text-xs text-black/50 mt-0.5">
-                Seu link de revisão está pronto
+                {isAttachMode
+                  ? "O post já aparece pro cliente no calendário"
+                  : "Seu link de revisão está pronto"}
               </p>
             </div>
           </div>
-          <ReviewLinkBox token={reviewToken} slug={freelancerSlug} />
+          {!isAttachMode && (
+            <ReviewLinkBox token={reviewToken} slug={freelancerSlug} />
+          )}
         </div>
       )}
 
