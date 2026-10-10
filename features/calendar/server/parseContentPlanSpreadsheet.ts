@@ -1,4 +1,5 @@
 import ExcelJS from "exceljs";
+import { mapColumnsWithAI } from "./aiColumnMapper";
 
 export interface ContentPlanEntry {
   sheet: string;
@@ -13,14 +14,22 @@ export interface ContentPlanEntry {
   copyText: string | null;
 }
 
+export interface AiMappedColumn {
+  sheet: string;
+  header: string;
+  mappedTo: keyof ContentPlanEntry;
+}
+
 export interface ParseResult {
   entries: ContentPlanEntry[];
   warnings: string[];
+  aiMappedColumns: AiMappedColumn[];
 }
 
 // Matches the agency's content-plan template. Header names are normalized
 // (trimmed, lowercased, accents stripped) before matching, so small template
-// drift (extra spaces, accents) doesn't break the import.
+// drift (extra spaces, accents) doesn't break the import. Columns that still
+// don't match fall through to AI-assisted mapping (see aiColumnMapper.ts).
 const FIELD_ALIASES: Record<string, keyof ContentPlanEntry> = {
   "no": "planNumber",
   "n": "planNumber",
@@ -49,7 +58,7 @@ function normalizeHeader(raw: string): string {
     .trim()
     .toLowerCase()
     .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "") // strip accents
+    .replace(/[\u0300-\u036f]/g, "") // strip accents
     .replace(/[º°]/g, ""); // strip ordinal indicators, e.g. "Nº" → "n"
 }
 
@@ -64,6 +73,12 @@ function cellText(value: ExcelJS.CellValue): string {
   return String(value);
 }
 
+interface SheetHeaders {
+  worksheet: ExcelJS.Worksheet;
+  rawHeaders: (string | undefined)[]; // indexed by column number
+  columnKeys: (keyof ContentPlanEntry | undefined)[]; // indexed by column number
+}
+
 export async function parseContentPlanSpreadsheet(
   buffer: Buffer,
 ): Promise<ParseResult> {
@@ -74,9 +89,7 @@ export async function parseContentPlanSpreadsheet(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   await workbook.xlsx.load(buffer as any);
 
-  const entries: ContentPlanEntry[] = [];
   const warnings: string[] = [];
-
   const sheets = workbook.worksheets.slice(0, MAX_SHEETS);
   if (workbook.worksheets.length > MAX_SHEETS) {
     warnings.push(
@@ -84,14 +97,53 @@ export async function parseContentPlanSpreadsheet(
     );
   }
 
-  for (const worksheet of sheets) {
+  // Pass 1: read headers and apply the deterministic alias match.
+  const sheetHeaders: SheetHeaders[] = sheets.map((worksheet) => {
     const headerRow = worksheet.getRow(1);
+    const rawHeaders: (string | undefined)[] = [];
     const columnKeys: (keyof ContentPlanEntry | undefined)[] = [];
     headerRow.eachCell({ includeEmpty: true }, (cell, colNumber) => {
-      const normalized = normalizeHeader(cellText(cell.value));
-      columnKeys[colNumber] = FIELD_ALIASES[normalized];
+      const raw = cellText(cell.value).trim();
+      if (!raw) return;
+      rawHeaders[colNumber] = raw;
+      columnKeys[colNumber] = FIELD_ALIASES[normalizeHeader(raw)];
     });
+    return { worksheet, rawHeaders, columnKeys };
+  });
 
+  // Collect headers that stayed unmatched, across every sheet, for one
+  // batched AI-mapping call (header text only — never cell content).
+  const unmatchedHeaders = new Set<string>();
+  for (const { rawHeaders, columnKeys } of sheetHeaders) {
+    rawHeaders.forEach((raw, colNumber) => {
+      if (raw && !columnKeys[colNumber]) unmatchedHeaders.add(raw);
+    });
+  }
+
+  const aiMappedColumns: AiMappedColumn[] = [];
+  if (unmatchedHeaders.size > 0) {
+    const aiMapping = await mapColumnsWithAI(Array.from(unmatchedHeaders));
+    if (aiMapping) {
+      for (const sheet of sheetHeaders) {
+        sheet.rawHeaders.forEach((raw, colNumber) => {
+          if (!raw || sheet.columnKeys[colNumber]) return;
+          const mapped = aiMapping[raw];
+          if (mapped) {
+            sheet.columnKeys[colNumber] = mapped;
+            aiMappedColumns.push({
+              sheet: sheet.worksheet.name,
+              header: raw,
+              mappedTo: mapped,
+            });
+          }
+        });
+      }
+    }
+  }
+
+  // Pass 2: extract rows using the (possibly AI-augmented) column mapping.
+  const entries: ContentPlanEntry[] = [];
+  for (const { worksheet, columnKeys } of sheetHeaders) {
     const hasAnyKnownColumn = columnKeys.some((k) => k != null);
     if (!hasAnyKnownColumn) {
       warnings.push(
@@ -140,5 +192,5 @@ export async function parseContentPlanSpreadsheet(
     }
   }
 
-  return { entries, warnings };
+  return { entries, warnings, aiMappedColumns };
 }

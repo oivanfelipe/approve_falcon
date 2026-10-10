@@ -21,6 +21,12 @@ interface ContentPlanEntry {
   copyText: string | null;
 }
 
+interface AiMappedColumn {
+  sheet: string;
+  header: string;
+  mappedTo: string;
+}
+
 interface ImportSpreadsheetModalProps {
   projectId: string;
   isOpen: boolean;
@@ -29,6 +35,17 @@ interface ImportSpreadsheetModalProps {
 }
 
 type Step = "pick" | "parsing" | "preview" | "importing" | "done" | "error";
+
+const FIELD_LABELS: Record<string, string> = {
+  planNumber: "Nº",
+  theme: "Tema",
+  format: "Formato",
+  product: "Produto",
+  weekHint: "Data",
+  objective: "Objetivo / Pilar",
+  artCopy: "Copy da arte",
+  copyText: "Legenda e CTA",
+};
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
@@ -42,6 +59,7 @@ export default function ImportSpreadsheetModal({
   const [entries, setEntries] = useState<ContentPlanEntry[]>([]);
   const [excluded, setExcluded] = useState<Set<number>>(new Set());
   const [warnings, setWarnings] = useState<string[]>([]);
+  const [aiMappedColumns, setAiMappedColumns] = useState<AiMappedColumn[]>([]);
   const [errorMsg, setErrorMsg] = useState("");
   const [isPending, startTransition] = useTransition();
   const [importedCount, setImportedCount] = useState(0);
@@ -52,6 +70,7 @@ export default function ImportSpreadsheetModal({
     setEntries([]);
     setExcluded(new Set());
     setWarnings([]);
+    setAiMappedColumns([]);
     setErrorMsg("");
     setImportedCount(0);
     onClose();
@@ -75,6 +94,7 @@ export default function ImportSpreadsheetModal({
 
         setEntries(data.entries);
         setWarnings(data.warnings ?? []);
+        setAiMappedColumns(data.aiMappedColumns ?? []);
         setExcluded(new Set());
         setStep("preview");
       } catch (e) {
@@ -185,6 +205,21 @@ export default function ImportSpreadsheetModal({
               {warnings.map((w, i) => (
                 <p key={i} className="text-xs text-black/70">
                   {w}
+                </p>
+              ))}
+            </div>
+          )}
+
+          {aiMappedColumns.length > 0 && (
+            <div className="border-2 border-black bg-black/[0.03] p-3 flex flex-col gap-1.5">
+              <p className="text-xs font-bold uppercase text-black">
+                Colunas identificadas por IA — confira antes de importar
+              </p>
+              {aiMappedColumns.map((m, i) => (
+                <p key={i} className="text-xs text-black/70">
+                  <span className="font-mono">&quot;{m.header}&quot;</span> →{" "}
+                  {FIELD_LABELS[m.mappedTo] ?? m.mappedTo}
+                  <span className="text-black/40"> (aba: {m.sheet})</span>
                 </p>
               ))}
             </div>
