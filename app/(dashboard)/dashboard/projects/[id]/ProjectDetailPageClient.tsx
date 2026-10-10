@@ -17,6 +17,7 @@ import { Tabs } from "@/components/ui/Tabs";
 import type { BadgeVariant } from "@/components/ui/Badge";
 import { Copy, Upload } from "lucide-react";
 import { getPublicReviewPath } from "@/lib/freelancer-branding-shared";
+import { cn } from "@/lib/utils";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -162,12 +163,16 @@ function ShareButtons({
 function DeliveryEditRow({
   delivery,
   freelancerSlug,
+  selected,
+  onToggleSelect,
   onAttach,
   onScheduled,
   onDeleted,
 }: {
   delivery: DeliveryRow;
   freelancerSlug?: string | null;
+  selected: boolean;
+  onToggleSelect: () => void;
   onAttach: () => void;
   onScheduled: () => void;
   onDeleted: () => void;
@@ -208,9 +213,21 @@ function DeliveryEditRow({
   };
 
   return (
-    <div className="flex flex-col gap-3 p-4 bg-white border-2 border-black shadow-hard-sm">
+    <div
+      className={cn(
+        "flex flex-col gap-3 p-4 bg-white border-2 shadow-hard-sm",
+        selected ? "border-[#e10600]" : "border-black",
+      )}
+    >
       <div className="flex flex-col sm:flex-row sm:items-start gap-3">
         <div className="flex items-start gap-3 flex-1 min-w-0">
+          <input
+            type="checkbox"
+            checked={selected}
+            onChange={onToggleSelect}
+            aria-label={`Selecionar ${delivery.theme ?? delivery.label ?? "post"}`}
+            className="mt-1 shrink-0"
+          />
           {delivery.planNumber && (
             <span className="shrink-0 font-mono text-xs font-bold text-white bg-black px-2 py-0.5">
               {delivery.planNumber}
@@ -415,6 +432,10 @@ export default function ProjectDetailClient({
   const [viewMode, setViewMode] = useState<"edit" | "calendar">("edit");
   const [importOpen, setImportOpen] = useState(false);
   const [attachingId, setAttachingId] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [isBulkDeleting, setIsBulkDeleting] = useState(false);
+  const [bulkDeleteError, setBulkDeleteError] = useState("");
+  const [confirmingBulkDelete, setConfirmingBulkDelete] = useState(false);
 
   const openUpload = (dateInputValue?: string) => {
     setUploadInitialDate(dateInputValue);
@@ -422,6 +443,23 @@ export default function ProjectDetailClient({
   };
 
   const editOrderedDeliveries = sortForEditing(liveDeliveries);
+
+  const toggleSelected = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    setSelectedIds((prev) =>
+      prev.size === editOrderedDeliveries.length
+        ? new Set()
+        : new Set(editOrderedDeliveries.map((d) => d.id)),
+    );
+  };
 
   // ─── Supabase Realtime + refetch helper ────────────────────────────────────
   const refetch = React.useCallback(async () => {
@@ -441,6 +479,26 @@ export default function ProjectDetailClient({
       // silently ignore
     }
   }, [projectId]);
+
+  const handleBulkDelete = async () => {
+    setIsBulkDeleting(true);
+    setBulkDeleteError("");
+    const results = await Promise.all(
+      Array.from(selectedIds).map((id) => deleteDelivery(id)),
+    );
+    setIsBulkDeleting(false);
+    setConfirmingBulkDelete(false);
+    const failed = results.filter((r) => r.error);
+    if (failed.length > 0) {
+      setBulkDeleteError(
+        `${failed.length} post${failed.length !== 1 ? "s" : ""} não ${
+          failed.length !== 1 ? "puderam" : "pôde"
+        } ser apagado${failed.length !== 1 ? "s" : ""} (ex.: já aprovado).`,
+      );
+    }
+    setSelectedIds(new Set());
+    refetch();
+  };
 
   useEffect(() => {
     const channel = supabaseClient
@@ -593,16 +651,71 @@ export default function ProjectDetailClient({
         <Tabs.Panel value="edit" className="mt-4">
           {editOrderedDeliveries.length > 0 ? (
             <div className="flex flex-col gap-3">
-              <h2 className="text-xs font-mono font-bold text-black/40 uppercase tracking-wider">
-                {editOrderedDeliveries.length} post
-                {editOrderedDeliveries.length !== 1 ? "s" : ""}
-              </h2>
+              <div className="flex items-center gap-3 flex-wrap">
+                <label className="flex items-center gap-1.5 text-xs font-mono font-bold text-black/40 uppercase tracking-wider cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={
+                      selectedIds.size > 0 &&
+                      selectedIds.size === editOrderedDeliveries.length
+                    }
+                    onChange={toggleSelectAll}
+                  />
+                  {editOrderedDeliveries.length} post
+                  {editOrderedDeliveries.length !== 1 ? "s" : ""}
+                </label>
+
+                {selectedIds.size > 0 && (
+                  <div className="flex items-center gap-2 ml-auto flex-wrap">
+                    {confirmingBulkDelete ? (
+                      <>
+                        <span className="text-xs text-black/60">
+                          Apagar {selectedIds.size} selecionado
+                          {selectedIds.size !== 1 ? "s" : ""}?
+                        </span>
+                        <Button
+                          variant="danger"
+                          size="sm"
+                          onClick={handleBulkDelete}
+                          loading={isBulkDeleting}
+                        >
+                          Confirmar
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setConfirmingBulkDelete(false)}
+                          disabled={isBulkDeleting}
+                        >
+                          Cancelar
+                        </Button>
+                      </>
+                    ) : (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setConfirmingBulkDelete(true)}
+                      >
+                        Apagar {selectedIds.size} selecionado
+                        {selectedIds.size !== 1 ? "s" : ""}
+                      </Button>
+                    )}
+                  </div>
+                )}
+              </div>
+              {bulkDeleteError && (
+                <p className="text-xs font-medium text-[#e10600]">
+                  {bulkDeleteError}
+                </p>
+              )}
               <div className="flex flex-col gap-2">
                 {editOrderedDeliveries.map((d) => (
                   <DeliveryEditRow
                     key={d.id}
                     delivery={d}
                     freelancerSlug={freelancerSlug}
+                    selected={selectedIds.has(d.id)}
+                    onToggleSelect={() => toggleSelected(d.id)}
                     onAttach={() => setAttachingId(d.id)}
                     onScheduled={refetch}
                     onDeleted={refetch}

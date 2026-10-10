@@ -343,6 +343,7 @@ export default function ReviewClientShell({
                     text={artCopy}
                     primaryColor={primaryColor}
                     accountLabel={brandName}
+                    caption={copyText}
                   />
                 </div>
               )}

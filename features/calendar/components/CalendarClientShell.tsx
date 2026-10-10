@@ -153,6 +153,7 @@ function DayDetailModal({
                     text={delivery.artCopy}
                     primaryColor={primaryColor}
                     accountLabel={accountLabel}
+                    caption={delivery.copyText}
                   />
                 </div>
               )}

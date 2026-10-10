@@ -67,10 +67,12 @@ export default function ArtCopyMockup({
   text,
   primaryColor = "#e10600",
   accountLabel,
+  caption,
 }: {
   text: string;
   primaryColor?: string;
   accountLabel?: string | null;
+  caption?: string | null;
 }) {
   const slides = parseArtCopySlides(text);
   const [index, setIndex] = useState(0);
@@ -165,10 +167,19 @@ export default function ArtCopyMockup({
         <Bookmark className="w-[22px] h-[22px] text-black ml-auto" strokeWidth={1.75} />
       </div>
 
-      {/* Likes / caption placeholder */}
+      {/* Likes placeholder + real caption */}
       <div className="flex flex-col gap-1.5 px-3 pb-3 border-2 border-black border-t-0 bg-white">
         <div className="h-2 w-20 bg-black/10 rounded-sm" />
-        <div className="h-2 w-32 bg-black/10 rounded-sm" />
+        {caption ? (
+          <p className="text-xs text-black leading-snug line-clamp-3 whitespace-pre-wrap">
+            {accountLabel && (
+              <span className="font-bold mr-1">{accountLabel}</span>
+            )}
+            {caption}
+          </p>
+        ) : (
+          <div className="h-2 w-32 bg-black/10 rounded-sm" />
+        )}
       </div>
 
       <p className="text-center text-[10px] font-mono text-black/30 mt-2">
