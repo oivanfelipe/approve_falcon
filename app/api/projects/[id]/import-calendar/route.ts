@@ -3,7 +3,10 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma/client";
 import { parseContentPlanSpreadsheet } from "@/features/calendar/server/parseContentPlanSpreadsheet";
 
-const MAX_FILE_BYTES = 10 * 1024 * 1024; // 10MB
+// Vercel's platform-level request body cap for Functions is 4.5MB; stay
+// comfortably under it so we return our own clear error instead of the
+// platform rejecting the request before it reaches this handler.
+const MAX_FILE_BYTES = 4 * 1024 * 1024; // 4MB
 
 export async function POST(
   request: NextRequest,
@@ -30,7 +33,10 @@ export async function POST(
   }
   if (file.size > MAX_FILE_BYTES) {
     return NextResponse.json(
-      { error: "Arquivo maior que 10MB" },
+      {
+        error:
+          "Arquivo maior que 4MB. Remova imagens/formatação pesada da planilha (ou separe em abas menores) e tente novamente.",
+      },
       { status: 400 },
     );
   }
