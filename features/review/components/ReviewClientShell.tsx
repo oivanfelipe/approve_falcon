@@ -11,6 +11,7 @@ import CommentSystem, {
 } from "@/features/review/components/CommentSystem";
 import ImageWithComments from "@/features/review/components/ImageWithComments";
 import TextWithComments from "@/features/review/components/TextWithComments";
+import ArtCopyMockup from "@/features/review/components/ArtCopyMockup";
 import FilePreview from "@/features/review/components/FilePreview";
 import DriveEmbed from "@/features/review/components/DriveEmbed";
 import VersionSwitcher from "@/features/review/components/VersionSwitcher";
@@ -336,11 +337,9 @@ export default function ReviewClientShell({
               {artCopy && (
                 <div>
                   <p className="text-xs font-mono font-bold uppercase tracking-wider text-black/40 mb-2">
-                    Copy da arte
+                    Copy da arte — prévia
                   </p>
-                  <p className="text-sm text-black whitespace-pre-wrap leading-relaxed">
-                    {artCopy}
-                  </p>
+                  <ArtCopyMockup text={artCopy} primaryColor={primaryColor} />
                 </div>
               )}
 

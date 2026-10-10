@@ -7,6 +7,7 @@ import type { BadgeVariant } from "@/components/ui/Badge";
 import FilePreview from "@/features/review/components/FilePreview";
 import DriveEmbed from "@/features/review/components/DriveEmbed";
 import ApprovalPanel from "@/features/review/components/ApprovalPanel";
+import ArtCopyMockup from "@/features/review/components/ArtCopyMockup";
 import { cn } from "@/lib/utils";
 import type { CalendarPageData, CalendarDelivery } from "@/features/calendar/server/loadCalendarPageData";
 import {
@@ -48,12 +49,14 @@ function DayDetailModal({
   onClose,
   onStatusChange,
   onCopyStatusChange,
+  primaryColor,
 }: {
   delivery: CalendarDelivery;
   copyStatus: Status;
   onClose: () => void;
   onStatusChange: (status: Status) => void;
   onCopyStatusChange: (status: Status) => void;
+  primaryColor?: string;
 }) {
   const date = new Date(delivery.scheduledAt!);
   const hasCopyContent = Boolean(
@@ -142,11 +145,12 @@ function DayDetailModal({
               {delivery.artCopy && (
                 <div>
                   <p className="text-xs font-mono font-bold uppercase tracking-wider text-black/40 mb-2">
-                    Copy da arte
+                    Copy da arte — prévia
                   </p>
-                  <p className="text-sm text-black whitespace-pre-wrap leading-relaxed">
-                    {delivery.artCopy}
-                  </p>
+                  <ArtCopyMockup
+                    text={delivery.artCopy}
+                    primaryColor={primaryColor}
+                  />
                 </div>
               )}
 
@@ -369,6 +373,7 @@ export default function CalendarClientShell({ data }: CalendarClientShellProps) 
           onCopyStatusChange={(status) =>
             setCopyStatuses((prev) => ({ ...prev, [openDelivery.id]: status }))
           }
+          primaryColor={primaryColor}
         />
       )}
 
