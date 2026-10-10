@@ -52,6 +52,36 @@ const FIELD_ALIASES: Record<string, keyof ContentPlanEntry> = {
   "cta": "copyText",
 };
 
+// Second deterministic pass for headers that don't match a full alias above
+// but contain a recognizable word — e.g. "Legenda Completa" or "Roteiro /
+// Texto dos Slides" (real headers from a client spreadsheet). This used to
+// fall straight through to the AI fallback, which isn't guaranteed to
+// classify the same header the same way on every import; a word match here
+// is deterministic and only reached when no exact alias applies. Matched on
+// whole words (not substrings) so e.g. "Sistema de postagem" doesn't match
+// "tema".
+const KEYWORD_ALIASES: Record<string, keyof ContentPlanEntry> = {
+  legenda: "copyText",
+  cta: "copyText",
+  roteiro: "artCopy",
+  copy: "artCopy",
+  funcao: "postFunction",
+  objetivo: "objective",
+  pilar: "objective",
+  formato: "format",
+  produto: "product",
+  tema: "theme",
+};
+
+function matchKeywordAlias(raw: string): keyof ContentPlanEntry | undefined {
+  const words = normalizeHeader(raw).split(/[^a-z0-9]+/).filter(Boolean);
+  for (const word of words) {
+    const match = KEYWORD_ALIASES[word];
+    if (match) return match;
+  }
+  return undefined;
+}
+
 const MAX_SHEETS = 50;
 const MAX_ROWS_PER_SHEET = 500;
 const MAX_CELL_LENGTH = 5000;
@@ -179,7 +209,8 @@ export async function parseContentPlanSpreadsheet(
       const raw = cellText(cell.value).trim();
       if (!raw) return;
       rawHeaders[colNumber] = raw;
-      columnKeys[colNumber] = FIELD_ALIASES[normalizeHeader(raw)];
+      columnKeys[colNumber] =
+        FIELD_ALIASES[normalizeHeader(raw)] ?? matchKeywordAlias(raw);
     });
     return { worksheet, headerRowNumber, rawHeaders, columnKeys };
   });
