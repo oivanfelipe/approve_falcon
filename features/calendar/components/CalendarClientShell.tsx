@@ -57,7 +57,11 @@ function DayDetailModal({
 }) {
   const date = new Date(delivery.scheduledAt!);
   const hasCopyContent = Boolean(
-    delivery.copyText || delivery.artCopy || delivery.theme || delivery.objective,
+    delivery.copyText ||
+      delivery.artCopy ||
+      delivery.theme ||
+      delivery.objective ||
+      delivery.postFunction,
   );
   const creativeRevealed = copyStatus === "APPROVED" || !hasCopyContent;
   const hasCreativeFile = Boolean(delivery.driveUrl || delivery.signedUrl);
@@ -78,7 +82,7 @@ function DayDetailModal({
         <div className="border-2 border-black">
           {!creativeRevealed ? (
             <div className="p-6 flex flex-col gap-5">
-              {(delivery.theme || delivery.format || delivery.product || delivery.objective) && (
+              {(delivery.theme || delivery.format || delivery.product || delivery.objective || delivery.postFunction) && (
                 <div className="flex flex-col gap-2 pb-4 border-b border-black/10">
                   <div className="flex items-center gap-2 flex-wrap">
                     {delivery.planNumber && (
@@ -98,6 +102,9 @@ function DayDetailModal({
                     )}
                     {delivery.product && (
                       <span className="text-xs text-black/40">{delivery.product}</span>
+                    )}
+                    {delivery.postFunction && (
+                      <span className="text-xs text-black/40">{delivery.postFunction}</span>
                     )}
                   </div>
                   {delivery.objective && (
@@ -264,7 +271,13 @@ export default function CalendarClientShell({ data }: CalendarClientShellProps) 
             const creativeRevealed =
               !delivery ||
               copyStatus === "APPROVED" ||
-              !(delivery.copyText || delivery.artCopy || delivery.theme || delivery.objective);
+              !(
+                delivery.copyText ||
+                delivery.artCopy ||
+                delivery.theme ||
+                delivery.objective ||
+                delivery.postFunction
+              );
             const status = delivery
               ? creativeRevealed
                 ? statuses[delivery.id] ?? (delivery.status as Status)

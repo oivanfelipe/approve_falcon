@@ -8,8 +8,10 @@ export interface ContentPlanEntry {
   theme: string | null;
   format: string | null;
   product: string | null;
-  weekHint: string | null; // "Data" column — a fuzzy week label, not a real date
+  weekHint: string | null; // "Data" column text that isn't a real calendar date (e.g. "1ª semana")
+  scheduledDate: string | null; // "Data" column, when it's a real calendar date — ISO yyyy-mm-dd
   objective: string | null;
+  postFunction: string | null; // "Função" — the post's role in the strategy
   artCopy: string | null;
   copyText: string | null;
 }
@@ -42,6 +44,7 @@ const FIELD_ALIASES: Record<string, keyof ContentPlanEntry> = {
   "objetivo/pilar": "objective",
   "objetivo": "objective",
   "pilar": "objective",
+  "funcao": "postFunction",
   "copy da arte": "artCopy",
   "copy": "artCopy",
   "legenda e cta": "copyText",
@@ -68,6 +71,36 @@ function normalizeHeader(raw: string): string {
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "") // strip accents
     .replace(/[º°]/g, ""); // strip ordinal indicators, e.g. "Nº" → "n"
+}
+
+// Parses "DD/MM/YYYY" (the common Brazilian date format) into an ISO
+// yyyy-mm-dd string, or null if the text isn't an unambiguous real date
+// (e.g. "1ª semana de setembro" — a fuzzy hint, not a calendar date).
+function parseBrazilianDate(raw: string): string | null {
+  const match = raw.trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (!match) return null;
+  const day = Number(match[1]);
+  const month = Number(match[2]);
+  const year = Number(match[3]);
+  if (month < 1 || month > 12 || day < 1 || day > 31) return null;
+
+  const iso = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+  const roundTrip = new Date(`${iso}T00:00:00Z`);
+  const isValidDate =
+    roundTrip.getUTCFullYear() === year &&
+    roundTrip.getUTCMonth() + 1 === month &&
+    roundTrip.getUTCDate() === day;
+  return isValidDate ? iso : null;
+}
+
+// A cell formatted as an Excel date is read back by ExcelJS as a JS Date
+// (not text), so cellText() never sees it — check for that case separately.
+function cellDateIso(value: ExcelJS.CellValue): string | null {
+  if (!(value instanceof Date)) return null;
+  const y = value.getUTCFullYear();
+  const m = String(value.getUTCMonth() + 1).padStart(2, "0");
+  const d = String(value.getUTCDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
 }
 
 function cellText(value: ExcelJS.CellValue): string {
@@ -214,6 +247,16 @@ export async function parseContentPlanSpreadsheet(
         const key = columnKeys[colNumber];
         if (!key) return;
         const text = cellText(cell.value).trim().slice(0, MAX_CELL_LENGTH);
+
+        if (key === "weekHint") {
+          const iso = cellDateIso(cell.value) ?? (text ? parseBrazilianDate(text) : null);
+          if (iso) {
+            hasValue = true;
+            entry.scheduledDate = iso;
+            return; // a real date was found — no need to also keep the fuzzy hint
+          }
+        }
+
         if (!text) return;
         hasValue = true;
         // If a second column also maps to this field (see the AI-mapping
@@ -244,7 +287,9 @@ export async function parseContentPlanSpreadsheet(
         format: entry.format ?? null,
         product: entry.product ?? null,
         weekHint: entry.weekHint ?? null,
+        scheduledDate: entry.scheduledDate ?? null,
         objective: entry.objective ?? null,
+        postFunction: entry.postFunction ?? null,
         artCopy: entry.artCopy ?? null,
         copyText: entry.copyText ?? null,
       });

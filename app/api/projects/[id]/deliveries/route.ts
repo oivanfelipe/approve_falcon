@@ -41,6 +41,8 @@ export async function GET(
       theme: true,
       format: true,
       product: true,
+      objective: true,
+      postFunction: true,
       copyStatus: true,
       copyText: true,
       _count: {
@@ -73,6 +75,8 @@ export async function GET(
     theme: d.theme,
     format: d.format,
     product: d.product,
+    objective: d.objective,
+    postFunction: d.postFunction,
     copyStatus: d.copyStatus,
     copyText: d.copyText,
   }));

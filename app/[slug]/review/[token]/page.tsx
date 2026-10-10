@@ -128,6 +128,7 @@ export default async function BrandedReviewPage({
       format={delivery.format}
       product={delivery.product}
       objective={delivery.objective}
+      postFunction={delivery.postFunction}
       artCopy={delivery.artCopy}
       initialCopyStatus={
         delivery.copyStatus as "PENDING" | "APPROVED" | "CHANGES_REQUESTED"

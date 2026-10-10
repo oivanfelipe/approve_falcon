@@ -13,6 +13,7 @@ export type ContentPlanField =
   | "product"
   | "weekHint"
   | "objective"
+  | "postFunction"
   | "artCopy"
   | "copyText";
 
@@ -22,8 +23,10 @@ const FIELD_DESCRIPTIONS: Record<ContentPlanField, string> = {
   format: "the content format, e.g. Carrossel, Estático, Reels, Stories",
   product: "which product or line this post is about",
   weekHint:
-    "a fuzzy publish timing, e.g. 'week 1 of September' — NOT an exact calendar date",
+    "a fuzzy publish timing or the publish date, e.g. 'week 1 of September' or a date",
   objective: "the marketing objective or funnel pillar for this post",
+  postFunction:
+    "the post's specific role in the strategy, e.g. 'Institucional', 'Lançamento do perfil' — more specific than the objective/pillar",
   artCopy:
     "the script/text that goes INSIDE the creative itself (capa, slide 2, slide 3...), written for a designer to execute",
   copyText:

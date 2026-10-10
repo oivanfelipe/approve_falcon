@@ -55,6 +55,7 @@ interface ReviewClientShellProps {
   format?: string | null;
   product?: string | null;
   objective?: string | null;
+  postFunction?: string | null;
   artCopy?: string | null;
   initialCopyStatus?: Status;
   scheduledAt?: string | Date | null;
@@ -156,6 +157,7 @@ export default function ReviewClientShell({
   format,
   product,
   objective,
+  postFunction,
   artCopy,
   initialCopyStatus = "APPROVED",
   scheduledAt,
@@ -181,7 +183,9 @@ export default function ReviewClientShell({
 
   const [status, setStatus] = useState<Status>(initialStatus);
   const [copyStatus, setCopyStatus] = useState<Status>(initialCopyStatus);
-  const hasCopyContent = Boolean(copyText || artCopy || theme || objective);
+  const hasCopyContent = Boolean(
+    copyText || artCopy || theme || objective || postFunction,
+  );
   const creativeRevealed = copyStatus === "APPROVED" || !hasCopyContent;
   const hasCreativeFile = Boolean(driveUrl || signedUrl);
   const scheduledDate = scheduledAt ? new Date(scheduledAt) : null;
@@ -272,7 +276,7 @@ export default function ReviewClientShell({
 
           {!creativeRevealed ? (
             <div className="border-2 border-black p-6 bg-white flex flex-col gap-5">
-              {(theme || format || product || objective) && (
+              {(theme || format || product || objective || postFunction) && (
                 <div className="flex flex-col gap-2 pb-4 border-b border-black/10">
                   <div className="flex items-center gap-2 flex-wrap">
                     {planNumber && (
@@ -292,6 +296,11 @@ export default function ReviewClientShell({
                     )}
                     {product && (
                       <span className="text-xs text-black/40">{product}</span>
+                    )}
+                    {postFunction && (
+                      <span className="text-xs text-black/40">
+                        {postFunction}
+                      </span>
                     )}
                   </div>
                   {objective && (
