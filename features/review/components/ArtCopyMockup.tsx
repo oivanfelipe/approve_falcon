@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Heart, MessageCircle, Send } from "lucide-react";
 
 // ─── Parsing ──────────────────────────────────────────────────────────────────
 // "Copy da arte" is a script written for a designer (capa, slide 2, slide 3…),
@@ -47,13 +47,19 @@ export function parseArtCopySlides(text: string): ArtCopySlide[] {
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
+// Deliberately shaped like a real Instagram post (profile row, square frame,
+// action icons, pagination dots) rather than a plain text card — a marketer
+// recognizes this silhouette instantly, which is the point: give a rough
+// sense of the finished post, not just formatted text.
 
 export default function ArtCopyMockup({
   text,
   primaryColor = "#e10600",
+  accountLabel,
 }: {
   text: string;
   primaryColor?: string;
+  accountLabel?: string | null;
 }) {
   const slides = parseArtCopySlides(text);
   const [index, setIndex] = useState(0);
@@ -64,23 +70,38 @@ export default function ArtCopyMockup({
   const hasMultiple = slides.length > 1;
 
   return (
-    <div className="flex flex-col gap-2">
-      <div className="relative aspect-square w-full max-w-xs mx-auto border-2 border-black bg-white flex flex-col">
-        <div className="flex-1 flex items-center justify-center p-6 text-center overflow-y-auto">
-          <div className="flex flex-col gap-2 items-center">
-            {current.label && (
-              <span
-                className="text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 border"
-                style={{ color: primaryColor, borderColor: primaryColor }}
-              >
-                {current.label}
-              </span>
-            )}
-            <p className="text-sm font-semibold text-black whitespace-pre-wrap leading-snug">
-              {current.body}
-            </p>
-          </div>
-        </div>
+    <div className="w-full max-w-xs mx-auto">
+      {/* Profile row */}
+      <div className="flex items-center gap-2 px-3 py-2.5 border-2 border-black border-b-0 bg-white">
+        <div
+          className="w-7 h-7 rounded-full shrink-0 border border-black/10"
+          style={{ backgroundColor: primaryColor }}
+        />
+        {accountLabel ? (
+          <span className="text-xs font-bold text-black truncate">
+            {accountLabel}
+          </span>
+        ) : (
+          <div className="h-2 w-24 bg-black/10 rounded-sm" />
+        )}
+        <span className="ml-auto text-black/25 text-xs tracking-wider select-none">
+          •••
+        </span>
+      </div>
+
+      {/* Slide frame */}
+      <div className="relative aspect-square border-2 border-black bg-black flex flex-col items-center justify-center gap-3 px-8 py-10 text-center overflow-hidden">
+        {current.label && (
+          <span
+            className="text-[10px] font-mono font-bold uppercase tracking-[0.2em]"
+            style={{ color: primaryColor }}
+          >
+            {current.label}
+          </span>
+        )}
+        <p className="text-xl font-extrabold text-white whitespace-pre-wrap leading-snug">
+          {current.body}
+        </p>
 
         {hasMultiple && (
           <>
@@ -89,7 +110,7 @@ export default function ArtCopyMockup({
               aria-label="Slide anterior"
               onClick={() => setIndex((i) => Math.max(0, i - 1))}
               disabled={index === 0}
-              className="absolute left-1 top-1/2 -translate-y-1/2 w-7 h-7 flex items-center justify-center bg-white border-2 border-black disabled:opacity-20"
+              className="absolute left-2 top-1/2 -translate-y-1/2 w-7 h-7 flex items-center justify-center bg-white border-2 border-black disabled:opacity-0 transition-opacity"
             >
               <ChevronLeft className="w-3.5 h-3.5" />
             </button>
@@ -100,33 +121,44 @@ export default function ArtCopyMockup({
                 setIndex((i) => Math.min(slides.length - 1, i + 1))
               }
               disabled={index === slides.length - 1}
-              className="absolute right-1 top-1/2 -translate-y-1/2 w-7 h-7 flex items-center justify-center bg-white border-2 border-black disabled:opacity-20"
+              className="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 flex items-center justify-center bg-white border-2 border-black disabled:opacity-0 transition-opacity"
             >
               <ChevronRight className="w-3.5 h-3.5" />
             </button>
+            <span className="absolute top-3 right-3 text-[10px] font-mono font-bold text-white/40">
+              {index + 1}/{slides.length}
+            </span>
           </>
         )}
       </div>
 
-      {hasMultiple && (
-        <div className="flex items-center justify-center gap-1.5">
-          {slides.map((_, i) => (
-            <button
-              key={i}
-              type="button"
-              aria-label={`Ir para slide ${i + 1}`}
-              onClick={() => setIndex(i)}
-              className="w-1.5 h-1.5 rounded-full transition-colors"
-              style={{
-                backgroundColor:
-                  i === index ? primaryColor : "rgba(0,0,0,0.15)",
-              }}
-            />
-          ))}
+      {/* Action row + pagination */}
+      <div className="flex flex-col gap-2 px-3 py-2.5 border-2 border-black border-t-0 bg-white">
+        <div className="flex items-center gap-3 text-black/30">
+          <Heart className="w-[18px] h-[18px]" />
+          <MessageCircle className="w-[18px] h-[18px]" />
+          <Send className="w-[18px] h-[18px]" />
+          {hasMultiple && (
+            <div className="ml-auto flex items-center gap-1.5">
+              {slides.map((_, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  aria-label={`Ir para slide ${i + 1}`}
+                  onClick={() => setIndex(i)}
+                  className="w-1.5 h-1.5 rounded-full transition-colors"
+                  style={{
+                    backgroundColor:
+                      i === index ? primaryColor : "rgba(0,0,0,0.15)",
+                  }}
+                />
+              ))}
+            </div>
+          )}
         </div>
-      )}
+      </div>
 
-      <p className="text-center text-[10px] font-mono text-black/30">
+      <p className="text-center text-[10px] font-mono text-black/30 mt-2">
         Prévia estrutural do roteiro — a arte final pode variar
       </p>
     </div>

@@ -339,7 +339,11 @@ export default function ReviewClientShell({
                   <p className="text-xs font-mono font-bold uppercase tracking-wider text-black/40 mb-2">
                     Copy da arte — prévia
                   </p>
-                  <ArtCopyMockup text={artCopy} primaryColor={primaryColor} />
+                  <ArtCopyMockup
+                    text={artCopy}
+                    primaryColor={primaryColor}
+                    accountLabel={brandName}
+                  />
                 </div>
               )}
 

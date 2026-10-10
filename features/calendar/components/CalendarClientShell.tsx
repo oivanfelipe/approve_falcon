@@ -50,6 +50,7 @@ function DayDetailModal({
   onStatusChange,
   onCopyStatusChange,
   primaryColor,
+  accountLabel,
 }: {
   delivery: CalendarDelivery;
   copyStatus: Status;
@@ -57,6 +58,7 @@ function DayDetailModal({
   onStatusChange: (status: Status) => void;
   onCopyStatusChange: (status: Status) => void;
   primaryColor?: string;
+  accountLabel?: string | null;
 }) {
   const date = new Date(delivery.scheduledAt!);
   const hasCopyContent = Boolean(
@@ -150,6 +152,7 @@ function DayDetailModal({
                   <ArtCopyMockup
                     text={delivery.artCopy}
                     primaryColor={primaryColor}
+                    accountLabel={accountLabel}
                   />
                 </div>
               )}
@@ -374,6 +377,7 @@ export default function CalendarClientShell({ data }: CalendarClientShellProps) 
             setCopyStatuses((prev) => ({ ...prev, [openDelivery.id]: status }))
           }
           primaryColor={primaryColor}
+          accountLabel={data.branding?.displayName}
         />
       )}
 
