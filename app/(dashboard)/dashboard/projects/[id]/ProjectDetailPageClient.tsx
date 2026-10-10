@@ -9,7 +9,10 @@ import NewDeliveryModal from "@/features/deliveries/components/NewDeliveryModal"
 import CalendarLinkButton from "@/features/calendar/components/CalendarLinkButton";
 import DashboardCalendarView from "@/features/calendar/components/DashboardCalendarView";
 import ImportSpreadsheetModal from "@/features/calendar/components/ImportSpreadsheetModal";
-import { scheduleDelivery } from "@/features/deliveries/actions/deliveries";
+import {
+  scheduleDelivery,
+  deleteDelivery,
+} from "@/features/deliveries/actions/deliveries";
 import { Tabs } from "@/components/ui/Tabs";
 import type { BadgeVariant } from "@/components/ui/Badge";
 import { Copy, Upload } from "lucide-react";
@@ -161,15 +164,20 @@ function DeliveryEditRow({
   freelancerSlug,
   onAttach,
   onScheduled,
+  onDeleted,
 }: {
   delivery: DeliveryRow;
   freelancerSlug?: string | null;
   onAttach: () => void;
   onScheduled: () => void;
+  onDeleted: () => void;
 }) {
   const [date, setDate] = useState("");
   const [isPending, setIsPending] = useState(false);
   const [error, setError] = useState("");
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
 
   const handleSchedule = async () => {
     if (!date) return;
@@ -185,6 +193,18 @@ function DeliveryEditRow({
       return;
     }
     onScheduled();
+  };
+
+  const handleDelete = async () => {
+    setIsDeleting(true);
+    setDeleteError("");
+    const result = await deleteDelivery(delivery.id);
+    setIsDeleting(false);
+    if (result.error) {
+      setDeleteError(result.error);
+      return;
+    }
+    onDeleted();
   };
 
   return (
@@ -337,6 +357,41 @@ function DeliveryEditRow({
           >
             Preview ↗
           </Link>
+
+          {confirmingDelete ? (
+            <span className="flex items-center gap-1.5">
+              <span className="text-[11px] text-black/50">Apagar?</span>
+              <button
+                type="button"
+                onClick={handleDelete}
+                disabled={isDeleting}
+                className="text-xs font-bold text-[#e10600] hover:underline disabled:opacity-50"
+              >
+                {isDeleting ? "..." : "Sim"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setConfirmingDelete(false)}
+                disabled={isDeleting}
+                className="text-xs font-semibold text-black/40 hover:text-black"
+              >
+                Não
+              </button>
+            </span>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setConfirmingDelete(true)}
+              className="text-xs font-semibold text-black/40 hover:text-[#e10600] transition-colors"
+            >
+              Apagar
+            </button>
+          )}
+          {deleteError && (
+            <span className="text-[11px] font-medium text-[#e10600]">
+              {deleteError}
+            </span>
+          )}
         </div>
       </div>
     </div>
@@ -550,6 +605,7 @@ export default function ProjectDetailClient({
                     freelancerSlug={freelancerSlug}
                     onAttach={() => setAttachingId(d.id)}
                     onScheduled={refetch}
+                    onDeleted={refetch}
                   />
                 ))}
               </div>
