@@ -1,5 +1,5 @@
 import ExcelJS from "exceljs";
-import { mapColumnsWithAI } from "@/features/calendar/server/aiColumnMapper";
+import { mapColumnsWithAI } from "./aiColumnMapper";
 
 export interface ContentPlanEntry {
   sheet: string;
@@ -58,7 +58,7 @@ function normalizeHeader(raw: string): string {
     .trim()
     .toLowerCase()
     .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "") // strip accents
+    .replace(/[\u0300-\u036f]/g, "") // strip accents
     .replace(/[º°]/g, ""); // strip ordinal indicators, e.g. "Nº" → "n"
 }
 
