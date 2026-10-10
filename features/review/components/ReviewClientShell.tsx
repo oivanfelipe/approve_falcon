@@ -276,8 +276,12 @@ export default function ReviewClientShell({
 
           {!creativeRevealed ? (
             <div className="border-2 border-black p-6 bg-white flex flex-col gap-5">
+              <p className="text-[11px] font-mono text-black/40">
+                Etapa 1 de 2 — aprove o planejamento abaixo. A arte é criada
+                e enviada para aprovação depois.
+              </p>
               {(theme || format || product || objective || postFunction) && (
-                <div className="flex flex-col gap-2 pb-4 border-b border-black/10">
+                <div className="flex flex-col gap-3 pb-4 border-b border-black/10">
                   <div className="flex items-center gap-2 flex-wrap">
                     {planNumber && (
                       <span className="font-mono text-xs font-bold text-white bg-black px-1.5 py-0.5">
@@ -289,22 +293,42 @@ export default function ReviewClientShell({
                         {theme}
                       </span>
                     )}
-                    {format && (
-                      <span className="text-xs font-mono text-black/40">
-                        {format}
-                      </span>
-                    )}
-                    {product && (
-                      <span className="text-xs text-black/40">{product}</span>
-                    )}
-                    {postFunction && (
-                      <span className="text-xs text-black/40">
-                        {postFunction}
-                      </span>
-                    )}
                   </div>
+                  {(format || product || postFunction) && (
+                    <div className="flex flex-wrap gap-x-4 gap-y-1">
+                      {format && (
+                        <span className="text-xs text-black/60">
+                          <span className="font-mono font-bold uppercase tracking-wider text-black/35">
+                            Formato{" "}
+                          </span>
+                          {format}
+                        </span>
+                      )}
+                      {postFunction && (
+                        <span className="text-xs text-black/60">
+                          <span className="font-mono font-bold uppercase tracking-wider text-black/35">
+                            Função{" "}
+                          </span>
+                          {postFunction}
+                        </span>
+                      )}
+                      {product && (
+                        <span className="text-xs text-black/60">
+                          <span className="font-mono font-bold uppercase tracking-wider text-black/35">
+                            Produto{" "}
+                          </span>
+                          {product}
+                        </span>
+                      )}
+                    </div>
+                  )}
                   {objective && (
-                    <p className="text-xs text-black/50">{objective}</p>
+                    <p className="text-xs text-black/60">
+                      <span className="font-mono font-bold uppercase tracking-wider text-black/35">
+                        Objetivo / Pilar{" "}
+                      </span>
+                      {objective}
+                    </p>
                   )}
                 </div>
               )}

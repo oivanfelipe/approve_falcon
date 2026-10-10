@@ -82,8 +82,12 @@ function DayDetailModal({
         <div className="border-2 border-black">
           {!creativeRevealed ? (
             <div className="p-6 flex flex-col gap-5">
+              <p className="text-[11px] font-mono text-black/40">
+                Etapa 1 de 2 — aprove o planejamento abaixo. A arte é criada
+                e enviada para aprovação depois.
+              </p>
               {(delivery.theme || delivery.format || delivery.product || delivery.objective || delivery.postFunction) && (
-                <div className="flex flex-col gap-2 pb-4 border-b border-black/10">
+                <div className="flex flex-col gap-3 pb-4 border-b border-black/10">
                   <div className="flex items-center gap-2 flex-wrap">
                     {delivery.planNumber && (
                       <span className="font-mono text-xs font-bold text-white bg-black px-1.5 py-0.5">
@@ -95,20 +99,42 @@ function DayDetailModal({
                         {delivery.theme}
                       </span>
                     )}
-                    {delivery.format && (
-                      <span className="text-xs font-mono text-black/40">
-                        {delivery.format}
-                      </span>
-                    )}
-                    {delivery.product && (
-                      <span className="text-xs text-black/40">{delivery.product}</span>
-                    )}
-                    {delivery.postFunction && (
-                      <span className="text-xs text-black/40">{delivery.postFunction}</span>
-                    )}
                   </div>
+                  {(delivery.format || delivery.product || delivery.postFunction) && (
+                    <div className="flex flex-wrap gap-x-4 gap-y-1">
+                      {delivery.format && (
+                        <span className="text-xs text-black/60">
+                          <span className="font-mono font-bold uppercase tracking-wider text-black/35">
+                            Formato{" "}
+                          </span>
+                          {delivery.format}
+                        </span>
+                      )}
+                      {delivery.postFunction && (
+                        <span className="text-xs text-black/60">
+                          <span className="font-mono font-bold uppercase tracking-wider text-black/35">
+                            Função{" "}
+                          </span>
+                          {delivery.postFunction}
+                        </span>
+                      )}
+                      {delivery.product && (
+                        <span className="text-xs text-black/60">
+                          <span className="font-mono font-bold uppercase tracking-wider text-black/35">
+                            Produto{" "}
+                          </span>
+                          {delivery.product}
+                        </span>
+                      )}
+                    </div>
+                  )}
                   {delivery.objective && (
-                    <p className="text-xs text-black/50">{delivery.objective}</p>
+                    <p className="text-xs text-black/60">
+                      <span className="font-mono font-bold uppercase tracking-wider text-black/35">
+                        Objetivo / Pilar{" "}
+                      </span>
+                      {delivery.objective}
+                    </p>
                   )}
                 </div>
               )}
