@@ -171,7 +171,7 @@ export default function ArtCopyMockup({
       <div className="flex flex-col gap-1.5 px-3 pb-3 border-2 border-black border-t-0 bg-white">
         <div className="h-2 w-20 bg-black/10 rounded-sm" />
         {caption ? (
-          <p className="text-xs text-black leading-snug line-clamp-3 whitespace-pre-wrap">
+          <p className="text-xs text-black leading-snug whitespace-pre-wrap">
             {accountLabel && (
               <span className="font-bold mr-1">{accountLabel}</span>
             )}

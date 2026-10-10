@@ -10,7 +10,6 @@ import CommentSystem, {
   type CommentData,
 } from "@/features/review/components/CommentSystem";
 import ImageWithComments from "@/features/review/components/ImageWithComments";
-import TextWithComments from "@/features/review/components/TextWithComments";
 import ArtCopyMockup from "@/features/review/components/ArtCopyMockup";
 import FilePreview from "@/features/review/components/FilePreview";
 import DriveEmbed from "@/features/review/components/DriveEmbed";
@@ -344,26 +343,6 @@ export default function ReviewClientShell({
                     primaryColor={primaryColor}
                     accountLabel={brandName}
                     caption={copyText}
-                  />
-                </div>
-              )}
-
-              {copyText && (
-                <div>
-                  <p className="text-xs font-mono font-bold uppercase tracking-wider text-black/40 mb-2">
-                    Legenda e CTA
-                  </p>
-                  <TextWithComments
-                    text={copyText}
-                    comments={comments}
-                    pinnedCommentNumbers={pinnedCommentNumbers}
-                    token={token}
-                    onCommentAdded={(c) => setComments((prev) => [...prev, c])}
-                    onPinClick={(id) => {
-                      setShowChat(true);
-                      setOpenPinCommentId(id);
-                    }}
-                    primaryColor={primaryColor}
                   />
                 </div>
               )}

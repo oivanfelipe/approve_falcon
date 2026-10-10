@@ -158,16 +158,6 @@ function DayDetailModal({
                 </div>
               )}
 
-              {delivery.copyText && (
-                <div>
-                  <p className="text-xs font-mono font-bold uppercase tracking-wider text-black/40 mb-2">
-                    Legenda e CTA
-                  </p>
-                  <p className="text-sm text-black whitespace-pre-wrap leading-relaxed">
-                    {delivery.copyText}
-                  </p>
-                </div>
-              )}
             </div>
           ) : !hasCreativeFile ? (
             <p className="p-6 text-sm text-black/50 text-center">
