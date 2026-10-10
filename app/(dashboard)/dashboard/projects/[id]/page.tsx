@@ -59,6 +59,8 @@ export default async function ProjectDetailPage({ params }: PageProps) {
     theme: d.theme,
     format: d.format,
     product: d.product,
+    objective: d.objective,
+    postFunction: d.postFunction,
     copyStatus: d.copyStatus as "PENDING" | "APPROVED" | "CHANGES_REQUESTED",
     copyText: d.copyText,
   }));

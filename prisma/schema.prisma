@@ -108,6 +108,7 @@ model Delivery {
     format        String? // "Formato" — Carrossel, Estático, Reels, etc.
     product       String? // "Produto" — optional product/line this post is about
     objective     String? @db.Text // "Objetivo / Pilar"
+    postFunction  String? // "Função" — the post's role in the strategy, e.g. "Institucional", "Lançamento do perfil"
     artCopy       String? @db.Text // "Copy da arte" — script/text that goes inside the creative, for the designer
     copyText      String? // "Legenda e CTA" — approved before the creative is revealed
     copyStatus    DeliveryStatus @default(PENDING)

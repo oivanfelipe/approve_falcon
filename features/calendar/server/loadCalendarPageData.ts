@@ -26,6 +26,7 @@ export async function loadCalendarPageData(token: string) {
           format: true,
           product: true,
           objective: true,
+          postFunction: true,
           artCopy: true,
           scheduledAt: true,
           sourceType: true,

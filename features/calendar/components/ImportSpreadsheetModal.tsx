@@ -16,7 +16,9 @@ interface ContentPlanEntry {
   format: string | null;
   product: string | null;
   weekHint: string | null;
+  scheduledDate: string | null;
   objective: string | null;
+  postFunction: string | null;
   artCopy: string | null;
   copyText: string | null;
 }
@@ -36,6 +38,11 @@ interface ImportSpreadsheetModalProps {
 
 type Step = "pick" | "parsing" | "preview" | "importing" | "done" | "error";
 
+// Keep in sync with the MAX_FILE_BYTES check in
+// app/api/projects/[id]/import-calendar/route.ts (itself kept under
+// Vercel's ~4.5MB platform request-body cap for Functions).
+const MAX_FILE_BYTES = 4 * 1024 * 1024;
+
 const FIELD_LABELS: Record<string, string> = {
   planNumber: "Nº",
   theme: "Tema",
@@ -43,9 +50,15 @@ const FIELD_LABELS: Record<string, string> = {
   product: "Produto",
   weekHint: "Data",
   objective: "Objetivo / Pilar",
+  postFunction: "Função",
   artCopy: "Copy da arte",
   copyText: "Legenda e CTA",
 };
+
+function formatIsoDatePtBr(iso: string): string {
+  const [year, month, day] = iso.split("-");
+  return `${day}/${month}/${year}`;
+}
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
@@ -78,6 +91,14 @@ export default function ImportSpreadsheetModal({
 
   const handleFileChange = (file: File | undefined) => {
     if (!file) return;
+    if (file.size > MAX_FILE_BYTES) {
+      setErrorMsg(
+        "Arquivo maior que 4MB. Remova imagens/formatação pesada da planilha (ou separe em abas menores) e tente novamente.",
+      );
+      setStep("error");
+      return;
+    }
+
     setStep("parsing");
     setErrorMsg("");
 
@@ -89,12 +110,30 @@ export default function ImportSpreadsheetModal({
           method: "POST",
           body: formData,
         });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error ?? "Falha ao ler a planilha");
 
-        setEntries(data.entries);
-        setWarnings(data.warnings ?? []);
-        setAiMappedColumns(data.aiMappedColumns ?? []);
+        let data: {
+          error?: string;
+          entries?: ContentPlanEntry[];
+          warnings?: string[];
+          aiMappedColumns?: AiMappedColumn[];
+        } | null = null;
+        try {
+          data = await res.json();
+        } catch {
+          // The platform (or a proxy) rejected the request before our route
+          // handler ran — e.g. a body-size limit — so the response body
+          // isn't JSON. Fall back to a message based on the HTTP status.
+          throw new Error(
+            res.status === 413
+              ? "Arquivo muito grande para o servidor aceitar. Reduza o tamanho da planilha e tente novamente."
+              : `Falha ao ler a planilha (erro ${res.status}).`,
+          );
+        }
+        if (!res.ok) throw new Error(data?.error ?? "Falha ao ler a planilha");
+
+        setEntries(data?.entries ?? []);
+        setWarnings(data?.warnings ?? []);
+        setAiMappedColumns(data?.aiMappedColumns ?? []);
         setExcluded(new Set());
         setStep("preview");
       } catch (e) {
@@ -119,8 +158,10 @@ export default function ImportSpreadsheetModal({
             format: e.format,
             product: e.product,
             objective: e.objective,
+            postFunction: e.postFunction,
             artCopy: e.artCopy,
             copyText: e.copyText,
+            scheduledDate: e.scheduledDate,
           })),
         });
         if (result.error) throw new Error(result.error);
@@ -150,7 +191,7 @@ export default function ImportSpreadsheetModal({
       isOpen={isOpen}
       onClose={handleClose}
       title="Importar calendário de conteúdo"
-      description="Suba a planilha de planejamento (Nº, Tema, Formato, Data, Objetivo/Pilar, Copy da arte, Legenda e CTA). Cada linha entra como um post sem imagem e sem data — você agenda e sobe a arte depois."
+      description="Suba a planilha de planejamento (Nº, Tema, Formato, Data, Objetivo/Pilar, Função, Copy da arte, Legenda e CTA), até 4MB. Linhas com data real já entram agendadas no calendário; as outras ficam sem data até você agendar. A arte de cada post é anexada depois."
       size="xl"
       closeOnOverlayClick={step !== "parsing" && step !== "importing"}
       footer={
@@ -267,15 +308,26 @@ export default function ImportSpreadsheetModal({
                           {entry.product}
                         </span>
                       )}
-                      {entry.weekHint && (
-                        <span className="text-xs text-black/40">
-                          {entry.weekHint}
-                        </span>
+                      {entry.scheduledDate ? (
+                        <Badge variant="success" size="sm">
+                          {formatIsoDatePtBr(entry.scheduledDate)}
+                        </Badge>
+                      ) : (
+                        entry.weekHint && (
+                          <span className="text-xs text-black/40">
+                            {entry.weekHint}
+                          </span>
+                        )
                       )}
                       <span className="text-[10px] font-mono text-black/30 ml-auto">
                         aba: {entry.sheet}
                       </span>
                     </div>
+                    {entry.postFunction && (
+                      <p className="text-xs text-black/50 mt-1">
+                        {entry.postFunction}
+                      </p>
+                    )}
                     {entry.copyText && (
                       <p className="text-xs text-black/60 mt-1 line-clamp-2">
                         {entry.copyText}
@@ -318,8 +370,9 @@ export default function ImportSpreadsheetModal({
               {importedCount !== 1 ? "s" : ""}!
             </p>
             <p className="text-xs text-black/50 mt-0.5">
-              Agora agende a data e suba a arte de cada um na aba &quot;Sem
-              data&quot;.
+              Linhas com data real já entraram no calendário. As outras
+              aparecem no topo da aba &quot;Edição&quot; para você agendar e
+              subir a arte.
             </p>
           </div>
         </div>

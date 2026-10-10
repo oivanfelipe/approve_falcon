@@ -35,8 +35,16 @@ const contentPlanEntrySchema = z.object({
   format: z.string().max(100).nullable().optional(),
   product: z.string().max(100).nullable().optional(),
   objective: z.string().max(5000).nullable().optional(),
+  postFunction: z.string().max(300).nullable().optional(),
   artCopy: z.string().max(5000).nullable().optional(),
   copyText: z.string().max(5000).nullable().optional(),
+  // ISO yyyy-mm-dd — only set when the spreadsheet had a real calendar date
+  // (not a fuzzy week hint), so the post can go straight onto the calendar.
+  scheduledDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .nullable()
+    .optional(),
 });
 
 const importContentPlanSchema = z.object({
@@ -74,10 +82,11 @@ export async function importContentPlan(
       format: entry.format || null,
       product: entry.product || null,
       objective: entry.objective || null,
+      postFunction: entry.postFunction || null,
       artCopy: entry.artCopy || null,
       copyText: entry.copyText || null,
       copyStatus: "PENDING",
-      scheduledAt: null,
+      scheduledAt: entry.scheduledDate ? new Date(entry.scheduledDate) : null,
       sourceType: "FILE",
       fileName: null,
       reviewToken: generateReviewToken(),

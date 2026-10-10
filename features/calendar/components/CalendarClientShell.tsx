@@ -7,6 +7,7 @@ import type { BadgeVariant } from "@/components/ui/Badge";
 import FilePreview from "@/features/review/components/FilePreview";
 import DriveEmbed from "@/features/review/components/DriveEmbed";
 import ApprovalPanel from "@/features/review/components/ApprovalPanel";
+import ArtCopyMockup from "@/features/review/components/ArtCopyMockup";
 import { cn } from "@/lib/utils";
 import type { CalendarPageData, CalendarDelivery } from "@/features/calendar/server/loadCalendarPageData";
 import {
@@ -48,16 +49,24 @@ function DayDetailModal({
   onClose,
   onStatusChange,
   onCopyStatusChange,
+  primaryColor,
+  accountLabel,
 }: {
   delivery: CalendarDelivery;
   copyStatus: Status;
   onClose: () => void;
   onStatusChange: (status: Status) => void;
   onCopyStatusChange: (status: Status) => void;
+  primaryColor?: string;
+  accountLabel?: string | null;
 }) {
   const date = new Date(delivery.scheduledAt!);
   const hasCopyContent = Boolean(
-    delivery.copyText || delivery.artCopy || delivery.theme || delivery.objective,
+    delivery.copyText ||
+      delivery.artCopy ||
+      delivery.theme ||
+      delivery.objective ||
+      delivery.postFunction,
   );
   const creativeRevealed = copyStatus === "APPROVED" || !hasCopyContent;
   const hasCreativeFile = Boolean(delivery.driveUrl || delivery.signedUrl);
@@ -78,8 +87,12 @@ function DayDetailModal({
         <div className="border-2 border-black">
           {!creativeRevealed ? (
             <div className="p-6 flex flex-col gap-5">
-              {(delivery.theme || delivery.format || delivery.product || delivery.objective) && (
-                <div className="flex flex-col gap-2 pb-4 border-b border-black/10">
+              <p className="text-[11px] font-mono text-black/40">
+                Etapa 1 de 2 — aprove o planejamento abaixo. A arte é criada
+                e enviada para aprovação depois.
+              </p>
+              {(delivery.theme || delivery.format || delivery.product || delivery.objective || delivery.postFunction) && (
+                <div className="flex flex-col gap-3 pb-4 border-b border-black/10">
                   <div className="flex items-center gap-2 flex-wrap">
                     {delivery.planNumber && (
                       <span className="font-mono text-xs font-bold text-white bg-black px-1.5 py-0.5">
@@ -91,17 +104,42 @@ function DayDetailModal({
                         {delivery.theme}
                       </span>
                     )}
-                    {delivery.format && (
-                      <span className="text-xs font-mono text-black/40">
-                        {delivery.format}
-                      </span>
-                    )}
-                    {delivery.product && (
-                      <span className="text-xs text-black/40">{delivery.product}</span>
-                    )}
                   </div>
+                  {(delivery.format || delivery.product || delivery.postFunction) && (
+                    <div className="flex flex-wrap gap-x-4 gap-y-1">
+                      {delivery.format && (
+                        <span className="text-xs text-black/60">
+                          <span className="font-mono font-bold uppercase tracking-wider text-black/35">
+                            Formato{" "}
+                          </span>
+                          {delivery.format}
+                        </span>
+                      )}
+                      {delivery.postFunction && (
+                        <span className="text-xs text-black/60">
+                          <span className="font-mono font-bold uppercase tracking-wider text-black/35">
+                            Função{" "}
+                          </span>
+                          {delivery.postFunction}
+                        </span>
+                      )}
+                      {delivery.product && (
+                        <span className="text-xs text-black/60">
+                          <span className="font-mono font-bold uppercase tracking-wider text-black/35">
+                            Produto{" "}
+                          </span>
+                          {delivery.product}
+                        </span>
+                      )}
+                    </div>
+                  )}
                   {delivery.objective && (
-                    <p className="text-xs text-black/50">{delivery.objective}</p>
+                    <p className="text-xs text-black/60">
+                      <span className="font-mono font-bold uppercase tracking-wider text-black/35">
+                        Objetivo / Pilar{" "}
+                      </span>
+                      {delivery.objective}
+                    </p>
                   )}
                 </div>
               )}
@@ -109,24 +147,17 @@ function DayDetailModal({
               {delivery.artCopy && (
                 <div>
                   <p className="text-xs font-mono font-bold uppercase tracking-wider text-black/40 mb-2">
-                    Copy da arte
+                    Copy da arte — prévia
                   </p>
-                  <p className="text-sm text-black whitespace-pre-wrap leading-relaxed">
-                    {delivery.artCopy}
-                  </p>
+                  <ArtCopyMockup
+                    text={delivery.artCopy}
+                    primaryColor={primaryColor}
+                    accountLabel={accountLabel}
+                    caption={delivery.copyText}
+                  />
                 </div>
               )}
 
-              {delivery.copyText && (
-                <div>
-                  <p className="text-xs font-mono font-bold uppercase tracking-wider text-black/40 mb-2">
-                    Legenda e CTA
-                  </p>
-                  <p className="text-sm text-black whitespace-pre-wrap leading-relaxed">
-                    {delivery.copyText}
-                  </p>
-                </div>
-              )}
             </div>
           ) : !hasCreativeFile ? (
             <p className="p-6 text-sm text-black/50 text-center">
@@ -264,7 +295,13 @@ export default function CalendarClientShell({ data }: CalendarClientShellProps) 
             const creativeRevealed =
               !delivery ||
               copyStatus === "APPROVED" ||
-              !(delivery.copyText || delivery.artCopy || delivery.theme || delivery.objective);
+              !(
+                delivery.copyText ||
+                delivery.artCopy ||
+                delivery.theme ||
+                delivery.objective ||
+                delivery.postFunction
+              );
             const status = delivery
               ? creativeRevealed
                 ? statuses[delivery.id] ?? (delivery.status as Status)
@@ -330,6 +367,8 @@ export default function CalendarClientShell({ data }: CalendarClientShellProps) 
           onCopyStatusChange={(status) =>
             setCopyStatuses((prev) => ({ ...prev, [openDelivery.id]: status }))
           }
+          primaryColor={primaryColor}
+          accountLabel={data.branding?.displayName}
         />
       )}
 

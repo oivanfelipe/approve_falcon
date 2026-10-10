@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
@@ -9,11 +9,15 @@ import NewDeliveryModal from "@/features/deliveries/components/NewDeliveryModal"
 import CalendarLinkButton from "@/features/calendar/components/CalendarLinkButton";
 import DashboardCalendarView from "@/features/calendar/components/DashboardCalendarView";
 import ImportSpreadsheetModal from "@/features/calendar/components/ImportSpreadsheetModal";
-import { scheduleDelivery } from "@/features/deliveries/actions/deliveries";
+import {
+  scheduleDelivery,
+  deleteDelivery,
+} from "@/features/deliveries/actions/deliveries";
 import { Tabs } from "@/components/ui/Tabs";
 import type { BadgeVariant } from "@/components/ui/Badge";
 import { Copy, Upload } from "lucide-react";
 import { getPublicReviewPath } from "@/lib/freelancer-branding-shared";
+import { cn } from "@/lib/utils";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -36,6 +40,8 @@ interface DeliveryRow {
   theme: string | null;
   format: string | null;
   product: string | null;
+  objective: string | null;
+  postFunction: string | null;
   copyStatus: "PENDING" | "APPROVED" | "CHANGES_REQUESTED";
   copyText: string | null;
 }
@@ -79,6 +85,20 @@ function timeAgo(date: Date): string {
   const hrs = Math.floor(mins / 60);
   if (hrs < 24) return `${hrs}h ago`;
   return `${Math.floor(hrs / 24)}d ago`;
+}
+
+function sortForEditing(deliveries: DeliveryRow[]): DeliveryRow[] {
+  // Posts still needing a date surface first (they need action); scheduled
+  // posts follow in publish order, soonest first.
+  const unscheduled = deliveries.filter((d) => !d.scheduledAt);
+  const scheduled = deliveries
+    .filter((d) => d.scheduledAt)
+    .sort(
+      (a, b) =>
+        new Date(a.scheduledAt as Date).getTime() -
+        new Date(b.scheduledAt as Date).getTime(),
+    );
+  return [...unscheduled, ...scheduled];
 }
 
 // ─── Share buttons ────────────────────────────────────────────────────────────
@@ -135,20 +155,34 @@ function ShareButtons({
   );
 }
 
-// ─── Unscheduled row ──────────────────────────────────────────────────────────
+// ─── Delivery edit row ────────────────────────────────────────────────────────
+// One row per post, covering every stage: assigning a date, uploading the
+// creative, and the existing version/share/stats meta — the agency's team
+// manages the whole content plan from this single list.
 
-function UnscheduledRow({
+function DeliveryEditRow({
   delivery,
+  freelancerSlug,
+  selected,
+  onToggleSelect,
   onAttach,
   onScheduled,
+  onDeleted,
 }: {
   delivery: DeliveryRow;
+  freelancerSlug?: string | null;
+  selected: boolean;
+  onToggleSelect: () => void;
   onAttach: () => void;
   onScheduled: () => void;
+  onDeleted: () => void;
 }) {
   const [date, setDate] = useState("");
   const [isPending, setIsPending] = useState(false);
   const [error, setError] = useState("");
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
 
   const handleSchedule = async () => {
     if (!date) return;
@@ -166,28 +200,93 @@ function UnscheduledRow({
     onScheduled();
   };
 
+  const handleDelete = async () => {
+    setIsDeleting(true);
+    setDeleteError("");
+    const result = await deleteDelivery(delivery.id);
+    setIsDeleting(false);
+    if (result.error) {
+      setDeleteError(result.error);
+      return;
+    }
+    onDeleted();
+  };
+
   return (
-    <div className="flex flex-col sm:flex-row sm:items-center gap-3 p-4 bg-white border-2 border-black shadow-hard-sm">
-      <div className="flex items-center gap-3 flex-1 min-w-0">
-        {delivery.planNumber && (
-          <span className="shrink-0 font-mono text-xs font-bold text-white bg-black px-2 py-0.5">
-            {delivery.planNumber}
-          </span>
-        )}
-        <div className="min-w-0">
-          <p className="text-sm font-semibold text-black truncate">
-            {delivery.theme ?? delivery.label ?? `Versão ${delivery.versionNumber}`}
-          </p>
-          <p className="text-xs text-black/40 truncate">
-            {[delivery.format, delivery.product].filter(Boolean).join(" · ")}
-          </p>
+    <div
+      className={cn(
+        "flex flex-col gap-3 p-4 bg-white border-2 shadow-hard-sm",
+        selected ? "border-[#e10600]" : "border-black",
+      )}
+    >
+      <div className="flex flex-col sm:flex-row sm:items-start gap-3">
+        <div className="flex items-start gap-3 flex-1 min-w-0">
+          <input
+            type="checkbox"
+            checked={selected}
+            onChange={onToggleSelect}
+            aria-label={`Selecionar ${delivery.theme ?? delivery.label ?? "post"}`}
+            className="mt-1 shrink-0"
+          />
+          {delivery.planNumber && (
+            <span className="shrink-0 font-mono text-xs font-bold text-white bg-black px-2 py-0.5">
+              {delivery.planNumber}
+            </span>
+          )}
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-black truncate">
+              {delivery.theme ??
+                delivery.label ??
+                delivery.fileName ??
+                `Versão ${delivery.versionNumber}`}
+            </p>
+            <p className="text-xs text-black/40 truncate">
+              {[delivery.format, delivery.product, delivery.postFunction]
+                .filter(Boolean)
+                .join(" · ")}
+            </p>
+            {delivery.objective && (
+              <p className="text-xs text-black/35 truncate mt-0.5">
+                {delivery.objective}
+              </p>
+            )}
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 shrink-0 flex-wrap">
+          <Badge variant={statusVariant[delivery.copyStatus]} size="sm" dot>
+            Copy: {statusLabel[delivery.copyStatus]}
+          </Badge>
+          <Badge variant={statusVariant[delivery.status]} size="sm" dot>
+            Arte: {statusLabel[delivery.status]}
+          </Badge>
         </div>
       </div>
 
-      <div className="flex items-center gap-2 shrink-0 flex-wrap">
-        <Badge variant={statusVariant[delivery.copyStatus]} size="sm" dot>
-          Copy: {statusLabel[delivery.copyStatus]}
-        </Badge>
+      <div className="flex items-center gap-2 flex-wrap pt-2 border-t border-black/10">
+        {delivery.scheduledAt ? (
+          <span className="inline-flex items-center gap-1.5 text-xs font-mono font-semibold text-black/60 border-2 border-black/10 px-2 py-1">
+            {new Date(delivery.scheduledAt).toLocaleDateString("pt-BR")}
+          </span>
+        ) : (
+          <>
+            <input
+              type="date"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+              className="border-2 border-black px-2 py-1.5 text-xs font-mono"
+            />
+            <Button
+              variant="primary"
+              size="sm"
+              disabled={!date || isPending}
+              loading={isPending}
+              onClick={handleSchedule}
+            >
+              Agendar
+            </Button>
+          </>
+        )}
 
         {!delivery.fileName && (
           <Button variant="outline" size="sm" onClick={onAttach}>
@@ -195,26 +294,122 @@ function UnscheduledRow({
           </Button>
         )}
 
-        <input
-          type="date"
-          value={date}
-          onChange={(e) => setDate(e.target.value)}
-          className="border-2 border-black px-2 py-1.5 text-xs font-mono"
-        />
-        <Button
-          variant="primary"
-          size="sm"
-          disabled={!date || isPending}
-          loading={isPending}
-          onClick={handleSchedule}
-        >
-          Agendar
-        </Button>
         {error && (
           <span className="text-[11px] font-medium text-[#e10600]">
             {error}
           </span>
         )}
+
+        <div className="flex items-center gap-3 ml-auto flex-wrap">
+          {delivery.fileName && (
+            <>
+              {delivery.sourceType === "DRIVE_LINK" ? (
+                <span className="text-xs font-mono font-bold text-white bg-black px-2 py-0.5">
+                  Google Drive
+                </span>
+              ) : (
+                <span className="text-xs font-mono text-black/40">
+                  {formatSize(delivery.fileSize)}
+                </span>
+              )}
+            </>
+          )}
+
+          <div className="flex items-center gap-1.5 text-xs font-mono text-black/40">
+            <svg
+              width="10"
+              height="10"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
+            </svg>
+            {delivery.commentCount}
+          </div>
+
+          <div className="flex items-center gap-1.5 text-xs font-mono text-black/40">
+            <svg
+              width="10"
+              height="10"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+              <circle cx="12" cy="12" r="3" />
+            </svg>
+            {delivery.viewCount}
+          </div>
+
+          <span className="text-[10px] font-mono text-black/35">
+            {timeAgo(delivery.createdAt)}
+          </span>
+
+          {delivery.lastViewedAt ? (
+            <span className="flex items-center gap-1 text-[10px] font-mono text-[#e10600]">
+              👀 {timeAgo(delivery.lastViewedAt)}
+            </span>
+          ) : (
+            <span className="text-[10px] font-mono text-black/25 italic">
+              Not viewed
+            </span>
+          )}
+
+          <ShareButtons token={delivery.reviewToken} slug={freelancerSlug} />
+
+          <Link
+            href={`${getPublicReviewPath(delivery.reviewToken, freelancerSlug)}?preview=1`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-xs font-semibold text-black/60 hover:text-black transition-colors"
+          >
+            Preview ↗
+          </Link>
+
+          {confirmingDelete ? (
+            <span className="flex items-center gap-1.5">
+              <span className="text-[11px] text-black/50">Apagar?</span>
+              <button
+                type="button"
+                onClick={handleDelete}
+                disabled={isDeleting}
+                className="text-xs font-bold text-[#e10600] hover:underline disabled:opacity-50"
+              >
+                {isDeleting ? "..." : "Sim"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setConfirmingDelete(false)}
+                disabled={isDeleting}
+                className="text-xs font-semibold text-black/40 hover:text-black"
+              >
+                Não
+              </button>
+            </span>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setConfirmingDelete(true)}
+              className="text-xs font-semibold text-black/40 hover:text-[#e10600] transition-colors"
+            >
+              Apagar
+            </button>
+          )}
+          {deleteError && (
+            <span className="text-[11px] font-medium text-[#e10600]">
+              {deleteError}
+            </span>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -234,18 +429,37 @@ export default function ProjectDetailClient({
   const [liveDeliveries, setLiveDeliveries] = useState(initialDeliveries);
   const [uploadOpen, setUploadOpen] = useState(false);
   const [uploadInitialDate, setUploadInitialDate] = useState<string | undefined>();
-  const [viewMode, setViewMode] = useState<"list" | "calendar" | "unscheduled">(
-    "list",
-  );
+  const [viewMode, setViewMode] = useState<"edit" | "calendar">("edit");
   const [importOpen, setImportOpen] = useState(false);
   const [attachingId, setAttachingId] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [isBulkDeleting, setIsBulkDeleting] = useState(false);
+  const [bulkDeleteError, setBulkDeleteError] = useState("");
+  const [confirmingBulkDelete, setConfirmingBulkDelete] = useState(false);
 
   const openUpload = (dateInputValue?: string) => {
     setUploadInitialDate(dateInputValue);
     setUploadOpen(true);
   };
 
-  const unscheduledDeliveries = liveDeliveries.filter((d) => !d.scheduledAt);
+  const editOrderedDeliveries = sortForEditing(liveDeliveries);
+
+  const toggleSelected = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    setSelectedIds((prev) =>
+      prev.size === editOrderedDeliveries.length
+        ? new Set()
+        : new Set(editOrderedDeliveries.map((d) => d.id)),
+    );
+  };
 
   // ─── Supabase Realtime + refetch helper ────────────────────────────────────
   const refetch = React.useCallback(async () => {
@@ -265,6 +479,26 @@ export default function ProjectDetailClient({
       // silently ignore
     }
   }, [projectId]);
+
+  const handleBulkDelete = async () => {
+    setIsBulkDeleting(true);
+    setBulkDeleteError("");
+    const results = await Promise.all(
+      Array.from(selectedIds).map((id) => deleteDelivery(id)),
+    );
+    setIsBulkDeleting(false);
+    setConfirmingBulkDelete(false);
+    const failed = results.filter((r) => r.error);
+    if (failed.length > 0) {
+      setBulkDeleteError(
+        `${failed.length} post${failed.length !== 1 ? "s" : ""} não ${
+          failed.length !== 1 ? "puderam" : "pôde"
+        } ser apagado${failed.length !== 1 ? "s" : ""} (ex.: já aprovado).`,
+      );
+    }
+    setSelectedIds(new Set());
+    refetch();
+  };
 
   useEffect(() => {
     const channel = supabaseClient
@@ -398,36 +632,12 @@ export default function ProjectDetailClient({
       {/* View toggle */}
       <Tabs
         value={viewMode}
-        onValueChange={(v) => setViewMode(v as "list" | "calendar" | "unscheduled")}
+        onValueChange={(v) => setViewMode(v as "edit" | "calendar")}
       >
         <Tabs.List>
-          <Tabs.Tab value="list">List</Tabs.Tab>
-          <Tabs.Tab value="calendar">Calendar</Tabs.Tab>
-          <Tabs.Tab value="unscheduled">
-            Sem data
-            {unscheduledDeliveries.length > 0 && ` (${unscheduledDeliveries.length})`}
-          </Tabs.Tab>
+          <Tabs.Tab value="edit">Edição</Tabs.Tab>
+          <Tabs.Tab value="calendar">Calendário</Tabs.Tab>
         </Tabs.List>
-
-        <Tabs.Panel value="unscheduled" className="mt-4">
-          {unscheduledDeliveries.length > 0 ? (
-            <div className="flex flex-col gap-2">
-              {unscheduledDeliveries.map((d) => (
-                <UnscheduledRow
-                  key={d.id}
-                  delivery={d}
-                  onAttach={() => setAttachingId(d.id)}
-                  onScheduled={refetch}
-                />
-              ))}
-            </div>
-          ) : (
-            <p className="text-sm text-black/40 py-10 text-center">
-              Nenhum post sem data. Importe uma planilha ou agende pelo
-              calendário.
-            </p>
-          )}
-        </Tabs.Panel>
 
         <Tabs.Panel value="calendar" className="mt-4">
           <DashboardCalendarView
@@ -438,152 +648,114 @@ export default function ProjectDetailClient({
           />
         </Tabs.Panel>
 
-        <Tabs.Panel value="list" className="mt-4">
-      {/* Deliveries */}
-      {liveDeliveries.length > 0 ? (
-        <div className="flex flex-col gap-3">
-          <h2 className="text-xs font-mono font-bold text-black/40 uppercase tracking-wider">
-            {liveDeliveries.length} version
-            {liveDeliveries.length !== 1 ? "s" : ""}
-          </h2>
-          <div className="flex flex-col gap-2">
-            {liveDeliveries.map((d) => (
-              <div
-                key={d.id}
-                className="flex flex-col sm:flex-row sm:items-center gap-4 p-4 bg-white border-2 border-black shadow-hard-sm"
-              >
-                {/* Left: version info */}
-                <div className="flex items-center gap-3 flex-1 min-w-0">
-                  <span className="shrink-0 font-mono text-xs font-bold text-white bg-black px-2 py-0.5">
-                    v{d.versionNumber}
-                  </span>
-                  <div className="min-w-0">
-                    <p className="text-sm font-semibold text-black truncate">
-                      {d.label ?? d.fileName}
-                    </p>
-                    {d.label && (
-                      <p className="text-xs text-black/40 truncate">
-                        {d.fileName}
-                      </p>
+        <Tabs.Panel value="edit" className="mt-4">
+          {editOrderedDeliveries.length > 0 ? (
+            <div className="flex flex-col gap-3">
+              <div className="flex items-center gap-3 flex-wrap">
+                <label className="flex items-center gap-1.5 text-xs font-mono font-bold text-black/40 uppercase tracking-wider cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={
+                      selectedIds.size > 0 &&
+                      selectedIds.size === editOrderedDeliveries.length
+                    }
+                    onChange={toggleSelectAll}
+                  />
+                  {editOrderedDeliveries.length} post
+                  {editOrderedDeliveries.length !== 1 ? "s" : ""}
+                </label>
+
+                {selectedIds.size > 0 && (
+                  <div className="flex items-center gap-2 ml-auto flex-wrap">
+                    {confirmingBulkDelete ? (
+                      <>
+                        <span className="text-xs text-black/60">
+                          Apagar {selectedIds.size} selecionado
+                          {selectedIds.size !== 1 ? "s" : ""}?
+                        </span>
+                        <Button
+                          variant="danger"
+                          size="sm"
+                          onClick={handleBulkDelete}
+                          loading={isBulkDeleting}
+                        >
+                          Confirmar
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setConfirmingBulkDelete(false)}
+                          disabled={isBulkDeleting}
+                        >
+                          Cancelar
+                        </Button>
+                      </>
+                    ) : (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setConfirmingBulkDelete(true)}
+                      >
+                        Apagar {selectedIds.size} selecionado
+                        {selectedIds.size !== 1 ? "s" : ""}
+                      </Button>
                     )}
                   </div>
-                </div>
-
-                {/* Meta */}
-                <div className="flex items-center gap-3 shrink-0 flex-wrap">
-                  {d.sourceType === "DRIVE_LINK" ? (
-                    <span className="text-xs font-mono font-bold text-white bg-black px-2 py-0.5">
-                      Google Drive
-                    </span>
-                  ) : (
-                    <span className="text-xs font-mono text-black/40">
-                      {formatSize(d.fileSize)}
-                    </span>
-                  )}
-
-                  <div className="flex items-center gap-1.5 text-xs font-mono text-black/40">
-                    <svg
-                      width="10"
-                      height="10"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      aria-hidden="true"
-                    >
-                      <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
-                    </svg>
-                    {d.commentCount}
-                  </div>
-
-                  <div className="flex items-center gap-1.5 text-xs font-mono text-black/40">
-                    <svg
-                      width="10"
-                      height="10"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      aria-hidden="true"
-                    >
-                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                      <circle cx="12" cy="12" r="3" />
-                    </svg>
-                    {d.viewCount}
-                  </div>
-
-                  <Badge variant={statusVariant[d.status]} size="sm" dot>
-                    {statusLabel[d.status]}
-                  </Badge>
-
-                  <span className="text-[10px] font-mono text-black/35">
-                    {timeAgo(d.createdAt)}
-                  </span>
-
-                  {d.lastViewedAt ? (
-                    <span className="flex items-center gap-1 text-[10px] font-mono text-[#e10600]">
-                      👀 {timeAgo(d.lastViewedAt)}
-                    </span>
-                  ) : (
-                    <span className="text-[10px] font-mono text-black/25 italic">
-                      Not viewed
-                    </span>
-                  )}
-
-                  <ShareButtons token={d.reviewToken} slug={freelancerSlug} />
-
-                  <Link
-                    href={`${getPublicReviewPath(d.reviewToken, freelancerSlug)}?preview=1`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-xs font-semibold text-black/60 hover:text-black transition-colors"
-                  >
-                    Preview ↗
-                  </Link>
-                </div>
+                )}
               </div>
-            ))}
-          </div>
-        </div>
-      ) : (
-        <div className="flex flex-col items-center justify-center py-20 gap-4 text-center">
-          <div className="w-16 h-16 bg-white border-2 border-black flex items-center justify-center">
-            <svg
-              width="26"
-              height="26"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="text-black"
-              aria-hidden="true"
-            >
-              <polyline points="16 16 12 12 8 16" />
-              <line x1="12" y1="12" x2="12" y2="21" />
-              <path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3" />
-            </svg>
-          </div>
-          <div>
-            <p className="text-sm font-semibold text-black">No versions yet</p>
-            <p className="text-xs text-black/45 mt-1">
-              Upload your first file to generate a review link
-            </p>
-          </div>
-          <Button
-            variant="primary"
-            size="sm"
-            onClick={() => openUpload()}
-          >
-            Upload version
-          </Button>
-        </div>
-      )}
+              {bulkDeleteError && (
+                <p className="text-xs font-medium text-[#e10600]">
+                  {bulkDeleteError}
+                </p>
+              )}
+              <div className="flex flex-col gap-2">
+                {editOrderedDeliveries.map((d) => (
+                  <DeliveryEditRow
+                    key={d.id}
+                    delivery={d}
+                    freelancerSlug={freelancerSlug}
+                    selected={selectedIds.has(d.id)}
+                    onToggleSelect={() => toggleSelected(d.id)}
+                    onAttach={() => setAttachingId(d.id)}
+                    onScheduled={refetch}
+                    onDeleted={refetch}
+                  />
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-20 gap-4 text-center">
+              <div className="w-16 h-16 bg-white border-2 border-black flex items-center justify-center">
+                <svg
+                  width="26"
+                  height="26"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="text-black"
+                  aria-hidden="true"
+                >
+                  <polyline points="16 16 12 12 8 16" />
+                  <line x1="12" y1="12" x2="12" y2="21" />
+                  <path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3" />
+                </svg>
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-black">
+                  No versions yet
+                </p>
+                <p className="text-xs text-black/45 mt-1">
+                  Upload your first file to generate a review link
+                </p>
+              </div>
+              <Button variant="primary" size="sm" onClick={() => openUpload()}>
+                Upload version
+              </Button>
+            </div>
+          )}
         </Tabs.Panel>
       </Tabs>
 
@@ -620,11 +792,9 @@ export default function ProjectDetailClient({
         onClose={() => setImportOpen(false)}
         onSuccess={() => {
           refetch();
-          setViewMode("unscheduled");
+          setViewMode("edit");
         }}
       />
     </div>
   );
 }
-
-

@@ -127,6 +127,7 @@ export default async function ReviewPage({ params, searchParams }: PageProps) {
       format={delivery.format}
       product={delivery.product}
       objective={delivery.objective}
+      postFunction={delivery.postFunction}
       artCopy={delivery.artCopy}
       initialCopyStatus={
         delivery.copyStatus as "PENDING" | "APPROVED" | "CHANGES_REQUESTED"
