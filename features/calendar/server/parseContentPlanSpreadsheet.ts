@@ -52,6 +52,14 @@ const FIELD_ALIASES: Record<string, keyof ContentPlanEntry> = {
 const MAX_SHEETS = 50;
 const MAX_ROWS_PER_SHEET = 500;
 const MAX_CELL_LENGTH = 5000;
+const MAX_HEADER_SCAN_ROWS = 15;
+// Many real-world exports put a title/instructions banner above the actual
+// header row (often as merged cells, which ExcelJS reports as the same text
+// repeated across every column). Stop treating a blank run as "still inside
+// the data" after this many consecutive empty rows, so a sheet whose
+// formatting extends far past its real content doesn't trigger a bogus
+// "too many rows" warning.
+const MAX_CONSECUTIVE_EMPTY_ROWS = 25;
 
 function normalizeHeader(raw: string): string {
   return raw
@@ -75,8 +83,38 @@ function cellText(value: ExcelJS.CellValue): string {
 
 interface SheetHeaders {
   worksheet: ExcelJS.Worksheet;
+  headerRowNumber: number;
   rawHeaders: (string | undefined)[]; // indexed by column number
   columnKeys: (keyof ContentPlanEntry | undefined)[]; // indexed by column number
+}
+
+function rowCellTexts(row: ExcelJS.Row): string[] {
+  const texts: string[] = [];
+  row.eachCell({ includeEmpty: true }, (cell) => {
+    const text = cellText(cell.value).trim();
+    if (text) texts.push(text);
+  });
+  return texts;
+}
+
+// A title/instructions banner above the real header row is usually either a
+// single merged cell (so every column reports the same long sentence) or a
+// near-empty row. A real header row has several short, distinct labels.
+function looksLikeHeaderRow(cellTexts: string[]): boolean {
+  if (cellTexts.length < 2) return false;
+  const distinct = new Set(cellTexts.map((t) => t.toLowerCase()));
+  if (distinct.size < 2) return false;
+  const avgLength =
+    cellTexts.reduce((sum, t) => sum + t.length, 0) / cellTexts.length;
+  return avgLength <= 60;
+}
+
+function findHeaderRowNumber(worksheet: ExcelJS.Worksheet): number {
+  const lastScanRow = Math.min(worksheet.rowCount, MAX_HEADER_SCAN_ROWS);
+  for (let r = 1; r <= lastScanRow; r++) {
+    if (looksLikeHeaderRow(rowCellTexts(worksheet.getRow(r)))) return r;
+  }
+  return 1; // no row looked like a header — fall back to the old assumption
 }
 
 export async function parseContentPlanSpreadsheet(
@@ -97,9 +135,11 @@ export async function parseContentPlanSpreadsheet(
     );
   }
 
-  // Pass 1: read headers and apply the deterministic alias match.
+  // Pass 1: locate the header row (skipping any title/instructions banner
+  // above it) and apply the deterministic alias match.
   const sheetHeaders: SheetHeaders[] = sheets.map((worksheet) => {
-    const headerRow = worksheet.getRow(1);
+    const headerRowNumber = findHeaderRowNumber(worksheet);
+    const headerRow = worksheet.getRow(headerRowNumber);
     const rawHeaders: (string | undefined)[] = [];
     const columnKeys: (keyof ContentPlanEntry | undefined)[] = [];
     headerRow.eachCell({ includeEmpty: true }, (cell, colNumber) => {
@@ -108,7 +148,7 @@ export async function parseContentPlanSpreadsheet(
       rawHeaders[colNumber] = raw;
       columnKeys[colNumber] = FIELD_ALIASES[normalizeHeader(raw)];
     });
-    return { worksheet, rawHeaders, columnKeys };
+    return { worksheet, headerRowNumber, rawHeaders, columnKeys };
   });
 
   // Collect headers that stayed unmatched, across every sheet, for one
@@ -125,6 +165,12 @@ export async function parseContentPlanSpreadsheet(
     const aiMapping = await mapColumnsWithAI(Array.from(unmatchedHeaders));
     if (aiMapping) {
       for (const sheet of sheetHeaders) {
+        // More than one column can legitimately land on the same field —
+        // e.g. a template that splits "Legenda e CTA" into separate
+        // "Legenda Completa" and "CTA" columns. Row extraction (pass 2)
+        // concatenates same-key columns instead of one overwriting the
+        // other, so it's safe to let the AI claim a key a deterministic
+        // alias already matched in this sheet.
         sheet.rawHeaders.forEach((raw, colNumber) => {
           if (!raw || sheet.columnKeys[colNumber]) return;
           const mapped = aiMapping[raw];
@@ -143,7 +189,7 @@ export async function parseContentPlanSpreadsheet(
 
   // Pass 2: extract rows using the (possibly AI-augmented) column mapping.
   const entries: ContentPlanEntry[] = [];
-  for (const { worksheet, columnKeys } of sheetHeaders) {
+  for (const { worksheet, headerRowNumber, columnKeys } of sheetHeaders) {
     const hasAnyKnownColumn = columnKeys.some((k) => k != null);
     if (!hasAnyKnownColumn) {
       warnings.push(
@@ -152,17 +198,14 @@ export async function parseContentPlanSpreadsheet(
       continue;
     }
 
-    const lastRowNumber = Math.min(
-      worksheet.lastRow?.number ?? 1,
-      MAX_ROWS_PER_SHEET + 1,
+    const lastScanRow = Math.min(
+      worksheet.lastRow?.number ?? headerRowNumber,
+      headerRowNumber + MAX_ROWS_PER_SHEET,
     );
-    if ((worksheet.lastRow?.number ?? 1) > MAX_ROWS_PER_SHEET + 1) {
-      warnings.push(
-        `A aba "${worksheet.name}" tem mais de ${MAX_ROWS_PER_SHEET} linhas; só as primeiras foram lidas.`,
-      );
-    }
 
-    for (let r = 2; r <= lastRowNumber; r++) {
+    let consecutiveEmptyRows = 0;
+    let lastDataRow = headerRowNumber;
+    for (let r = headerRowNumber + 1; r <= lastScanRow; r++) {
       const row = worksheet.getRow(r);
       const entry: Partial<ContentPlanEntry> = {};
       let hasValue = false;
@@ -171,11 +214,27 @@ export async function parseContentPlanSpreadsheet(
         const key = columnKeys[colNumber];
         if (!key) return;
         const text = cellText(cell.value).trim().slice(0, MAX_CELL_LENGTH);
-        if (text) hasValue = true;
-        (entry as Record<string, string | null>)[key] = text || null;
+        if (!text) return;
+        hasValue = true;
+        // If a second column also maps to this field (see the AI-mapping
+        // comment above), append rather than overwrite — nothing gets lost.
+        const existing = (entry as Record<string, string | null>)[key];
+        (entry as Record<string, string | null>)[key] = existing
+          ? `${existing}\n\n${text}`
+          : text;
       });
 
-      if (!hasValue) continue;
+      if (!hasValue) {
+        consecutiveEmptyRows++;
+        // A sheet's formatting (borders, column width) often extends far
+        // past its real content, inflating lastRow.number — stop once a
+        // long blank run shows the real data has ended, rather than
+        // scanning (and warning about) thousands of formatting-only rows.
+        if (consecutiveEmptyRows >= MAX_CONSECUTIVE_EMPTY_ROWS) break;
+        continue;
+      }
+      consecutiveEmptyRows = 0;
+      lastDataRow = r;
 
       entries.push({
         sheet: worksheet.name,
@@ -189,6 +248,12 @@ export async function parseContentPlanSpreadsheet(
         artCopy: entry.artCopy ?? null,
         copyText: entry.copyText ?? null,
       });
+    }
+
+    if (lastDataRow - headerRowNumber >= MAX_ROWS_PER_SHEET) {
+      warnings.push(
+        `A aba "${worksheet.name}" tem mais de ${MAX_ROWS_PER_SHEET} linhas; só as primeiras foram lidas.`,
+      );
     }
   }
 
