@@ -96,6 +96,7 @@ export default async function ProjectDetailPage({ params }: PageProps) {
       clientLogoUrl={clientLogoSignedUrl}
       primaryColor={project.primaryColor}
       secondaryColor={project.secondaryColor}
+      freelancerName={session.user.name ?? session.user.email ?? "Equipe"}
     />
   );
 }

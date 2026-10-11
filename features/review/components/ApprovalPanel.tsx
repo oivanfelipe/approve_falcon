@@ -170,7 +170,6 @@ export default function ApprovalPanel({
 }: ApprovalPanelProps) {
   const [panel, setPanel] = useState<Panel>("idle");
   const [signerName, setSignerName] = useState("");
-  const [signerEmail, setSignerEmail] = useState("");
   const [changeNote, setChangeNote] = useState("");
   const [formError, setFormError] = useState("");
   const [isPending, startTransition] = useTransition();
@@ -178,20 +177,35 @@ export default function ApprovalPanel({
   const [messageSent, setMessageSent] = useState(false);
   const [sendingMessage, setSendingMessage] = useState(false);
 
+  // Load saved author name so returning visitors aren't asked again.
+  React.useEffect(() => {
+    try {
+      const saved = localStorage.getItem("review_author_name");
+      if (saved) setSignerName(saved);
+    } catch {
+      // ignore
+    }
+  }, []);
+
   const handleApprove = () => {
-    if (!signerName.trim()) {
+    const trimmedName = signerName.trim();
+    if (!trimmedName) {
       setFormError("Seu nome é obrigatório");
       return;
     }
     setFormError("");
+    try {
+      localStorage.setItem("review_author_name", trimmedName);
+    } catch {
+      // ignore
+    }
 
     startTransition(async () => {
       const res = await fetch(`${apiBase}/${token}/${actionPrefix}approve`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          signerName: signerName.trim(),
-          signerEmail: signerEmail.trim() || undefined,
+          signerName: trimmedName,
         }),
       });
 
@@ -207,18 +221,24 @@ export default function ApprovalPanel({
   };
 
   const handleRequestChanges = () => {
-    if (!signerName.trim()) {
+    const trimmedName = signerName.trim();
+    if (!trimmedName) {
       setFormError("Seu nome é obrigatório");
       return;
     }
     setFormError("");
+    try {
+      localStorage.setItem("review_author_name", trimmedName);
+    } catch {
+      // ignore
+    }
 
     startTransition(async () => {
       const res = await fetch(`${apiBase}/${token}/${actionPrefix}request-changes`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          signerName: signerName.trim(),
+          signerName: trimmedName,
           note: changeNote.trim() || undefined,
         }),
       });
@@ -242,7 +262,7 @@ export default function ApprovalPanel({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           content: approvalMessage.trim(),
-          authorName: signerName || "Anonymous client",
+          authorName: signerName || "Cliente anônimo",
           authorType: "CLIENT",
         }),
       });
@@ -297,14 +317,6 @@ export default function ApprovalPanel({
             onChange={(e) => setSignerName(e.target.value)}
             fullWidth
             required
-          />
-          <Input
-            label="E-mail (opcional)"
-            type="email"
-            placeholder="jane@empresa.com"
-            value={signerEmail}
-            onChange={(e) => setSignerEmail(e.target.value)}
-            fullWidth
           />
           {formError && (
             <p className="text-xs font-medium text-[#e10600]" role="alert">
@@ -412,9 +424,6 @@ export default function ApprovalPanel({
             <div>
               <p className="text-base font-extrabold uppercase text-white">
                 Versão aprovada!
-              </p>
-              <p className="text-xs text-white/60 mt-1">
-                O freelancer foi notificado.
               </p>
             </div>
           </div>

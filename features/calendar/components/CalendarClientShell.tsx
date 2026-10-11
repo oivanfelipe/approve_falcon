@@ -252,6 +252,7 @@ export default function CalendarClientShell({ data }: CalendarClientShellProps) 
   const openDelivery = data.deliveries.find((d) => d.id === openDeliveryId) ?? null;
 
   const primaryColor = data.branding?.primaryColor;
+  const agencyLabel = data.branding?.displayName ?? "Agência";
 
   return (
     <div className="min-h-screen bg-white">
@@ -361,10 +362,10 @@ export default function CalendarClientShell({ data }: CalendarClientShellProps) 
                     </span>
                     <Badge variant={statusVariant[status]} className="hidden sm:inline-flex w-fit text-[9px]">
                       {status === "PENDING"
-                        ? "Pendente"
+                        ? "Pendente (Cliente)"
                         : status === "APPROVED"
                           ? "Aprovado"
-                          : "Alterações"}
+                          : `Pendente (${agencyLabel})`}
                     </Badge>
                   </div>
                 )}

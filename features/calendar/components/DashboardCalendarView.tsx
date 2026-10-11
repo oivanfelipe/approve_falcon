@@ -51,11 +51,17 @@ const statusVariant: Record<Status, BadgeVariant> = {
   CHANGES_REQUESTED: "error",
 };
 
-const statusLabel: Record<Status, string> = {
-  PENDING: "Pendente",
-  APPROVED: "Aprovado",
-  CHANGES_REQUESTED: "Alterações",
-};
+function copyStatusLabel(status: Status): string {
+  if (status === "APPROVED") return "Aprovada";
+  if (status === "CHANGES_REQUESTED") return "Pendente (V4)";
+  return "Pendente (Cliente)";
+}
+
+function artStatusLabel(status: Status, hasFile: boolean): string {
+  if (status === "APPROVED") return "Aprovada";
+  if (status === "CHANGES_REQUESTED") return "Pendente (V4)";
+  return hasFile ? "Pendente (Cliente)" : "Pendente (V4)";
+}
 
 const statusDot: Record<Status, string> = {
   PENDING: "bg-[#f5a623]",
@@ -226,11 +232,15 @@ export default function DashboardCalendarView({
             <div className="flex items-center gap-2 flex-wrap">
               {selectedDelivery.copyStatus && (
                 <Badge variant={statusVariant[selectedDelivery.copyStatus]} size="sm">
-                  Copy: {statusLabel[selectedDelivery.copyStatus]}
+                  Copy: {copyStatusLabel(selectedDelivery.copyStatus)}
                 </Badge>
               )}
               <Badge variant={statusVariant[selectedDelivery.status]} size="sm">
-                Arte: {statusLabel[selectedDelivery.status]}
+                Arte:{" "}
+                {artStatusLabel(
+                  selectedDelivery.status,
+                  Boolean(selectedDelivery.fileName),
+                )}
               </Badge>
               {!!selectedDelivery.pendingCommentCount && (
                 <Badge variant="error" size="sm" dot>

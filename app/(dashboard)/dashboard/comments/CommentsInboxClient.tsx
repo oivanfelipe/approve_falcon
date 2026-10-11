@@ -1,13 +1,10 @@
 "use client";
 
-import React, { useMemo, useState, useTransition } from "react";
+import React, { useMemo, useState } from "react";
 import { Badge } from "@/components/ui/Badge";
-import { Button } from "@/components/ui/Button";
 import { Tabs } from "@/components/ui/Tabs";
 import type { BadgeVariant } from "@/components/ui/Badge";
-import CommentSystem from "@/features/review/components/CommentSystem";
-import EditDeliveryContentModal from "@/features/deliveries/components/EditDeliveryContentModal";
-import { markReadyForClientReview } from "@/features/comments/actions/comments";
+import DeliveryCommentsPanel from "@/features/comments/components/DeliveryCommentsPanel";
 import type { CommentInboxDelivery } from "@/features/comments/server/loadCommentsInboxData";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -43,22 +40,6 @@ function CommentInboxCard({
   freelancerName: string;
   onChanged: () => void;
 }) {
-  const [editingOpen, setEditingOpen] = useState(false);
-  const [isMarking, startMarking] = useTransition();
-  const [markError, setMarkError] = useState("");
-
-  const handleMarkReady = () => {
-    setMarkError("");
-    startMarking(async () => {
-      const result = await markReadyForClientReview(delivery.id);
-      if (result.error) {
-        setMarkError(result.error);
-        return;
-      }
-      onChanged();
-    });
-  };
-
   return (
     <div className="border-2 border-black shadow-hard-sm bg-white flex flex-col">
       <div className="flex items-center justify-between gap-3 px-5 py-4 border-b-2 border-black flex-wrap">
@@ -89,44 +70,13 @@ function CommentInboxCard({
         </div>
       </div>
 
-      <div className="px-5 py-4">
-        <CommentSystem
-          token={delivery.reviewToken}
-          deliveryId={delivery.id}
-          initialComments={delivery.comments}
-          mode="freelancer"
-          freelancerName={freelancerName}
-        />
-      </div>
-
-      <div className="flex items-center gap-2 px-5 py-4 border-t-2 border-black/10 flex-wrap">
-        <Button variant="outline" size="sm" onClick={() => setEditingOpen(true)}>
-          Editar copy completa
-        </Button>
-        <Button
-          variant="primary"
-          size="sm"
-          onClick={handleMarkReady}
-          loading={isMarking}
-          disabled={delivery.pendingCount === 0}
-        >
-          Pronto — liberar para o cliente revisar
-        </Button>
-        {markError && (
-          <span className="text-[11px] font-medium text-[#e10600]">
-            {markError}
-          </span>
-        )}
-      </div>
-
-      {editingOpen && (
-        <EditDeliveryContentModal
+      <div className="px-5">
+        <DeliveryCommentsPanel
           delivery={delivery}
-          isOpen
-          onClose={() => setEditingOpen(false)}
-          onSuccess={onChanged}
+          freelancerName={freelancerName}
+          onChanged={onChanged}
         />
-      )}
+      </div>
     </div>
   );
 }
