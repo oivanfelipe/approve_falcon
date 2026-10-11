@@ -2,6 +2,7 @@ import React from "react";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import Sidebar from "@/features/dashboard/components/Sidebar";
+import { countPendingClientComments } from "@/features/comments/server/loadCommentsInboxData";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -16,12 +17,17 @@ export default async function DashboardLayout({
   const session = await auth();
   if (!session?.user) redirect("/login");
 
+  const pendingCommentsCount = await countPendingClientComments(
+    session.user.ownerId,
+  );
+
   return (
     <div className="flex h-screen bg-white overflow-hidden">
       <Sidebar
         userName={session.user.name}
         userEmail={session.user.email}
         isAdmin={session.user.role === "ADMIN"}
+        pendingCommentsCount={pendingCommentsCount}
       />
       <main className="flex-1 overflow-y-auto">{children}</main>
     </div>

@@ -39,6 +39,26 @@ const navItems: NavItem[] = [
     ),
   },
   {
+    label: "Comentários",
+    href: "/dashboard/comments",
+    isActive: (p) => p.startsWith("/dashboard/comments"),
+    icon: (
+      <svg
+        width="16"
+        height="16"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+      >
+        <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
+      </svg>
+    ),
+  },
+  {
     label: "Time",
     href: "/dashboard/team",
     isActive: (p) => p.startsWith("/dashboard/team"),
@@ -83,9 +103,15 @@ interface SidebarProps {
   userName?: string | null;
   userEmail?: string | null;
   isAdmin?: boolean;
+  pendingCommentsCount?: number;
 }
 
-export default function Sidebar({ userName, userEmail, isAdmin }: SidebarProps) {
+export default function Sidebar({
+  userName,
+  userEmail,
+  isAdmin,
+  pendingCommentsCount = 0,
+}: SidebarProps) {
   const pathname = usePathname();
   const visibleNavItems = isAdmin
     ? navItems
@@ -96,10 +122,12 @@ export default function Sidebar({ userName, userEmail, isAdmin }: SidebarProps) 
       <SidebarLogo />
 
       {/* Nav */}
-      <nav className="flex-1 px-3 py-2" aria-label="Dashboard navigation">
+      <nav className="flex-1 px-3 py-2" aria-label="Navegação do painel">
         <ul className="flex flex-col gap-0.5 list-none" role="list">
           {visibleNavItems.map(({ label, href, isActive: checkActive, icon }) => {
             const active = checkActive(pathname);
+            const badgeCount =
+              href === "/dashboard/comments" ? pendingCommentsCount : 0;
 
             return (
               <li key={label}>
@@ -123,7 +151,12 @@ export default function Sidebar({ userName, userEmail, isAdmin }: SidebarProps) 
                   >
                     {icon}
                   </span>
-                  {label}
+                  <span className="flex-1">{label}</span>
+                  {badgeCount > 0 && (
+                    <span className="shrink-0 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-[#e10600] text-white text-[10px] font-bold normal-case tracking-normal">
+                      {badgeCount}
+                    </span>
+                  )}
                 </Link>
               </li>
             );
@@ -139,7 +172,7 @@ export default function Sidebar({ userName, userEmail, isAdmin }: SidebarProps) 
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-xs font-semibold text-white truncate">
-              {userName ?? "User"}
+              {userName ?? "Usuário"}
             </p>
             <p className="text-[10px] text-white/40 truncate">
               {userEmail ?? ""}
@@ -152,8 +185,8 @@ export default function Sidebar({ userName, userEmail, isAdmin }: SidebarProps) 
               "hover:bg-white/10 transition-colors",
               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#e10600]/60",
             )}
-            aria-label="Sign out"
-            title="Sign out"
+            aria-label="Sair"
+            title="Sair"
           >
             <svg
               width="13"

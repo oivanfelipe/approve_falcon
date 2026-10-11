@@ -33,6 +33,7 @@ interface CalendarDeliveryRow {
   fileName?: string | null;
   theme?: string | null;
   copyStatus?: Status;
+  pendingCommentCount?: number;
 }
 
 interface DashboardCalendarViewProps {
@@ -51,9 +52,9 @@ const statusVariant: Record<Status, BadgeVariant> = {
 };
 
 const statusLabel: Record<Status, string> = {
-  PENDING: "Pending",
-  APPROVED: "Approved",
-  CHANGES_REQUESTED: "Changes requested",
+  PENDING: "Pendente",
+  APPROVED: "Aprovado",
+  CHANGES_REQUESTED: "Alterações",
 };
 
 const statusDot: Record<Status, string> = {
@@ -121,7 +122,7 @@ export default function DashboardCalendarView({
           }
           className="px-3 py-1.5 text-xs font-bold uppercase border-2 border-black hover:bg-black/5 transition-colors"
         >
-          ‹ Prev
+          ‹ Anterior
         </button>
         <h2 className="text-sm font-extrabold uppercase tracking-wide text-black">
           {monthLabel(monthDate)}
@@ -132,7 +133,7 @@ export default function DashboardCalendarView({
           }
           className="px-3 py-1.5 text-xs font-bold uppercase border-2 border-black hover:bg-black/5 transition-colors"
         >
-          Next ›
+          Próximo ›
         </button>
       </div>
 
@@ -160,7 +161,7 @@ export default function DashboardCalendarView({
                   : onEmptyDayClick(toDateInputValue(date))
               }
               className={cn(
-                "border-r-2 border-b-2 border-black min-h-16 sm:min-h-24 flex flex-col items-start p-2 text-left transition-colors",
+                "relative border-r-2 border-b-2 border-black min-h-16 sm:min-h-24 flex flex-col items-start p-2 text-left transition-colors",
                 !inMonth && "bg-black/5",
                 delivery ? "hover:bg-[#e10600]/5" : "hover:bg-black/5",
               )}
@@ -173,6 +174,14 @@ export default function DashboardCalendarView({
               >
                 {date.getDate()}
               </span>
+              {delivery && !!delivery.pendingCommentCount && (
+                <span
+                  className="absolute top-1.5 right-1.5 flex items-center justify-center min-w-[16px] h-4 px-1 rounded-full bg-[#e10600] text-white text-[9px] font-bold"
+                  title={`${delivery.pendingCommentCount} comentário${delivery.pendingCommentCount !== 1 ? "s" : ""} do cliente aguardando resposta`}
+                >
+                  {delivery.pendingCommentCount}
+                </span>
+              )}
               {delivery && (
                 <div className="mt-auto flex flex-col gap-1 w-full">
                   <span className={cn("w-2 h-2 rounded-full", statusDot[delivery.status])} />
@@ -187,8 +196,9 @@ export default function DashboardCalendarView({
       </div>
 
       <p className="text-xs text-black/40">
-        Click an empty day to upload a piece scheduled for that date. Click a
-        day with a piece to see its status and review link.
+        Clique em um dia vazio para enviar uma peça agendada para aquela
+        data. Clique em um dia com post para ver o status e o link de
+        revisão.
       </p>
 
       {/* Day detail modal */}
@@ -199,11 +209,11 @@ export default function DashboardCalendarView({
           title={
             selectedDelivery.theme ??
             selectedDelivery.label ??
-            `Version ${selectedDelivery.versionNumber}`
+            `Versão ${selectedDelivery.versionNumber}`
           }
           description={
             selectedDelivery.scheduledAt
-              ? formatScheduledDate(new Date(selectedDelivery.scheduledAt), "en-US", {
+              ? formatScheduledDate(new Date(selectedDelivery.scheduledAt), "pt-BR", {
                   weekday: "long",
                   day: "2-digit",
                   month: "long",
@@ -220,8 +230,14 @@ export default function DashboardCalendarView({
                 </Badge>
               )}
               <Badge variant={statusVariant[selectedDelivery.status]} size="sm">
-                Art: {statusLabel[selectedDelivery.status]}
+                Arte: {statusLabel[selectedDelivery.status]}
               </Badge>
+              {!!selectedDelivery.pendingCommentCount && (
+                <Badge variant="error" size="sm" dot>
+                  {selectedDelivery.pendingCommentCount} comentário
+                  {selectedDelivery.pendingCommentCount !== 1 ? "s" : ""} do cliente
+                </Badge>
+              )}
             </div>
 
             {onAttachCreative && (
@@ -231,7 +247,7 @@ export default function DashboardCalendarView({
                 fullWidth
                 onClick={() => onAttachCreative(selectedDelivery.id)}
               >
-                {selectedDelivery.fileName ? "Edit creative" : "Subir arte"}
+                {selectedDelivery.fileName ? "Editar arte" : "Subir arte"}
               </Button>
             )}
 
@@ -241,17 +257,17 @@ export default function DashboardCalendarView({
               rel="noopener noreferrer"
               className="inline-flex items-center justify-center px-4 py-2 text-sm font-bold uppercase bg-white border-2 border-black text-black hover:bg-black/5 transition-colors"
             >
-              Open review page
+              Abrir página de revisão
             </Link>
 
             {confirmingDelete ? (
               <div className="flex flex-col gap-3 p-4 bg-white border-2 border-[#e10600]">
                 <p className="text-sm font-extrabold uppercase text-[#e10600]">
-                  Delete this post?
+                  Apagar este post?
                 </p>
                 <p className="text-xs text-black/50">
-                  This permanently removes the post and its review link. This
-                  can&apos;t be undone.
+                  Isso remove o post e seu link de revisão permanentemente.
+                  Essa ação não pode ser desfeita.
                 </p>
                 {deleteError && (
                   <p className="text-xs font-medium text-[#e10600]" role="alert">
@@ -268,7 +284,7 @@ export default function DashboardCalendarView({
                     }}
                     disabled={isDeleting}
                   >
-                    Cancel
+                    Cancelar
                   </Button>
                   <Button
                     variant="danger"
@@ -276,7 +292,7 @@ export default function DashboardCalendarView({
                     onClick={handleDelete}
                     loading={isDeleting}
                   >
-                    Confirm delete
+                    Confirmar exclusão
                   </Button>
                 </div>
               </div>
@@ -287,7 +303,7 @@ export default function DashboardCalendarView({
                 onClick={() => setConfirmingDelete(true)}
                 fullWidth
               >
-                Delete post
+                Apagar post
               </Button>
             )}
           </div>
