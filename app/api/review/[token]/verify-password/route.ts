@@ -12,7 +12,7 @@ export async function POST(
     typeof body.password === "string" ? body.password : "";
 
   if (!password) {
-    return NextResponse.json({ error: "Password required" }, { status: 400 });
+    return NextResponse.json({ error: "Senha obrigatória" }, { status: 400 });
   }
 
   const delivery = await prisma.delivery.findUnique({
@@ -21,16 +21,16 @@ export async function POST(
   });
 
   if (!delivery || !delivery.password) {
-    return NextResponse.json({ error: "Not found" }, { status: 404 });
+    return NextResponse.json({ error: "Não encontrado" }, { status: 404 });
   }
 
   if (delivery.expiresAt && delivery.expiresAt < new Date()) {
-    return NextResponse.json({ error: "Link expired" }, { status: 410 });
+    return NextResponse.json({ error: "Link expirado" }, { status: 410 });
   }
 
   const valid = await bcrypt.compare(password, delivery.password);
   if (!valid) {
-    return NextResponse.json({ error: "Incorrect password" }, { status: 401 });
+    return NextResponse.json({ error: "Senha incorreta" }, { status: 401 });
   }
 
   // Set a short-lived httpOnly cookie scoped to this token

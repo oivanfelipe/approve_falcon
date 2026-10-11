@@ -53,14 +53,14 @@ export default function GuestUploader() {
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        throw new Error(data.error ?? "Upload failed. Please try again.");
+        throw new Error(data.error ?? "Falha no envio. Tente novamente.");
       }
       const data = await res.json();
       setResult({ reviewUrl: data.reviewUrl, fileName: file.name });
       setState("done");
     } catch (e) {
       setError(
-        e instanceof Error ? e.message : "Upload failed. Please try again.",
+        e instanceof Error ? e.message : "Falha no envio. Tente novamente.",
       );
       setState("error");
     }

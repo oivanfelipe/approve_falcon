@@ -31,22 +31,22 @@ export async function POST(
   });
 
   if (!delivery) {
-    return NextResponse.json({ error: "Not found" }, { status: 404 });
+    return NextResponse.json({ error: "Não encontrado" }, { status: 404 });
   }
 
   if (delivery.expiresAt && delivery.expiresAt < new Date()) {
-    return NextResponse.json({ error: "Link expired" }, { status: 410 });
+    return NextResponse.json({ error: "Link expirado" }, { status: 410 });
   }
 
   if (delivery.copyStatus === "APPROVED") {
-    return NextResponse.json({ error: "Already approved" }, { status: 409 });
+    return NextResponse.json({ error: "Já aprovado" }, { status: 409 });
   }
 
   const body = await request.json().catch(() => ({}));
   const parsed = approveSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(
-      { error: parsed.error.issues[0]?.message ?? "Invalid input" },
+      { error: parsed.error.issues[0]?.message ?? "Dados inválidos" },
       { status: 400 },
     );
   }

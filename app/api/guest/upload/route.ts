@@ -11,24 +11,24 @@ export async function POST(request: NextRequest) {
   try {
     formData = await request.formData();
   } catch {
-    return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+    return NextResponse.json({ error: "Requisição inválida" }, { status: 400 });
   }
 
   const file = formData.get("file");
   if (!(file instanceof File)) {
-    return NextResponse.json({ error: "No file provided" }, { status: 400 });
+    return NextResponse.json({ error: "Nenhum arquivo enviado" }, { status: 400 });
   }
 
   if (file.size > MAX_SIZE) {
     return NextResponse.json(
-      { error: "File too large. Maximum size is 20 MB." },
+      { error: "Arquivo muito grande. Tamanho máximo: 20 MB." },
       { status: 413 },
     );
   }
 
   if (!ALLOWED_PREFIXES.some((p) => file.type.startsWith(p))) {
     return NextResponse.json(
-      { error: "Unsupported file type. Upload an image, PDF, or video." },
+      { error: "Tipo de arquivo não suportado. Envie uma imagem, PDF ou vídeo." },
       { status: 415 },
     );
   }

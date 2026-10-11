@@ -10,13 +10,13 @@ export async function getOrCreateCalendarToken(
   projectId: string,
 ): Promise<{ token?: string; error?: string }> {
   const session = await auth();
-  if (!session?.user?.id) return { error: "Not authenticated" };
+  if (!session?.user?.id) return { error: "Não autenticado" };
 
   const project = await prisma.project.findFirst({
     where: { id: projectId, userId: session.user.ownerId },
     select: { id: true, calendarToken: true },
   });
-  if (!project) return { error: "Project not found" };
+  if (!project) return { error: "Projeto não encontrado" };
 
   if (project.calendarToken) return { token: project.calendarToken };
 
@@ -56,7 +56,7 @@ export async function importContentPlan(
   raw: unknown,
 ): Promise<{ count?: number; error?: string }> {
   const session = await auth();
-  if (!session?.user?.id) return { error: "Not authenticated" };
+  if (!session?.user?.id) return { error: "Não autenticado" };
 
   const parsed = importContentPlanSchema.safeParse(raw);
   if (!parsed.success) {
@@ -68,7 +68,7 @@ export async function importContentPlan(
     where: { id: projectId, userId: session.user.ownerId },
     select: { id: true, _count: { select: { deliveries: true } } },
   });
-  if (!project) return { error: "Project not found" };
+  if (!project) return { error: "Projeto não encontrado" };
 
   let nextVersion = project._count.deliveries + 1;
 

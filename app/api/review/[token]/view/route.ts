@@ -22,11 +22,11 @@ export async function POST(
   });
 
   if (!delivery) {
-    return NextResponse.json({ error: "Not found" }, { status: 404 });
+    return NextResponse.json({ error: "Não encontrado" }, { status: 404 });
   }
 
   if (delivery.expiresAt && delivery.expiresAt < new Date()) {
-    return NextResponse.json({ error: "Link expired" }, { status: 410 });
+    return NextResponse.json({ error: "Link expirado" }, { status: 410 });
   }
 
   const ip =

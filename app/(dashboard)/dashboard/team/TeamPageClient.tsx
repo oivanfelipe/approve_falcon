@@ -147,17 +147,29 @@ function MemberRow({
   const [role, setRole] = useState(member.role);
   const [confirmRemove, setConfirmRemove] = useState(false);
   const [isPending, startTransition] = useTransition();
+  const [error, setError] = useState("");
 
   const handleRoleChange = (newRole: Role) => {
+    const previousRole = role;
     setRole(newRole);
-    startTransition(() => {
-      updateMemberRole(member.id, newRole);
+    setError("");
+    startTransition(async () => {
+      const result = await updateMemberRole(member.id, newRole);
+      if (result?.error) {
+        setRole(previousRole);
+        setError(result.error);
+      }
     });
   };
 
   const handleRemove = () => {
+    setError("");
     startTransition(async () => {
-      await removeMember(member.id);
+      const result = await removeMember(member.id);
+      if (result?.error) {
+        setError(result.error);
+        return;
+      }
       setConfirmRemove(false);
     });
   };
@@ -170,6 +182,7 @@ function MemberRow({
           {isSelf && <span className="text-black/40 font-normal"> (você)</span>}
         </p>
         <p className="text-xs text-black/40 truncate">{member.user.email}</p>
+        {error && <p className="text-xs text-red-600 mt-1">{error}</p>}
       </div>
       <RoleToggle value={role} onChange={handleRoleChange} disabled={isPending} />
       <Button

@@ -46,25 +46,25 @@ export async function POST(
   });
 
   if (!delivery) {
-    return NextResponse.json({ error: "Not found" }, { status: 404 });
+    return NextResponse.json({ error: "Não encontrado" }, { status: 404 });
   }
 
   if (delivery.expiresAt && delivery.expiresAt < new Date()) {
-    return NextResponse.json({ error: "Link expired" }, { status: 410 });
+    return NextResponse.json({ error: "Link expirado" }, { status: 410 });
   }
 
   const body = await request.json().catch(() => ({}));
   const parsed = commentSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(
-      { error: parsed.error.issues[0]?.message ?? "Invalid input" },
+      { error: parsed.error.issues[0]?.message ?? "Dados inválidos" },
       { status: 400 },
     );
   }
 
   if (!parsed.data.content && !parsed.data.audioUrl) {
     return NextResponse.json(
-      { error: "Either content or audioUrl is required" },
+      { error: "É necessário enviar texto ou áudio" },
       { status: 400 },
     );
   }
@@ -84,7 +84,7 @@ export async function POST(
 
       if (!parentComment) {
         return NextResponse.json(
-          { error: "Parent comment not found" },
+          { error: "Comentário original não encontrado" },
           { status: 400 },
         );
       }
@@ -120,7 +120,7 @@ export async function POST(
     console.error("Comment create failed:", err);
     return NextResponse.json(
       {
-        error: err instanceof Error ? err.message : "Comment create failed",
+        error: err instanceof Error ? err.message : "Falha ao criar comentário",
       },
       { status: 500 },
     );

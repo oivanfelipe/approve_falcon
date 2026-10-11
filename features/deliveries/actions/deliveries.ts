@@ -70,13 +70,13 @@ export async function getUploadUrl(
   | { error: string }
 > {
   const session = await auth();
-  if (!session?.user?.id) return { error: "Not authenticated" };
+  if (!session?.user?.id) return { error: "Não autenticado" };
 
   const project = await prisma.project.findFirst({
     where: { id: projectId, userId: session.user.ownerId },
     select: { id: true },
   });
-  if (!project) return { error: "Project not found" };
+  if (!project) return { error: "Projeto não encontrado" };
 
   const ext = fileName.split(".").pop() ?? "bin";
   const ts = Date.now();
@@ -94,7 +94,7 @@ export async function createDelivery(
   raw: Record<string, unknown>,
 ): Promise<{ reviewToken?: string; error?: string }> {
   const session = await auth();
-  if (!session?.user?.id) return { error: "Not authenticated" };
+  if (!session?.user?.id) return { error: "Não autenticado" };
 
   const requestHeaders = await headers();
   const locale = detectLocale(requestHeaders.get("accept-language"));
@@ -104,7 +104,7 @@ export async function createDelivery(
 
   const parsed = createDeliverySchema.safeParse(raw);
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
+    return { error: parsed.error.issues[0]?.message ?? "Dados inválidos" };
   }
 
   const {
@@ -135,7 +135,7 @@ export async function createDelivery(
       _count: { select: { deliveries: true } },
     },
   });
-  if (!project) return { error: "Project not found" };
+  if (!project) return { error: "Projeto não encontrado" };
 
   const versionNumber = project._count.deliveries + 1;
   const reviewToken = generateShareToken();
@@ -190,7 +190,7 @@ export async function deleteDelivery(
   deliveryId: string,
 ): Promise<{ error?: string }> {
   const session = await auth();
-  if (!session?.user?.id) return { error: "Not authenticated" };
+  if (!session?.user?.id) return { error: "Não autenticado" };
 
   const delivery = await prisma.delivery.findFirst({
     where: { id: deliveryId, project: { userId: session.user.ownerId } },
@@ -202,7 +202,7 @@ export async function deleteDelivery(
       status: true,
     },
   });
-  if (!delivery) return { error: "Delivery not found" };
+  if (!delivery) return { error: "Post não encontrado" };
 
   try {
     assertDeliveryNotApproved(delivery);
@@ -254,11 +254,11 @@ export async function attachCreativeToDelivery(
   raw: Record<string, unknown>,
 ): Promise<{ error?: string }> {
   const session = await auth();
-  if (!session?.user?.id) return { error: "Not authenticated" };
+  if (!session?.user?.id) return { error: "Não autenticado" };
 
   const parsed = attachCreativeSchema.safeParse(raw);
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
+    return { error: parsed.error.issues[0]?.message ?? "Dados inválidos" };
   }
 
   const {
@@ -281,7 +281,7 @@ export async function attachCreativeToDelivery(
       filePath: true,
     },
   });
-  if (!delivery) return { error: "Delivery not found" };
+  if (!delivery) return { error: "Post não encontrado" };
 
   try {
     assertDeliveryNotApproved(delivery);
@@ -351,11 +351,11 @@ export async function addDeliveryAsset(
   raw: Record<string, unknown>,
 ): Promise<{ error?: string }> {
   const session = await auth();
-  if (!session?.user?.id) return { error: "Not authenticated" };
+  if (!session?.user?.id) return { error: "Não autenticado" };
 
   const parsed = addDeliveryAssetSchema.safeParse(raw);
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
+    return { error: parsed.error.issues[0]?.message ?? "Dados inválidos" };
   }
 
   const {
@@ -377,7 +377,7 @@ export async function addDeliveryAsset(
       assets: { select: { position: true }, orderBy: { position: "desc" }, take: 1 },
     },
   });
-  if (!delivery) return { error: "Delivery not found" };
+  if (!delivery) return { error: "Post não encontrado" };
 
   try {
     assertDeliveryNotApproved(delivery);
@@ -408,7 +408,7 @@ export async function deleteDeliveryAsset(
   assetId: string,
 ): Promise<{ error?: string }> {
   const session = await auth();
-  if (!session?.user?.id) return { error: "Not authenticated" };
+  if (!session?.user?.id) return { error: "Não autenticado" };
 
   const asset = await prisma.deliveryAsset.findFirst({
     where: { id: assetId, delivery: { project: { userId: session.user.ownerId } } },
@@ -452,18 +452,18 @@ export async function updateDeliveryContent(
   raw: Record<string, unknown>,
 ): Promise<{ error?: string }> {
   const session = await auth();
-  if (!session?.user?.id) return { error: "Not authenticated" };
+  if (!session?.user?.id) return { error: "Não autenticado" };
 
   const parsed = updateDeliveryContentSchema.safeParse(raw);
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
+    return { error: parsed.error.issues[0]?.message ?? "Dados inválidos" };
   }
 
   const delivery = await prisma.delivery.findFirst({
     where: { id: parsed.data.deliveryId, project: { userId: session.user.ownerId } },
     select: { id: true, projectId: true, status: true },
   });
-  if (!delivery) return { error: "Delivery not found" };
+  if (!delivery) return { error: "Post não encontrado" };
 
   try {
     assertDeliveryNotApproved(delivery);
@@ -504,18 +504,18 @@ export async function scheduleDelivery(
   raw: Record<string, unknown>,
 ): Promise<{ error?: string }> {
   const session = await auth();
-  if (!session?.user?.id) return { error: "Not authenticated" };
+  if (!session?.user?.id) return { error: "Não autenticado" };
 
   const parsed = scheduleDeliverySchema.safeParse(raw);
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
+    return { error: parsed.error.issues[0]?.message ?? "Dados inválidos" };
   }
 
   const delivery = await prisma.delivery.findFirst({
     where: { id: parsed.data.deliveryId, project: { userId: session.user.ownerId } },
     select: { id: true, projectId: true },
   });
-  if (!delivery) return { error: "Delivery not found" };
+  if (!delivery) return { error: "Post não encontrado" };
 
   await prisma.delivery.update({
     where: { id: delivery.id },

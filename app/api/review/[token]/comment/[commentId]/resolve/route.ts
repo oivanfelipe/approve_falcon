@@ -17,7 +17,7 @@ export async function PATCH(
 ) {
   const session = await auth();
   if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
   }
 
   const { token, commentId } = await params;
@@ -26,7 +26,7 @@ export async function PATCH(
 
   if (!parsed.success) {
     return NextResponse.json(
-      { error: parsed.error.issues[0]?.message ?? "Invalid input" },
+      { error: parsed.error.issues[0]?.message ?? "Dados inválidos" },
       { status: 400 },
     );
   }
@@ -44,11 +44,11 @@ export async function PATCH(
   });
 
   if (!delivery) {
-    return NextResponse.json({ error: "Not found" }, { status: 404 });
+    return NextResponse.json({ error: "Não encontrado" }, { status: 404 });
   }
 
   if (delivery.project.userId !== session.user.ownerId) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
   }
 
   const existingComment = await prisma.comment.findFirst({
@@ -63,12 +63,12 @@ export async function PATCH(
   });
 
   if (!existingComment) {
-    return NextResponse.json({ error: "Comment not found" }, { status: 404 });
+    return NextResponse.json({ error: "Comentário não encontrado" }, { status: 404 });
   }
 
   if (existingComment.authorType !== "CLIENT") {
     return NextResponse.json(
-      { error: "Only client comments can be resolved" },
+      { error: "Apenas comentários do cliente podem ser resolvidos" },
       { status: 400 },
     );
   }
@@ -128,7 +128,7 @@ export async function PATCH(
   `;
 
   if (!comment) {
-    return NextResponse.json({ error: "Comment not found" }, { status: 404 });
+    return NextResponse.json({ error: "Comentário não encontrado" }, { status: 404 });
   }
 
   return NextResponse.json({

@@ -9,9 +9,9 @@ import { z } from "zod";
 
 async function requireAdmin() {
   const session = await auth();
-  if (!session?.user?.id) return { error: "Not authenticated" as const };
+  if (!session?.user?.id) return { error: "Não autenticado" as const };
   if (session.user.role !== "ADMIN") {
-    return { error: "Only admins can manage the team" as const };
+    return { error: "Só administradores podem gerenciar o time" as const };
   }
   return { session };
 }
@@ -64,14 +64,14 @@ export async function inviteTeamMember(
     role: formData.get("role"),
   });
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
+    return { error: parsed.error.issues[0]?.message ?? "Dados inválidos" };
   }
 
   const { email, role } = parsed.data;
   const ownerId = session.user.ownerId;
 
   if (email.toLowerCase() === session.user.email?.toLowerCase()) {
-    return { error: "You can't invite yourself" };
+    return { error: "Você não pode convidar a si mesmo" };
   }
 
   const existingUser = await prisma.user.findUnique({
@@ -80,13 +80,13 @@ export async function inviteTeamMember(
   });
   if (existingUser) {
     if (existingUser.id === ownerId) {
-      return { error: "This person already owns this account" };
+      return { error: "Esta pessoa já é dona desta conta" };
     }
     const existingMembership = await prisma.teamMembership.findFirst({
       where: { ownerId, userId: existingUser.id },
       select: { id: true },
     });
-    if (existingMembership) return { error: "This person is already on your team" };
+    if (existingMembership) return { error: "Esta pessoa já faz parte do seu time" };
   }
 
   const token = generateSecureToken();
