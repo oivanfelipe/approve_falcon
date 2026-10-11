@@ -8,6 +8,8 @@ import FilePreview from "@/features/review/components/FilePreview";
 import DriveEmbed from "@/features/review/components/DriveEmbed";
 import ApprovalPanel from "@/features/review/components/ApprovalPanel";
 import ArtCopyMockup from "@/features/review/components/ArtCopyMockup";
+import RealAssetCarousel from "@/features/review/components/RealAssetCarousel";
+import PostCaption from "@/features/review/components/PostCaption";
 import { cn } from "@/lib/utils";
 import type { CalendarPageData, CalendarDelivery } from "@/features/calendar/server/loadCalendarPageData";
 import {
@@ -51,6 +53,7 @@ function DayDetailModal({
   onCopyStatusChange,
   primaryColor,
   accountLabel,
+  avatarUrl,
 }: {
   delivery: CalendarDelivery;
   copyStatus: Status;
@@ -59,6 +62,7 @@ function DayDetailModal({
   onCopyStatusChange: (status: Status) => void;
   primaryColor?: string;
   accountLabel?: string | null;
+  avatarUrl?: string | null;
 }) {
   const date = new Date(delivery.scheduledAt!);
   const hasCopyContent = Boolean(
@@ -68,8 +72,11 @@ function DayDetailModal({
       delivery.objective ||
       delivery.postFunction,
   );
-  const creativeRevealed = copyStatus === "APPROVED" || !hasCopyContent;
   const hasCreativeFile = Boolean(delivery.driveUrl || delivery.signedUrl);
+  // The real art, once uploaded, is always shown ahead of the
+  // planning-stage copy mockup.
+  const creativeRevealed =
+    hasCreativeFile || copyStatus === "APPROVED" || !hasCopyContent;
 
   return (
     <Modal
@@ -154,6 +161,7 @@ function DayDetailModal({
                     primaryColor={primaryColor}
                     accountLabel={accountLabel}
                     caption={delivery.copyText}
+                    avatarUrl={avatarUrl}
                   />
                 </div>
               )}
@@ -163,23 +171,34 @@ function DayDetailModal({
             <p className="p-6 text-sm text-black/50 text-center">
               Copy aprovada. Aguardando a arte ser enviada pelo time.
             </p>
-          ) : delivery.sourceType === "DRIVE_LINK" && delivery.driveUrl ? (
-            <DriveEmbed
-              driveUrl={delivery.driveUrl}
-              fileName={delivery.fileName ?? "Arte"}
-              allowDownload={delivery.allowDownload}
-            />
-          ) : delivery.signedUrl && delivery.mimeType ? (
-            <FilePreview
-              signedUrl={delivery.signedUrl}
-              mimeType={delivery.mimeType}
-              fileName={delivery.fileName ?? "Arte"}
-              allowDownload={delivery.allowDownload}
-            />
           ) : (
-            <p className="p-6 text-sm text-black/50">
-              Não foi possível carregar este arquivo.
-            </p>
+            <div className="p-4 flex flex-col gap-4">
+              <RealAssetCarousel
+                allowDownload={delivery.allowDownload}
+                extraAssets={delivery.assets}
+                renderPrimary={() =>
+                  delivery.sourceType === "DRIVE_LINK" && delivery.driveUrl ? (
+                    <DriveEmbed
+                      driveUrl={delivery.driveUrl}
+                      fileName={delivery.fileName ?? "Arte"}
+                      allowDownload={delivery.allowDownload}
+                    />
+                  ) : delivery.signedUrl && delivery.mimeType ? (
+                    <FilePreview
+                      signedUrl={delivery.signedUrl}
+                      mimeType={delivery.mimeType}
+                      fileName={delivery.fileName ?? "Arte"}
+                      allowDownload={delivery.allowDownload}
+                    />
+                  ) : (
+                    <p className="p-6 text-sm text-black/50">
+                      Não foi possível carregar este arquivo.
+                    </p>
+                  )
+                }
+              />
+              <PostCaption caption={delivery.copyText} accountLabel={accountLabel} />
+            </div>
           )}
         </div>
 
@@ -294,6 +313,7 @@ export default function CalendarClientShell({ data }: CalendarClientShellProps) 
               : null;
             const creativeRevealed =
               !delivery ||
+              Boolean(delivery.driveUrl || delivery.signedUrl) ||
               copyStatus === "APPROVED" ||
               !(
                 delivery.copyText ||
@@ -369,6 +389,7 @@ export default function CalendarClientShell({ data }: CalendarClientShellProps) 
           }
           primaryColor={primaryColor}
           accountLabel={data.branding?.displayName}
+          avatarUrl={data.branding?.logoUrl}
         />
       )}
 

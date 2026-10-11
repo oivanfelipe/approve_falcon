@@ -6,6 +6,10 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import { createProject } from "@/features/projects/actions/projects";
+import {
+  DEFAULT_PRIMARY_COLOR,
+  DEFAULT_SECONDARY_COLOR,
+} from "@/lib/freelancer-branding-shared";
 
 interface NewProjectModalProps {
   isOpen: boolean;
@@ -17,6 +21,9 @@ export default function NewProjectModal({
   onClose,
 }: NewProjectModalProps) {
   const [error, setError] = useState<string | null>(null);
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [primaryColor, setPrimaryColor] = useState(DEFAULT_PRIMARY_COLOR);
+  const [secondaryColor, setSecondaryColor] = useState(DEFAULT_SECONDARY_COLOR);
   const [isPending, startTransition] = useTransition();
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -24,6 +31,23 @@ export default function NewProjectModal({
     const formData = new FormData(e.currentTarget);
 
     startTransition(async () => {
+      setError(null);
+
+      if (logoFile) {
+        const uploadForm = new FormData();
+        uploadForm.set("file", logoFile);
+        const res = await fetch("/api/projects/logo", {
+          method: "POST",
+          body: uploadForm,
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          setError(data.error ?? "Falha ao enviar a logo");
+          return;
+        }
+        formData.set("clientLogoUrl", data.logoUrl);
+      }
+
       const result = await createProject(formData);
       if (result?.error) {
         setError(result.error);
@@ -91,6 +115,53 @@ export default function NewProjectModal({
           fullWidth
           resize="none"
         />
+
+        <div className="flex flex-col gap-2 pt-2 border-t border-black/10">
+          <label className="text-sm font-semibold text-black">
+            Logo do cliente (opcional)
+          </label>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 shrink-0 rounded-full border-2 border-black bg-black/[0.03] flex items-center justify-center overflow-hidden">
+              {logoFile && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={URL.createObjectURL(logoFile)}
+                  alt="Logo"
+                  className="w-full h-full object-cover"
+                />
+              )}
+            </div>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(e) => setLogoFile(e.target.files?.[0] ?? null)}
+              className="text-xs text-black/60"
+            />
+          </div>
+          <p className="text-xs text-black/45">
+            Usada nos mockups e nas páginas de revisão deste cliente.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <Input
+            type="color"
+            name="primaryColor"
+            label="Cor primária"
+            value={primaryColor}
+            onChange={(e) => setPrimaryColor(e.target.value)}
+            fullWidth
+          />
+          <Input
+            type="color"
+            name="secondaryColor"
+            label="Cor secundária"
+            value={secondaryColor}
+            onChange={(e) => setSecondaryColor(e.target.value)}
+            fullWidth
+          />
+        </div>
+
         {error && (
           <p className="text-xs font-medium text-[#e10600]" role="alert">
             {error}

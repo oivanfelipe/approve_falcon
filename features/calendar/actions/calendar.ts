@@ -2,7 +2,7 @@
 
 import { prisma } from "@/lib/prisma/client";
 import { auth } from "@/auth";
-import { generateReviewToken } from "@/lib/tokens";
+import { generateShareToken } from "@/lib/tokens";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
@@ -20,7 +20,7 @@ export async function getOrCreateCalendarToken(
 
   if (project.calendarToken) return { token: project.calendarToken };
 
-  const token = generateReviewToken();
+  const token = generateShareToken();
   await prisma.project.update({
     where: { id: projectId },
     data: { calendarToken: token },
@@ -89,7 +89,7 @@ export async function importContentPlan(
       scheduledAt: entry.scheduledDate ? new Date(entry.scheduledDate) : null,
       sourceType: "FILE",
       fileName: null,
-      reviewToken: generateReviewToken(),
+      reviewToken: generateShareToken(),
     })),
   });
 

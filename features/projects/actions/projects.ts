@@ -5,6 +5,10 @@ import { auth } from "@/auth";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import { deleteFile } from "@/lib/supabase/server";
+import { generateUniqueProjectSlug } from "@/lib/project-slug";
+
+const HEX_COLOR = /^#?[0-9a-fA-F]{6}$/;
 
 // ─── Schemas ──────────────────────────────────────────────────────────────────
 
@@ -13,6 +17,9 @@ const createProjectSchema = z.object({
   clientName: z.string().min(1).max(100),
   clientEmail: z.string().email().optional().or(z.literal("")),
   description: z.string().max(500).optional(),
+  clientLogoUrl: z.string().min(1).optional(),
+  primaryColor: z.string().regex(HEX_COLOR).optional().or(z.literal("")),
+  secondaryColor: z.string().regex(HEX_COLOR).optional().or(z.literal("")),
 });
 
 const updateProjectSchema = createProjectSchema.partial();
@@ -37,12 +44,17 @@ export async function createProject(
     clientName: formData.get("clientName"),
     clientEmail: formData.get("clientEmail") || undefined,
     description: formData.get("description") || undefined,
+    clientLogoUrl: formData.get("clientLogoUrl") || undefined,
+    primaryColor: formData.get("primaryColor") || undefined,
+    secondaryColor: formData.get("secondaryColor") || undefined,
   };
 
   const parsed = createProjectSchema.safeParse(raw);
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
   }
+
+  const slug = await generateUniqueProjectSlug(parsed.data.clientName);
 
   const project = await prisma.project.create({
     data: {
@@ -51,6 +63,10 @@ export async function createProject(
       clientName: parsed.data.clientName,
       clientEmail: parsed.data.clientEmail || null,
       description: parsed.data.description || null,
+      slug,
+      clientLogoUrl: parsed.data.clientLogoUrl || null,
+      primaryColor: parsed.data.primaryColor || null,
+      secondaryColor: parsed.data.secondaryColor || null,
     },
   });
 
@@ -66,7 +82,7 @@ export async function updateProject(
 
   const project = await prisma.project.findFirst({
     where: { id, userId },
-    select: { id: true },
+    select: { id: true, clientLogoUrl: true },
   });
   if (!project) return { error: "Project not found" };
 
@@ -75,6 +91,9 @@ export async function updateProject(
     clientName: formData.get("clientName") ?? undefined,
     clientEmail: formData.get("clientEmail") ?? undefined,
     description: formData.get("description") ?? undefined,
+    clientLogoUrl: formData.get("clientLogoUrl") ?? undefined,
+    primaryColor: formData.get("primaryColor") ?? undefined,
+    secondaryColor: formData.get("secondaryColor") ?? undefined,
   };
 
   const parsed = updateProjectSchema.safeParse(raw);
@@ -82,13 +101,33 @@ export async function updateProject(
     return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
   }
 
+  const nextLogoUrl =
+    parsed.data.clientLogoUrl !== undefined
+      ? parsed.data.clientLogoUrl || null
+      : undefined;
+
   await prisma.project.update({
     where: { id },
     data: {
       ...parsed.data,
       clientEmail: parsed.data.clientEmail || null,
+      ...(nextLogoUrl !== undefined ? { clientLogoUrl: nextLogoUrl } : {}),
+      ...(parsed.data.primaryColor !== undefined
+        ? { primaryColor: parsed.data.primaryColor || null }
+        : {}),
+      ...(parsed.data.secondaryColor !== undefined
+        ? { secondaryColor: parsed.data.secondaryColor || null }
+        : {}),
     },
   });
+
+  if (
+    nextLogoUrl !== undefined &&
+    project.clientLogoUrl &&
+    project.clientLogoUrl !== nextLogoUrl
+  ) {
+    deleteFile(project.clientLogoUrl).catch(() => {});
+  }
 
   revalidatePath(`/dashboard/projects/${id}`);
   revalidatePath("/dashboard");
@@ -100,12 +139,16 @@ export async function deleteProject(id: string): Promise<{ error?: string }> {
 
   const project = await prisma.project.findFirst({
     where: { id, userId },
-    select: { id: true },
+    select: { id: true, clientLogoUrl: true },
   });
   if (!project) return { error: "Project not found" };
 
   // Deliveries cascade via DB FK. Storage files must be cleaned up separately.
   await prisma.project.delete({ where: { id } });
+
+  if (project.clientLogoUrl) {
+    deleteFile(project.clientLogoUrl).catch(() => {});
+  }
 
   revalidatePath("/dashboard");
   redirect("/dashboard");

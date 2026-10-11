@@ -51,8 +51,15 @@ export default async function ReviewPage({ params, searchParams }: PageProps) {
   const pageData = await loadReviewPageData(token);
   if (!pageData) notFound();
 
-  const { delivery, signedUrl, initialComments, allDeliveries, branding } =
-    pageData;
+  const {
+    delivery,
+    signedUrl,
+    initialComments,
+    allDeliveries,
+    branding,
+    assets,
+    projectSlug,
+  } = pageData;
 
   if (delivery.expiresAt && delivery.expiresAt < new Date()) {
     return (
@@ -139,11 +146,12 @@ export default async function ReviewPage({ params, searchParams }: PageProps) {
       clientName={delivery.project.clientName}
       initialComments={initialComments}
       allDeliveries={allDeliveries}
+      extraAssets={assets}
       isFreelancerPreview={isFreelancerPreview}
       freelancerName={freelancerName}
       freelancerDisplayName={delivery.project.user?.name ?? null}
       branding={branding}
-      reviewPathSlug={branding?.slug ?? null}
+      reviewPathSlug={projectSlug}
     />
   );
 }

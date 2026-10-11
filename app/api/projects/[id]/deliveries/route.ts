@@ -46,6 +46,16 @@ export async function GET(
       copyStatus: true,
       copyText: true,
       artCopy: true,
+      assets: {
+        orderBy: { position: "asc" },
+        select: {
+          id: true,
+          fileName: true,
+          sourceType: true,
+          driveUrl: true,
+          mimeType: true,
+        },
+      },
       _count: {
         select: { comments: true, views: true },
       },
@@ -81,6 +91,7 @@ export async function GET(
     copyStatus: d.copyStatus,
     copyText: d.copyText,
     artCopy: d.artCopy,
+    assets: d.assets,
   }));
 
   return NextResponse.json(result);

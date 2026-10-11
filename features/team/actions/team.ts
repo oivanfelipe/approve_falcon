@@ -2,7 +2,7 @@
 
 import { prisma } from "@/lib/prisma/client";
 import { auth } from "@/auth";
-import { generateReviewToken } from "@/lib/tokens";
+import { generateSecureToken } from "@/lib/tokens";
 import { sendTeamInviteEmail } from "@/lib/email";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
@@ -89,7 +89,7 @@ export async function inviteTeamMember(
     if (existingMembership) return { error: "This person is already on your team" };
   }
 
-  const token = generateReviewToken();
+  const token = generateSecureToken();
 
   await prisma.teamInvite.upsert({
     where: { ownerId_email: { ownerId, email } },

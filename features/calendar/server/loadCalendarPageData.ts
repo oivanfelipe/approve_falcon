@@ -1,6 +1,8 @@
 import { prisma } from "@/lib/prisma/client";
 import { getSignedUrl } from "@/lib/supabase/server";
 import { getFreelancerBrandingByUserId } from "@/lib/freelancer-branding";
+import { resolveEffectiveBranding } from "@/lib/project-branding";
+import { signDeliveryAssets } from "@/lib/delivery-assets";
 
 export async function loadCalendarPageData(token: string) {
   const project = await prisma.project.findUnique({
@@ -10,6 +12,9 @@ export async function loadCalendarPageData(token: string) {
       name: true,
       clientName: true,
       userId: true,
+      clientLogoUrl: true,
+      primaryColor: true,
+      secondaryColor: true,
       deliveries: {
         where: { scheduledAt: { not: null } },
         orderBy: { scheduledAt: "asc" },
@@ -35,6 +40,7 @@ export async function loadCalendarPageData(token: string) {
           mimeType: true,
           driveUrl: true,
           allowDownload: true,
+          assets: { orderBy: { position: "asc" } },
         },
       },
     },
@@ -42,7 +48,16 @@ export async function loadCalendarPageData(token: string) {
 
   if (!project) return null;
 
-  const branding = await getFreelancerBrandingByUserId(project.userId);
+  const freelancerBranding = await getFreelancerBrandingByUserId(project.userId);
+  const branding = await resolveEffectiveBranding(
+    {
+      clientName: project.clientName,
+      clientLogoUrl: project.clientLogoUrl,
+      primaryColor: project.primaryColor,
+      secondaryColor: project.secondaryColor,
+    },
+    freelancerBranding,
+  );
 
   const deliveries = await Promise.all(
     project.deliveries.map(async (d) => ({
@@ -51,6 +66,7 @@ export async function loadCalendarPageData(token: string) {
         d.sourceType === "FILE" && d.filePath
           ? await getSignedUrl(d.filePath, 60 * 60 * 2).catch(() => null)
           : null,
+      assets: await signDeliveryAssets(d.assets),
     })),
   );
 
