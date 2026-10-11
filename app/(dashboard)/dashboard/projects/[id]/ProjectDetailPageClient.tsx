@@ -176,13 +176,14 @@ function DeliveryEditRow({
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState("");
 
-  const handleSchedule = async () => {
-    if (!date) return;
+  const handleDateChange = async (value: string) => {
+    setDate(value);
+    if (!value) return;
     setIsPending(true);
     setError("");
     const result = await scheduleDelivery({
       deliveryId: delivery.id,
-      scheduledAt: date,
+      scheduledAt: value,
     });
     setIsPending(false);
     if (result.error) {
@@ -265,18 +266,10 @@ function DeliveryEditRow({
         <input
           type="date"
           value={date}
-          onChange={(e) => setDate(e.target.value)}
-          className="border-2 border-black px-2 py-1.5 text-xs font-mono"
+          onChange={(e) => handleDateChange(e.target.value)}
+          disabled={isPending}
+          className="border-2 border-black px-2 py-1.5 text-xs font-mono disabled:opacity-50"
         />
-        <Button
-          variant={delivery.scheduledAt ? "outline" : "primary"}
-          size="sm"
-          disabled={!date || isPending}
-          loading={isPending}
-          onClick={handleSchedule}
-        >
-          {delivery.scheduledAt ? "Alterar data" : "Agendar"}
-        </Button>
 
         <Button
           variant="outline"
@@ -461,6 +454,10 @@ export default function ProjectDetailClient({
 
   const editOrderedDeliveries = sortForEditing(liveDeliveries);
   const editingDelivery = liveDeliveries.find((d) => d.id === editingId) ?? null;
+  const totalPendingComments = liveDeliveries.reduce(
+    (sum, d) => sum + d.pendingCommentCount,
+    0,
+  );
 
   const toggleSelected = (id: string) => {
     setSelectedIds((prev) => {
@@ -627,30 +624,16 @@ export default function ProjectDetailClient({
             >
               Importar planilha
             </Button>
-            <Button
-              variant="primary"
-              size="sm"
-              onClick={() => openUpload()}
-              leftIcon={
-                <svg
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  aria-hidden="true"
-                >
-                  <polyline points="16 16 12 12 8 16" />
-                  <line x1="12" y1="12" x2="12" y2="21" />
-                  <path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3" />
-                </svg>
-              }
-            >
-              Upload version
-            </Button>
+            <Link href={`/dashboard/comments?project=${projectId}`}>
+              <Button
+                variant={totalPendingComments > 0 ? "danger" : "primary"}
+                size="sm"
+                leftIcon={<MessageCircle className="w-3.5 h-3.5" />}
+              >
+                Revisão
+                {totalPendingComments > 0 ? ` (${totalPendingComments})` : ""}
+              </Button>
+            </Link>
           </div>
         </div>
       </div>
@@ -777,10 +760,10 @@ export default function ProjectDetailClient({
               </div>
               <div>
                 <p className="text-sm font-semibold text-black">
-                  No versions yet
+                  Nenhuma versão ainda
                 </p>
                 <p className="text-xs text-black/45 mt-1">
-                  Upload your first file to generate a review link
+                  Envie o primeiro arquivo para gerar um link de revisão
                 </p>
               </div>
               <Button variant="primary" size="sm" onClick={() => openUpload()}>
