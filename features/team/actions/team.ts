@@ -3,7 +3,6 @@
 import { prisma } from "@/lib/prisma/client";
 import { auth } from "@/auth";
 import { generateSecureToken } from "@/lib/tokens";
-import { sendTeamInviteEmail } from "@/lib/email";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
@@ -96,18 +95,6 @@ export async function inviteTeamMember(
     create: { ownerId, email, role, token },
     update: { role, token, status: "PENDING", createdAt: new Date() },
   });
-
-  const inviter = await prisma.user.findUnique({
-    where: { id: session.user.id },
-    select: { name: true, email: true },
-  });
-
-  sendTeamInviteEmail({
-    to: email,
-    inviterName: inviter?.name || inviter?.email || "Sua agência",
-    role,
-    token,
-  }).catch(console.error);
 
   revalidatePath("/dashboard/team");
   return {};

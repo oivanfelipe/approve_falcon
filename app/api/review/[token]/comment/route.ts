@@ -1,9 +1,5 @@
 ﻿import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma/client";
-import {
-  handleClientMessage,
-  handleFreelancerResponse,
-} from "@/lib/chat-notification";
 import { z } from "zod";
 
 const commentSchema = z.object({
@@ -28,20 +24,6 @@ export async function POST(
     select: {
       id: true,
       expiresAt: true,
-      project: {
-        select: {
-          id: true,
-          name: true,
-          userId: true,
-          slug: true,
-          user: {
-            select: {
-              email: true,
-              locale: true,
-            },
-          },
-        },
-      },
     },
   });
 
@@ -124,20 +106,6 @@ export async function POST(
       },
       { status: 500 },
     );
-  }
-
-  if (comment.authorType === "CLIENT") {
-    handleClientMessage(
-      {
-        deliveryId: delivery.id,
-        reviewToken: token,
-        project: delivery.project,
-      },
-      comment.authorName,
-      comment.content,
-    ).catch(console.error);
-  } else if (comment.authorType === "FREELANCER") {
-    handleFreelancerResponse(delivery.id).catch(console.error);
   }
 
   return NextResponse.json({

@@ -5,17 +5,9 @@ import { auth } from "@/auth";
 import { getSignedUploadUrl, deleteFile } from "@/lib/supabase/server";
 import { generateShareToken } from "@/lib/tokens";
 import { revalidatePath } from "next/cache";
-import { headers } from "next/headers";
 import { z } from "zod";
 import bcrypt from "bcryptjs";
-import { sendNewReviewEmail } from "@/lib/email";
 import { isGoogleDriveUrl } from "@/lib/google-drive";
-
-function detectLocale(acceptLanguage: string | null): "pt" | "en" {
-  if (!acceptLanguage) return "pt";
-  const primary = acceptLanguage.split(",")[0]?.toLowerCase() ?? "";
-  return primary.startsWith("pt") ? "pt" : "en";
-}
 
 function assertDeliveryNotApproved(delivery: { status: string }) {
   if (delivery.status === "APPROVED") {
@@ -96,12 +88,6 @@ export async function createDelivery(
   const session = await auth();
   if (!session?.user?.id) return { error: "Não autenticado" };
 
-  const requestHeaders = await headers();
-  const locale = detectLocale(requestHeaders.get("accept-language"));
-  prisma.user
-    .update({ where: { id: session.user.id }, data: { locale } })
-    .catch(() => {});
-
   const parsed = createDeliverySchema.safeParse(raw);
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Dados inválidos" };
@@ -128,10 +114,6 @@ export async function createDelivery(
     where: { id: projectId, userId: session.user.ownerId },
     select: {
       id: true,
-      name: true,
-      clientName: true,
-      clientEmail: true,
-      slug: true,
       _count: { select: { deliveries: true } },
     },
   });
@@ -169,19 +151,6 @@ export async function createDelivery(
       password: passwordHash,
     },
   });
-
-  if (project.clientEmail) {
-    sendNewReviewEmail({
-      to: project.clientEmail,
-      projectName: project.name,
-      clientName: project.clientName,
-      reviewToken,
-      versionNumber,
-      label: label || null,
-      projectSlug: project.slug,
-      locale,
-    }).catch(console.error);
-  }
 
   return { reviewToken };
 }

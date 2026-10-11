@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma/client";
-import { sendChangesRequestedEmail } from "@/lib/email";
 
 export async function POST(
   _request: NextRequest,
@@ -14,21 +13,6 @@ export async function POST(
       id: true,
       copyStatus: true,
       expiresAt: true,
-      reviewToken: true,
-      project: {
-        select: {
-          name: true,
-          clientName: true,
-          userId: true,
-          slug: true,
-          user: {
-            select: {
-              email: true,
-              locale: true,
-            },
-          },
-        },
-      },
     },
   });
 
@@ -51,18 +35,6 @@ export async function POST(
     where: { id: delivery.id },
     data: { copyStatus: "CHANGES_REQUESTED" },
   });
-
-  const ownerEmail = delivery.project.user?.email;
-  if (ownerEmail) {
-    sendChangesRequestedEmail({
-      to: ownerEmail,
-      projectName: delivery.project.name,
-      clientName: delivery.project.clientName,
-      reviewToken: delivery.reviewToken,
-      projectSlug: delivery.project.slug,
-      locale: (delivery.project.user?.locale as "pt" | "en") ?? "pt",
-    }).catch(console.error);
-  }
 
   return NextResponse.json({ ok: true });
 }
