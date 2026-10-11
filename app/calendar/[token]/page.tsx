@@ -1,5 +1,6 @@
 import React from "react";
 import { notFound } from "next/navigation";
+import { auth } from "@/auth";
 import { loadCalendarPageData } from "@/features/calendar/server/loadCalendarPageData";
 import CalendarClientShell from "@/features/calendar/components/CalendarClientShell";
 import type { Metadata } from "next";
@@ -18,5 +19,21 @@ export default async function CalendarPage({ params }: PageProps) {
 
   if (!data) notFound();
 
-  return <CalendarClientShell data={data} />;
+  const session = await auth();
+  // Logged-in member of the agency that owns this calendar — gets edit and
+  // comment capabilities directly on the client's own link.
+  const isTeamMember = Boolean(
+    session?.user?.ownerId && data.project.userId === session.user.ownerId,
+  );
+  const freelancerName = isTeamMember
+    ? (session?.user?.name ?? session?.user?.email ?? "Equipe")
+    : null;
+
+  return (
+    <CalendarClientShell
+      data={data}
+      isTeamMember={isTeamMember}
+      freelancerName={freelancerName}
+    />
+  );
 }

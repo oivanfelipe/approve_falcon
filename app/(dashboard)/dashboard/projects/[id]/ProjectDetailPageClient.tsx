@@ -7,7 +7,6 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import NewDeliveryModal from "@/features/deliveries/components/NewDeliveryModal";
 import EditDeliveryContentModal from "@/features/deliveries/components/EditDeliveryContentModal";
-import ManageSlidesModal from "@/features/deliveries/components/ManageSlidesModal";
 import EditProjectBrandingModal from "@/features/projects/components/EditProjectBrandingModal";
 import CalendarLinkButton from "@/features/calendar/components/CalendarLinkButton";
 import DashboardCalendarView from "@/features/calendar/components/DashboardCalendarView";
@@ -19,8 +18,8 @@ import {
 } from "@/features/deliveries/actions/deliveries";
 import { Tabs } from "@/components/ui/Tabs";
 import type { BadgeVariant } from "@/components/ui/Badge";
-import { Copy, Upload, Pencil, Images, Palette, MessageCircle } from "lucide-react";
-import { getPublicReviewPath } from "@/lib/freelancer-branding-shared";
+import { Upload, Pencil, Palette, MessageCircle } from "lucide-react";
+import { toDateInputValue } from "@/features/calendar/lib/monthGrid";
 import { cn } from "@/lib/utils";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -146,60 +145,6 @@ function sortForEditing(deliveries: DeliveryRow[]): DeliveryRow[] {
   return [...unscheduled, ...scheduled];
 }
 
-// ─── Share buttons ────────────────────────────────────────────────────────────
-
-function ShareButtons({
-  token,
-  slug,
-}: {
-  token: string;
-  slug?: string | null;
-}) {
-  const [copiedLink, setCopiedLink] = useState(false);
-
-  const copyLink = () => {
-    const url = `${window.location.origin}${getPublicReviewPath(token, slug)}`;
-    navigator.clipboard.writeText(url).then(() => {
-      setCopiedLink(true);
-      setTimeout(() => setCopiedLink(false), 2000);
-    });
-  };
-
-  return (
-    <div className="flex items-center gap-1">
-      <Button
-        onClick={copyLink}
-        variant={copiedLink ? "primary" : "outline"}
-        size="sm"
-        aria-label="Copiar link de revisão"
-      >
-        {copiedLink ? (
-          <>
-            <svg
-              width="10"
-              height="10"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden="true"
-            >
-              <polyline points="20 6 9 17 4 12" />
-            </svg>
-            Copiado!
-          </>
-        ) : (
-          <>
-            <Copy className="w-4 h-4" /> Link do cliente
-          </>
-        )}
-      </Button>
-    </div>
-  );
-}
-
 // ─── Delivery edit row ────────────────────────────────────────────────────────
 // One row per post, covering every stage: assigning a date, uploading the
 // creative, and the existing version/share/stats meta — the agency's team
@@ -207,28 +152,24 @@ function ShareButtons({
 
 function DeliveryEditRow({
   delivery,
-  projectSlug,
   selected,
   onToggleSelect,
-  onAttach,
   onEdit,
-  onManageSlides,
   onComments,
   onScheduled,
   onDeleted,
 }: {
   delivery: DeliveryRow;
-  projectSlug?: string | null;
   selected: boolean;
   onToggleSelect: () => void;
-  onAttach: () => void;
   onEdit: () => void;
-  onManageSlides: () => void;
   onComments: () => void;
   onScheduled: () => void;
   onDeleted: () => void;
 }) {
-  const [date, setDate] = useState("");
+  const [date, setDate] = useState(
+    delivery.scheduledAt ? toDateInputValue(new Date(delivery.scheduledAt)) : "",
+  );
   const [isPending, setIsPending] = useState(false);
   const [error, setError] = useState("");
   const [confirmingDelete, setConfirmingDelete] = useState(false);
@@ -321,32 +262,20 @@ function DeliveryEditRow({
       )}
 
       <div className="flex items-center gap-2 flex-wrap pt-2 border-t border-black/10">
-        {delivery.scheduledAt ? (
-          <span className="inline-flex items-center gap-1.5 text-xs font-mono font-semibold text-black/60 border-2 border-black/10 px-2 py-1">
-            {new Date(delivery.scheduledAt).toLocaleDateString("pt-BR")}
-          </span>
-        ) : (
-          <>
-            <input
-              type="date"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-              className="border-2 border-black px-2 py-1.5 text-xs font-mono"
-            />
-            <Button
-              variant="primary"
-              size="sm"
-              disabled={!date || isPending}
-              loading={isPending}
-              onClick={handleSchedule}
-            >
-              Agendar
-            </Button>
-          </>
-        )}
-
-        <Button variant="outline" size="sm" onClick={onAttach}>
-          {delivery.fileName ? "Editar arte" : "Subir arte"}
+        <input
+          type="date"
+          value={date}
+          onChange={(e) => setDate(e.target.value)}
+          className="border-2 border-black px-2 py-1.5 text-xs font-mono"
+        />
+        <Button
+          variant={delivery.scheduledAt ? "outline" : "primary"}
+          size="sm"
+          disabled={!date || isPending}
+          loading={isPending}
+          onClick={handleSchedule}
+        >
+          {delivery.scheduledAt ? "Alterar data" : "Agendar"}
         </Button>
 
         <Button
@@ -356,15 +285,6 @@ function DeliveryEditRow({
           leftIcon={<Pencil className="w-3 h-3" />}
         >
           Editar
-        </Button>
-
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={onManageSlides}
-          leftIcon={<Images className="w-3 h-3" />}
-        >
-          Lâminas{delivery.assets.length > 0 ? ` (${delivery.assets.length + 1})` : ""}
         </Button>
 
         <Button
@@ -465,17 +385,6 @@ function DeliveryEditRow({
             </span>
           )}
 
-          <ShareButtons token={delivery.reviewToken} slug={projectSlug} />
-
-          <Link
-            href={`${getPublicReviewPath(delivery.reviewToken, projectSlug)}?preview=1`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-xs font-semibold text-black/60 hover:text-black transition-colors"
-          >
-            Pré-visualizar ↗
-          </Link>
-
           {confirmingDelete ? (
             <span className="flex items-center gap-1.5">
               <span className="text-[11px] text-black/50">Apagar?</span>
@@ -536,9 +445,8 @@ export default function ProjectDetailClient({
   const [uploadInitialDate, setUploadInitialDate] = useState<string | undefined>();
   const [viewMode, setViewMode] = useState<"edit" | "calendar">("edit");
   const [importOpen, setImportOpen] = useState(false);
-  const [attachingId, setAttachingId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [managingSlidesId, setManagingSlidesId] = useState<string | null>(null);
+  const [editInitialTab, setEditInitialTab] = useState<"content" | "art">("content");
   const [commentsId, setCommentsId] = useState<string | null>(null);
   const [brandingOpen, setBrandingOpen] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -553,8 +461,6 @@ export default function ProjectDetailClient({
 
   const editOrderedDeliveries = sortForEditing(liveDeliveries);
   const editingDelivery = liveDeliveries.find((d) => d.id === editingId) ?? null;
-  const managingSlidesDelivery =
-    liveDeliveries.find((d) => d.id === managingSlidesId) ?? null;
 
   const toggleSelected = (id: string) => {
     setSelectedIds((prev) => {
@@ -764,7 +670,10 @@ export default function ProjectDetailClient({
             deliveries={liveDeliveries}
             projectSlug={projectSlug}
             onEmptyDayClick={(dateInputValue) => openUpload(dateInputValue)}
-            onAttachCreative={(deliveryId) => setAttachingId(deliveryId)}
+            onAttachCreative={(deliveryId) => {
+              setEditingId(deliveryId);
+              setEditInitialTab("art");
+            }}
           />
         </Tabs.Panel>
 
@@ -833,12 +742,12 @@ export default function ProjectDetailClient({
                   <DeliveryEditRow
                     key={d.id}
                     delivery={d}
-                    projectSlug={projectSlug}
                     selected={selectedIds.has(d.id)}
                     onToggleSelect={() => toggleSelected(d.id)}
-                    onAttach={() => setAttachingId(d.id)}
-                    onEdit={() => setEditingId(d.id)}
-                    onManageSlides={() => setManagingSlidesId(d.id)}
+                    onEdit={() => {
+                      setEditingId(d.id);
+                      setEditInitialTab("content");
+                    }}
                     onComments={() => setCommentsId(d.id)}
                     onScheduled={refetch}
                     onDeleted={refetch}
@@ -896,37 +805,14 @@ export default function ProjectDetailClient({
         initialScheduledAt={uploadInitialDate}
       />
 
-      {attachingId && (
-        <NewDeliveryModal
-          projectId={projectId}
-          projectSlug={projectSlug}
-          isOpen
-          attachToDeliveryId={attachingId}
-          onClose={() => setAttachingId(null)}
-          onSuccess={() => {
-            refetch();
-          }}
-        />
-      )}
-
       {editingDelivery && (
         <EditDeliveryContentModal
           delivery={editingDelivery}
+          projectId={projectId}
+          initialTab={editInitialTab}
           isOpen
           onClose={() => setEditingId(null)}
           onSuccess={refetch}
-        />
-      )}
-
-      {managingSlidesDelivery && (
-        <ManageSlidesModal
-          projectId={projectId}
-          deliveryId={managingSlidesDelivery.id}
-          primaryFileName={managingSlidesDelivery.fileName}
-          assets={managingSlidesDelivery.assets}
-          isOpen
-          onClose={() => setManagingSlidesId(null)}
-          onChanged={refetch}
         />
       )}
 

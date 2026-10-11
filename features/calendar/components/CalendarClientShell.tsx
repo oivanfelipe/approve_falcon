@@ -10,6 +10,8 @@ import ApprovalPanel from "@/features/review/components/ApprovalPanel";
 import ArtCopyMockup from "@/features/review/components/ArtCopyMockup";
 import RealAssetCarousel from "@/features/review/components/RealAssetCarousel";
 import PostCaption from "@/features/review/components/PostCaption";
+import { Button } from "@/components/ui/Button";
+import DeliveryCommentsModal from "@/features/comments/components/DeliveryCommentsModal";
 import { cn } from "@/lib/utils";
 import type { CalendarPageData, CalendarDelivery } from "@/features/calendar/server/loadCalendarPageData";
 import {
@@ -27,6 +29,8 @@ type Status = "PENDING" | "APPROVED" | "CHANGES_REQUESTED";
 
 interface CalendarClientShellProps {
   data: CalendarPageData;
+  isTeamMember?: boolean;
+  freelancerName?: string | null;
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -54,6 +58,8 @@ function DayDetailModal({
   primaryColor,
   accountLabel,
   avatarUrl,
+  isTeamMember,
+  freelancerName,
 }: {
   delivery: CalendarDelivery;
   copyStatus: Status;
@@ -63,7 +69,10 @@ function DayDetailModal({
   primaryColor?: string;
   accountLabel?: string | null;
   avatarUrl?: string | null;
+  isTeamMember?: boolean;
+  freelancerName?: string | null;
 }) {
+  const [commentsOpen, setCommentsOpen] = useState(false);
   const date = new Date(delivery.scheduledAt!);
   const hasCopyContent = Boolean(
     delivery.copyText ||
@@ -223,14 +232,34 @@ function DayDetailModal({
             }}
           />
         )}
+
+        {isTeamMember && (
+          <Button variant="outline" size="sm" fullWidth onClick={() => setCommentsOpen(true)}>
+            Editar copy e comentários
+          </Button>
+        )}
       </div>
+
+      {isTeamMember && commentsOpen && (
+        <DeliveryCommentsModal
+          deliveryId={delivery.id}
+          isOpen
+          onClose={() => setCommentsOpen(false)}
+          freelancerName={freelancerName ?? "Equipe"}
+          onChanged={() => window.location.reload()}
+        />
+      )}
     </Modal>
   );
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export default function CalendarClientShell({ data }: CalendarClientShellProps) {
+export default function CalendarClientShell({
+  data,
+  isTeamMember = false,
+  freelancerName,
+}: CalendarClientShellProps) {
   const [monthDate, setMonthDate] = useState(() => {
     const today = new Date();
     return new Date(today.getFullYear(), today.getMonth(), 1);
@@ -357,14 +386,11 @@ export default function CalendarClientShell({ data }: CalendarClientShellProps) 
                         statusDot[status],
                       )}
                     />
-                    <span className="hidden sm:block text-[10px] font-semibold text-black/70 truncate">
-                      {delivery.label ?? `Versão ${delivery.versionNumber}`}
-                    </span>
-                    <Badge variant={statusVariant[status]} className="hidden sm:inline-flex w-fit text-[9px]">
+                    <Badge variant={statusVariant[status]} className="w-fit text-[9px]">
                       {status === "PENDING"
                         ? "Pendente (Cliente)"
                         : status === "APPROVED"
-                          ? "Aprovado"
+                          ? "Ok"
                           : `Pendente (${agencyLabel})`}
                     </Badge>
                   </div>
@@ -391,6 +417,8 @@ export default function CalendarClientShell({ data }: CalendarClientShellProps) 
           primaryColor={primaryColor}
           accountLabel={data.branding?.displayName}
           avatarUrl={data.branding?.logoUrl}
+          isTeamMember={isTeamMember}
+          freelancerName={freelancerName}
         />
       )}
 

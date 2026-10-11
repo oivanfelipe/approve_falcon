@@ -257,7 +257,7 @@ export default function DashboardCalendarView({
                 fullWidth
                 onClick={() => onAttachCreative(selectedDelivery.id)}
               >
-                {selectedDelivery.fileName ? "Editar arte" : "Subir arte"}
+                Editar post
               </Button>
             )}
 

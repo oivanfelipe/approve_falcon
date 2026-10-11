@@ -41,15 +41,21 @@ export default async function ReviewPage({ params, searchParams }: PageProps) {
   const { preview } = await searchParams;
   const isFreelancerPreview = preview === "1";
 
-  let freelancerName: string | null = null;
-  if (isFreelancerPreview) {
-    const session = await auth();
-    freelancerName =
-      session?.user?.name ?? session?.user?.email ?? "Freelancer";
-  }
-
   const pageData = await loadReviewPageData(token);
   if (!pageData) notFound();
+
+  const session = await auth();
+  // Logged-in member of the agency that owns this delivery — gets edit and
+  // comment capabilities directly on the client's own link, no preview
+  // param needed.
+  const isTeamMember = Boolean(
+    session?.user?.ownerId &&
+      pageData.delivery.project.user?.id === session.user.ownerId,
+  );
+  const freelancerName =
+    isFreelancerPreview || isTeamMember
+      ? (session?.user?.name ?? session?.user?.email ?? "Equipe")
+      : null;
 
   const {
     delivery,
@@ -83,17 +89,18 @@ export default async function ReviewPage({ params, searchParams }: PageProps) {
             </svg>
           </div>
           <h1 className="text-xl font-extrabold uppercase text-black mb-2">
-            Link expired
+            Link expirado
           </h1>
           <p className="text-sm text-black/50">
-            This review link has expired. Contact the sender for a new link.
+            Este link de revisão expirou. Fale com quem enviou para pedir um
+            novo link.
           </p>
         </div>
       </div>
     );
   }
 
-  if (delivery.password && !isFreelancerPreview) {
+  if (delivery.password && !isFreelancerPreview && !isTeamMember) {
     const cookieStore = await cookies();
     const unlocked = cookieStore.get(`review_pw_${token}`)?.value === "1";
     if (!unlocked) {
@@ -111,14 +118,20 @@ export default async function ReviewPage({ params, searchParams }: PageProps) {
   const ip = headersList.get("x-forwarded-for")?.split(",")[0]?.trim() ?? null;
   const userAgent = headersList.get("user-agent") ?? null;
 
-  prisma.view
-    .create({ data: { deliveryId: delivery.id, ipAddress: ip, userAgent } })
-    .catch(() => {});
+  if (!isTeamMember) {
+    prisma.view
+      .create({ data: { deliveryId: delivery.id, ipAddress: ip, userAgent } })
+      .catch(() => {});
+  }
 
   return (
     <ReviewClientShell
       token={token}
       deliveryId={delivery.id}
+      projectId={delivery.projectId}
+      rawFileName={delivery.fileName}
+      deliveryAssets={assets}
+      isTeamMember={isTeamMember}
       signedUrl={signedUrl}
       fileName={delivery.fileName ?? "Arte"}
       mimeType={delivery.mimeType}

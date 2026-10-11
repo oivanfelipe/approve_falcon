@@ -63,6 +63,18 @@ export function parseArtCopySlides(text: string): ArtCopySlide[] {
 // everything else (avatar, username line, like/comment counts) is a neutral
 // placeholder, since none of that exists yet.
 
+// Picks black or white text for readability against an arbitrary
+// background color (relative luminance threshold).
+function readableTextColor(hex: string): string {
+  const clean = hex.replace("#", "");
+  if (clean.length !== 6) return "#ffffff";
+  const r = parseInt(clean.slice(0, 2), 16) / 255;
+  const g = parseInt(clean.slice(2, 4), 16) / 255;
+  const b = parseInt(clean.slice(4, 6), 16) / 255;
+  const luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  return luminance > 0.6 ? "#000000" : "#ffffff";
+}
+
 export default function ArtCopyMockup({
   text,
   primaryColor = "#e10600",
@@ -76,6 +88,7 @@ export default function ArtCopyMockup({
   caption?: string | null;
   avatarUrl?: string | null;
 }) {
+  const mediaTextColor = readableTextColor(primaryColor);
   const slides = parseArtCopySlides(text);
   const [index, setIndex] = useState(0);
 
@@ -111,17 +124,23 @@ export default function ArtCopyMockup({
       </div>
 
       {/* Media */}
-      <div className="relative aspect-square border-2 border-black bg-black flex items-center justify-center px-8 py-10 text-center overflow-hidden">
+      <div
+        className="relative aspect-square border-2 border-black flex items-center justify-center px-8 py-10 text-center overflow-hidden"
+        style={{ backgroundColor: primaryColor }}
+      >
         <div className="flex flex-col gap-2 items-center">
           {current.label && (
             <span
-              className="text-[10px] font-mono font-bold uppercase tracking-[0.15em] mb-1"
-              style={{ color: primaryColor }}
+              className="text-[10px] font-mono font-bold uppercase tracking-[0.15em] mb-1 opacity-70"
+              style={{ color: mediaTextColor }}
             >
               {current.label}
             </span>
           )}
-          <p className="text-xl font-extrabold text-white whitespace-pre-wrap leading-snug">
+          <p
+            className="text-xl font-extrabold whitespace-pre-wrap leading-snug"
+            style={{ color: mediaTextColor }}
+          >
             {current.body}
           </p>
         </div>
