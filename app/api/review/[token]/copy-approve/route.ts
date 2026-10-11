@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma/client";
 import { z } from "zod";
-import { sendApprovalEmail } from "@/lib/email";
 
 const approveSchema = z.object({
   signerName: z.string().min(1).max(100),
@@ -20,13 +19,6 @@ export async function POST(
       id: true,
       copyStatus: true,
       expiresAt: true,
-      project: {
-        select: {
-          name: true,
-          clientName: true,
-          user: { select: { email: true, locale: true } },
-        },
-      },
     },
   });
 
@@ -55,18 +47,6 @@ export async function POST(
     where: { id: delivery.id },
     data: { copyStatus: "APPROVED" },
   });
-
-  const ownerEmail = delivery.project.user?.email;
-  if (ownerEmail) {
-    sendApprovalEmail({
-      to: ownerEmail,
-      projectName: delivery.project.name,
-      clientName: delivery.project.clientName,
-      signerName: parsed.data.signerName,
-      deliveryId: delivery.id,
-      locale: (delivery.project.user?.locale as "pt" | "en") ?? "pt",
-    }).catch(console.error);
-  }
 
   return NextResponse.json({ ok: true });
 }

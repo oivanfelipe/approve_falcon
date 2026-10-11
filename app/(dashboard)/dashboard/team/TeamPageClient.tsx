@@ -27,6 +27,7 @@ interface Invite {
   id: string;
   email: string;
   role: Role;
+  token: string;
 }
 
 interface TeamPageClientProps {
@@ -128,7 +129,8 @@ function InviteForm() {
       )}
       {success && (
         <p className="text-xs font-medium text-black w-full">
-          Convite enviado!
+          Convite criado! Copie o link na lista abaixo e envie para essa
+          pessoa.
         </p>
       )}
     </form>
@@ -212,6 +214,7 @@ function MemberRow({
 
 function InviteRow({ invite }: { invite: Invite }) {
   const [revoked, setRevoked] = useState(false);
+  const [copied, setCopied] = useState(false);
   const [isPending, startTransition] = useTransition();
 
   const handleRevoke = () => {
@@ -221,15 +224,32 @@ function InviteRow({ invite }: { invite: Invite }) {
     });
   };
 
+  const handleCopyLink = () => {
+    const url = `${window.location.origin}/invite/${invite.token}`;
+    navigator.clipboard.writeText(url).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
+
   if (revoked) return null;
 
   return (
     <div className="flex items-center gap-3 p-4 bg-white border-2 border-dashed border-black/30">
       <div className="flex-1 min-w-0">
         <p className="text-sm font-semibold text-black/70 truncate">{invite.email}</p>
-        <p className="text-xs text-black/40">Convite pendente</p>
+        <p className="text-xs text-black/40">
+          Convite pendente — copie o link e envie para essa pessoa
+        </p>
       </div>
       <Badge variant="warning">{invite.role === "ADMIN" ? "Admin" : "Editor"}</Badge>
+      <Button
+        variant={copied ? "primary" : "outline"}
+        size="sm"
+        onClick={handleCopyLink}
+      >
+        {copied ? "Copiado!" : "Copiar link"}
+      </Button>
       <Button variant="ghost" size="sm" loading={isPending} onClick={handleRevoke}>
         Cancelar
       </Button>
