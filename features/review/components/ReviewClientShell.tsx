@@ -215,10 +215,15 @@ export default function ReviewClientShell({
     hasCreativeFile || copyStatus === "APPROVED" || !hasCopyContent;
   const scheduledDate = scheduledAt ? new Date(scheduledAt) : null;
   const [comments, setComments] = useState<CommentData[]>(initialComments);
-  const [showChat, setShowChat] = useState(false);
+  const canComment = isFreelancerPreview || isTeamMember;
+  // The team opens this link specifically to see what the client said —
+  // land them straight on the conversation instead of making them
+  // discover "Abrir conversa" first.
+  const [showChat, setShowChat] = useState(
+    canComment && initialComments.length > 0,
+  );
   const [openPinCommentId, setOpenPinCommentId] = useState<string | null>(null);
   const [editOpen, setEditOpen] = useState(false);
-  const canComment = isFreelancerPreview || isTeamMember;
 
   // Build pin number map for comment system
   const pinnedComments = comments.filter(
