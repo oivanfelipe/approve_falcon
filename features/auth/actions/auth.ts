@@ -27,14 +27,14 @@ export async function registerUser(
 
   const parsed = registerSchema.safeParse(raw);
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
+    return { error: parsed.error.issues[0]?.message ?? "Dados inválidos" };
   }
 
   const existing = await prisma.user.findUnique({
     where: { email: parsed.data.email },
     select: { id: true },
   });
-  if (existing) return { error: "Email already in use" };
+  if (existing) return { error: "E-mail já está em uso" };
 
   const hash = await bcrypt.hash(parsed.data.password, 12);
 

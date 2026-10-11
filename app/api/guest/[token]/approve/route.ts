@@ -19,22 +19,22 @@ export async function POST(
   });
 
   if (!upload) {
-    return NextResponse.json({ error: "Not found" }, { status: 404 });
+    return NextResponse.json({ error: "Não encontrado" }, { status: 404 });
   }
 
   if (upload.expiresAt < new Date()) {
-    return NextResponse.json({ error: "Review link expired" }, { status: 410 });
+    return NextResponse.json({ error: "Link de revisão expirado" }, { status: 410 });
   }
 
   if (upload.status === "APPROVED") {
-    return NextResponse.json({ error: "Already approved" }, { status: 409 });
+    return NextResponse.json({ error: "Já aprovado" }, { status: 409 });
   }
 
   const body = await request.json().catch(() => ({}));
   const parsed = schema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(
-      { error: parsed.error.issues[0]?.message ?? "Invalid input" },
+      { error: parsed.error.issues[0]?.message ?? "Dados inválidos" },
       { status: 400 },
     );
   }

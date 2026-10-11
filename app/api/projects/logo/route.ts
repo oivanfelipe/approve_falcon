@@ -11,7 +11,7 @@ const MAX_LOGO_SIZE = 2 * 1024 * 1024;
 export async function POST(request: Request) {
   const session = await auth();
   if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
   }
 
   const formData = await request.formData();

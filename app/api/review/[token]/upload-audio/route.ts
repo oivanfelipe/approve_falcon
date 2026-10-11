@@ -11,7 +11,7 @@ export async function POST(
     const deliveryId = form.get("deliveryId") as string | null;
 
     if (!file) {
-      return NextResponse.json({ error: "No file provided" }, { status: 400 });
+      return NextResponse.json({ error: "Nenhum arquivo enviado" }, { status: 400 });
     }
 
     const bucket = "comments-audio";
@@ -35,7 +35,7 @@ export async function POST(
 
     if (!publicData || !publicData.data?.publicUrl) {
       return NextResponse.json(
-        { error: "failed to get public url" },
+        { error: "Falha ao obter URL pública" },
         { status: 500 },
       );
     }

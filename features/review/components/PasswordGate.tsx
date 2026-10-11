@@ -45,11 +45,7 @@ export default function PasswordGate({
         router.refresh();
       } else {
         const data = await res.json().catch(() => ({}));
-        setError(
-          data.error === "Incorrect password"
-            ? "Incorrect password."
-            : "Something went wrong. Try again.",
-        );
+        setError(data.error ?? "Algo deu errado. Tente novamente.");
       }
     });
   };
@@ -91,19 +87,19 @@ export default function PasswordGate({
             {displayName}
           </p>
           <h1 className="text-xl font-extrabold uppercase text-black mb-1">
-            Password required
+            Senha necessária
           </h1>
           <p className="text-sm text-black/50">
             <span className="text-black/80 font-medium">{projectName}</span>{" "}
-            is password protected. Enter the password to view the file.
+            está protegido por senha. Digite a senha para ver o arquivo.
           </p>
         </div>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <Input
             type="password"
-            label="Password"
-            placeholder="Enter password…"
+            label="Senha"
+            placeholder="Digite a senha…"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             autoFocus
@@ -125,7 +121,7 @@ export default function PasswordGate({
               color: getBrandTextColor(primaryColor),
             }}
           >
-            Continue
+            Continuar
           </Button>
         </form>
       </div>

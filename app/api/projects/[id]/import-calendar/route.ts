@@ -14,7 +14,7 @@ export async function POST(
 ) {
   const session = await auth();
   if (!session?.user?.id) {
-    return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+    return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
   }
 
   const { id: projectId } = await params;
@@ -23,7 +23,7 @@ export async function POST(
     select: { id: true },
   });
   if (!project) {
-    return NextResponse.json({ error: "Project not found" }, { status: 404 });
+    return NextResponse.json({ error: "Projeto não encontrado" }, { status: 404 });
   }
 
   const formData = await request.formData().catch(() => null);

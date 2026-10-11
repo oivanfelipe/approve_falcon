@@ -17,14 +17,14 @@ export async function getInviteByToken(token: string) {
 export async function acceptInvite(token: string): Promise<{ error?: string }> {
   const session = await auth();
   if (!session?.user?.id || !session.user.email) {
-    return { error: "Not authenticated" };
+    return { error: "Não autenticado" };
   }
 
   const invite = await getInviteByToken(token);
-  if (!invite) return { error: "This invite is invalid or has expired" };
+  if (!invite) return { error: "Este convite é inválido ou expirou" };
 
   if (invite.email.toLowerCase() !== session.user.email.toLowerCase()) {
-    return { error: "This invite was sent to a different email address" };
+    return { error: "Este convite foi enviado para outro endereço de e-mail" };
   }
 
   await prisma.$transaction([

@@ -212,7 +212,7 @@ function AddCommentPopup({
       onAdd(data);
     } else {
       const data = await res.json().catch(() => ({}));
-      setError(data.error ?? "Failed to post");
+      setError(data.error ?? "Falha ao publicar");
     }
   };
 

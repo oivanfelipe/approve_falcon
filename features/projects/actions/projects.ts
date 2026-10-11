@@ -51,7 +51,7 @@ export async function createProject(
 
   const parsed = createProjectSchema.safeParse(raw);
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
+    return { error: parsed.error.issues[0]?.message ?? "Dados inválidos" };
   }
 
   const slug = await generateUniqueProjectSlug(parsed.data.clientName);
@@ -84,7 +84,7 @@ export async function updateProject(
     where: { id, userId },
     select: { id: true, clientLogoUrl: true },
   });
-  if (!project) return { error: "Project not found" };
+  if (!project) return { error: "Projeto não encontrado" };
 
   const raw = {
     name: formData.get("name") ?? undefined,
@@ -98,7 +98,7 @@ export async function updateProject(
 
   const parsed = updateProjectSchema.safeParse(raw);
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
+    return { error: parsed.error.issues[0]?.message ?? "Dados inválidos" };
   }
 
   const nextLogoUrl =
@@ -141,7 +141,7 @@ export async function deleteProject(id: string): Promise<{ error?: string }> {
     where: { id, userId },
     select: { id: true, clientLogoUrl: true },
   });
-  if (!project) return { error: "Project not found" };
+  if (!project) return { error: "Projeto não encontrado" };
 
   // Deliveries cascade via DB FK. Storage files must be cleaned up separately.
   await prisma.project.delete({ where: { id } });
