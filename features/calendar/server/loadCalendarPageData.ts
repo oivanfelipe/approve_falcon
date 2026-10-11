@@ -75,6 +75,7 @@ export async function loadCalendarPageData(token: string) {
       id: project.id,
       name: project.name,
       clientName: project.clientName,
+      userId: project.userId,
     },
     deliveries,
     branding,

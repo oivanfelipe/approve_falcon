@@ -16,6 +16,7 @@ import DriveEmbed from "@/features/review/components/DriveEmbed";
 import RealAssetCarousel from "@/features/review/components/RealAssetCarousel";
 import PostCaption from "@/features/review/components/PostCaption";
 import VersionSwitcher from "@/features/review/components/VersionSwitcher";
+import EditDeliveryContentModal from "@/features/deliveries/components/EditDeliveryContentModal";
 import type { SignedDeliveryAsset } from "@/lib/delivery-assets";
 import { formatScheduledDate } from "@/features/calendar/lib/monthGrid";
 import { cn } from "@/lib/utils";
@@ -74,6 +75,17 @@ interface ReviewClientShellProps {
   freelancerDisplayName?: string | null;
   branding?: FreelancerBranding | null;
   reviewPathSlug?: string | null;
+  /** Logged-in member of the owning agency viewing the client's own link. */
+  isTeamMember?: boolean;
+  projectId?: string;
+  rawFileName?: string | null;
+  deliveryAssets?: {
+    id: string;
+    fileName: string | null;
+    sourceType: "FILE" | "DRIVE_LINK";
+    driveUrl: string | null;
+    mimeType: string | null;
+  }[];
 }
 
 // Status badge map
@@ -177,6 +189,10 @@ export default function ReviewClientShell({
   freelancerDisplayName,
   branding,
   reviewPathSlug,
+  isTeamMember = false,
+  projectId,
+  rawFileName,
+  deliveryAssets = [],
 }: ReviewClientShellProps) {
   const isDriveLink = sourceType === "DRIVE_LINK";
   const isImage = !isDriveLink && (mimeType?.startsWith("image/") ?? false);
@@ -201,6 +217,8 @@ export default function ReviewClientShell({
   const [comments, setComments] = useState<CommentData[]>(initialComments);
   const [showChat, setShowChat] = useState(false);
   const [openPinCommentId, setOpenPinCommentId] = useState<string | null>(null);
+  const [editOpen, setEditOpen] = useState(false);
+  const canComment = isFreelancerPreview || isTeamMember;
 
   // Build pin number map for comment system
   const pinnedComments = comments.filter(
@@ -453,7 +471,7 @@ export default function ReviewClientShell({
                   deliveryId={deliveryId}
                   initialComments={comments}
                   pinnedComments={pinnedCommentNumbers}
-                  mode={isFreelancerPreview ? "freelancer" : "client"}
+                  mode={canComment ? "freelancer" : "client"}
                   freelancerName={freelancerName ?? undefined}
                   onCommentsChange={setComments}
                   onOpenPin={(id) => setOpenPinCommentId(id)}
@@ -492,7 +510,7 @@ export default function ReviewClientShell({
                 </>
               )}
 
-              {isFreelancerPreview && (
+              {canComment && (
                 <div
                   className="flex items-center gap-2.5 border-2 border-black px-3.5 py-3"
                   style={{
@@ -512,26 +530,34 @@ export default function ReviewClientShell({
                       className="font-semibold"
                       style={{ color: primaryColor }}
                     >
-                      Modo de visualização
+                      {isTeamMember ? "Visão da equipe" : "Modo de visualização"}
                     </span>
-                    {" — "} o cliente vê este link; você pode responder os
-                    comentários abaixo.
+                    {" — "} o cliente vê este link; você pode editar a copy e
+                    responder os comentários abaixo.
                   </p>
                 </div>
               )}
 
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowChat(true)}
-                style={{
-                  borderColor: hexToRgba(primaryColor, 0.45),
-                  color: primaryColor,
-                  backgroundColor: hexToRgba(primaryColor, 0.06),
-                }}
-              >
-                Abrir conversa
-              </Button>
+              <div className="flex gap-2 flex-wrap">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowChat(true)}
+                  style={{
+                    borderColor: hexToRgba(primaryColor, 0.45),
+                    color: primaryColor,
+                    backgroundColor: hexToRgba(primaryColor, 0.06),
+                  }}
+                >
+                  Abrir conversa
+                </Button>
+
+                {isTeamMember && projectId && (
+                  <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
+                    Editar copy
+                  </Button>
+                )}
+              </div>
 
               {allDeliveries.length > 1 && (
                 <>
@@ -556,6 +582,29 @@ export default function ReviewClientShell({
           <span style={{ color: secondaryColor }}>{brandName}</span>
         </p>
       </footer>
+
+      {isTeamMember && projectId && editOpen && (
+        <EditDeliveryContentModal
+          delivery={{
+            id: deliveryId,
+            planNumber: planNumber ?? null,
+            theme: theme ?? null,
+            format: format ?? null,
+            product: product ?? null,
+            postFunction: postFunction ?? null,
+            objective: objective ?? null,
+            artCopy: artCopy ?? null,
+            copyText: copyText ?? null,
+            copyStatus,
+            fileName: rawFileName ?? null,
+            assets: deliveryAssets,
+          }}
+          projectId={projectId}
+          isOpen
+          onClose={() => setEditOpen(false)}
+          onSuccess={() => window.location.reload()}
+        />
+      )}
     </div>
   );
 }
