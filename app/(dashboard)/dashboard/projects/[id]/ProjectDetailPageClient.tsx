@@ -63,7 +63,7 @@ interface ProjectDetailClientProps {
   clientName: string;
   clientEmail: string | null | undefined;
   deliveries: DeliveryRow[];
-  freelancerSlug?: string | null;
+  projectSlug?: string | null;
   calendarToken?: string | null;
   clientLogoUrl?: string | null;
   primaryColor?: string | null;
@@ -176,7 +176,7 @@ function ShareButtons({
 
 function DeliveryEditRow({
   delivery,
-  freelancerSlug,
+  projectSlug,
   selected,
   onToggleSelect,
   onAttach,
@@ -186,7 +186,7 @@ function DeliveryEditRow({
   onDeleted,
 }: {
   delivery: DeliveryRow;
-  freelancerSlug?: string | null;
+  projectSlug?: string | null;
   selected: boolean;
   onToggleSelect: () => void;
   onAttach: () => void;
@@ -398,10 +398,10 @@ function DeliveryEditRow({
             </span>
           )}
 
-          <ShareButtons token={delivery.reviewToken} slug={freelancerSlug} />
+          <ShareButtons token={delivery.reviewToken} slug={projectSlug} />
 
           <Link
-            href={`${getPublicReviewPath(delivery.reviewToken, freelancerSlug)}?preview=1`}
+            href={`${getPublicReviewPath(delivery.reviewToken, projectSlug)}?preview=1`}
             target="_blank"
             rel="noopener noreferrer"
             className="text-xs font-semibold text-black/60 hover:text-black transition-colors"
@@ -457,7 +457,7 @@ export default function ProjectDetailClient({
   clientName,
   clientEmail,
   deliveries: initialDeliveries,
-  freelancerSlug,
+  projectSlug,
   calendarToken,
   clientLogoUrl,
   primaryColor,
@@ -693,7 +693,7 @@ export default function ProjectDetailClient({
         <Tabs.Panel value="calendar" className="mt-4">
           <DashboardCalendarView
             deliveries={liveDeliveries}
-            freelancerSlug={freelancerSlug}
+            projectSlug={projectSlug}
             onEmptyDayClick={(dateInputValue) => openUpload(dateInputValue)}
             onAttachCreative={(deliveryId) => setAttachingId(deliveryId)}
           />
@@ -764,7 +764,7 @@ export default function ProjectDetailClient({
                   <DeliveryEditRow
                     key={d.id}
                     delivery={d}
-                    freelancerSlug={freelancerSlug}
+                    projectSlug={projectSlug}
                     selected={selectedIds.has(d.id)}
                     onToggleSelect={() => toggleSelected(d.id)}
                     onAttach={() => setAttachingId(d.id)}
@@ -814,7 +814,7 @@ export default function ProjectDetailClient({
 
       <NewDeliveryModal
         projectId={projectId}
-        freelancerSlug={freelancerSlug}
+        projectSlug={projectSlug}
         isOpen={uploadOpen}
         onClose={() => {
           setUploadOpen(false);
@@ -829,7 +829,7 @@ export default function ProjectDetailClient({
       {attachingId && (
         <NewDeliveryModal
           projectId={projectId}
-          freelancerSlug={freelancerSlug}
+          projectSlug={projectSlug}
           isOpen
           attachToDeliveryId={attachingId}
           onClose={() => setAttachingId(null)}

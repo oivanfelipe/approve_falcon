@@ -3,13 +3,12 @@
 import { prisma } from "@/lib/prisma/client";
 import { auth } from "@/auth";
 import { getSignedUploadUrl, deleteFile } from "@/lib/supabase/server";
-import { generateReviewToken } from "@/lib/tokens";
+import { generateShareToken } from "@/lib/tokens";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { z } from "zod";
 import bcrypt from "bcryptjs";
 import { sendNewReviewEmail } from "@/lib/email";
-import { getFreelancerBrandingByUserId } from "@/lib/freelancer-branding";
 import { isGoogleDriveUrl } from "@/lib/google-drive";
 
 function detectLocale(acceptLanguage: string | null): "pt" | "en" {
@@ -132,13 +131,14 @@ export async function createDelivery(
       name: true,
       clientName: true,
       clientEmail: true,
+      slug: true,
       _count: { select: { deliveries: true } },
     },
   });
   if (!project) return { error: "Project not found" };
 
   const versionNumber = project._count.deliveries + 1;
-  const reviewToken = generateReviewToken();
+  const reviewToken = generateShareToken();
   const passwordHash = password ? await bcrypt.hash(password, 10) : null;
 
   let expiresAt: Date | null = null;
@@ -171,7 +171,6 @@ export async function createDelivery(
   });
 
   if (project.clientEmail) {
-    const branding = await getFreelancerBrandingByUserId(session.user.ownerId);
     sendNewReviewEmail({
       to: project.clientEmail,
       projectName: project.name,
@@ -179,7 +178,7 @@ export async function createDelivery(
       reviewToken,
       versionNumber,
       label: label || null,
-      freelancerSlug: branding.slug,
+      projectSlug: project.slug,
       locale,
     }).catch(console.error);
   }

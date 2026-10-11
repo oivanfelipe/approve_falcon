@@ -37,7 +37,7 @@ interface CalendarDeliveryRow {
 
 interface DashboardCalendarViewProps {
   deliveries: CalendarDeliveryRow[];
-  freelancerSlug?: string | null;
+  projectSlug?: string | null;
   onEmptyDayClick: (dateInputValue: string) => void;
   onAttachCreative?: (deliveryId: string) => void;
 }
@@ -66,7 +66,7 @@ const statusDot: Record<Status, string> = {
 
 export default function DashboardCalendarView({
   deliveries,
-  freelancerSlug,
+  projectSlug,
   onEmptyDayClick,
   onAttachCreative,
 }: DashboardCalendarViewProps) {
@@ -236,7 +236,7 @@ export default function DashboardCalendarView({
             )}
 
             <Link
-              href={getPublicReviewPath(selectedDelivery.reviewToken, freelancerSlug)}
+              href={getPublicReviewPath(selectedDelivery.reviewToken, projectSlug)}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center justify-center px-4 py-2 text-sm font-bold uppercase bg-white border-2 border-black text-black hover:bg-black/5 transition-colors"

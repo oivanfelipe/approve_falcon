@@ -32,6 +32,7 @@ export async function loadReviewPageData(token: string) {
           clientLogoUrl: true,
           primaryColor: true,
           secondaryColor: true,
+          slug: true,
           user: {
             select: {
               id: true,
@@ -278,5 +279,6 @@ export async function loadReviewPageData(token: string) {
     allDeliveries,
     branding,
     assets,
+    projectSlug: delivery.project.slug,
   };
 }

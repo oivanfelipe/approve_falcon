@@ -3,7 +3,6 @@ import { notFound, redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma/client";
 import ProjectDetailPageClient from "@/app/(dashboard)/dashboard/projects/[id]/ProjectDetailPageClient";
-import { getFreelancerBrandingByUserId } from "@/lib/freelancer-branding";
 import { getSignedUrl } from "@/lib/supabase/server";
 import type { Metadata } from "next";
 
@@ -49,7 +48,6 @@ export default async function ProjectDetailPage({ params }: PageProps) {
 
   if (!project) notFound();
 
-  const branding = await getFreelancerBrandingByUserId(session.user.ownerId);
   const clientLogoSignedUrl = project.clientLogoUrl
     ? await getSignedUrl(project.clientLogoUrl, 60 * 30).catch(() => null)
     : null;
@@ -88,7 +86,7 @@ export default async function ProjectDetailPage({ params }: PageProps) {
       clientName={project.clientName}
       clientEmail={project.clientEmail}
       deliveries={deliveries}
-      freelancerSlug={branding.slug}
+      projectSlug={project.slug}
       calendarToken={project.calendarToken}
       clientLogoUrl={clientLogoSignedUrl}
       primaryColor={project.primaryColor}

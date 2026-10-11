@@ -48,10 +48,17 @@ export default async function BrandedReviewPage({
   const pageData = await loadReviewPageData(token);
   if (!pageData) notFound();
 
-  const { delivery, signedUrl, initialComments, allDeliveries, branding, assets } =
-    pageData;
+  const {
+    delivery,
+    signedUrl,
+    initialComments,
+    allDeliveries,
+    branding,
+    assets,
+    projectSlug,
+  } = pageData;
 
-  if (!branding?.slug || branding.slug !== slug) {
+  if (!projectSlug || projectSlug !== slug) {
     notFound();
   }
 

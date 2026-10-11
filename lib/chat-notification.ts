@@ -1,6 +1,5 @@
 import { prisma } from "@/lib/prisma/client";
 import { sendCommentNotificationEmail } from "@/lib/email";
-import { getFreelancerBrandingByUserId } from "@/lib/freelancer-branding";
 
 type Locale = "pt" | "en";
 
@@ -10,6 +9,7 @@ interface DeliveryContext {
   project: {
     name: string;
     userId: string;
+    slug: string | null;
     user: {
       email: string;
       locale: string | null;
@@ -57,9 +57,6 @@ export async function handleClientMessage(
     },
   });
 
-  const branding = await getFreelancerBrandingByUserId(
-    delivery.project.userId,
-  );
   const locale = (delivery.project.user?.locale as Locale) ?? "pt";
 
   await sendCommentNotificationEmail({
@@ -69,7 +66,7 @@ export async function handleClientMessage(
     authorName,
     comment: content,
     unreadCount: 1,
-    freelancerSlug: branding.slug,
+    projectSlug: delivery.project.slug,
     locale,
   });
 }

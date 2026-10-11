@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { deleteFile } from "@/lib/supabase/server";
+import { generateUniqueProjectSlug } from "@/lib/project-slug";
 
 const HEX_COLOR = /^#?[0-9a-fA-F]{6}$/;
 
@@ -53,6 +54,8 @@ export async function createProject(
     return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
   }
 
+  const slug = await generateUniqueProjectSlug(parsed.data.clientName);
+
   const project = await prisma.project.create({
     data: {
       userId,
@@ -60,6 +63,7 @@ export async function createProject(
       clientName: parsed.data.clientName,
       clientEmail: parsed.data.clientEmail || null,
       description: parsed.data.description || null,
+      slug,
       clientLogoUrl: parsed.data.clientLogoUrl || null,
       primaryColor: parsed.data.primaryColor || null,
       secondaryColor: parsed.data.secondaryColor || null,

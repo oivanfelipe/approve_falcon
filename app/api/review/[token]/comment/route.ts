@@ -33,6 +33,7 @@ export async function POST(
           id: true,
           name: true,
           userId: true,
+          slug: true,
           user: {
             select: {
               email: true,
