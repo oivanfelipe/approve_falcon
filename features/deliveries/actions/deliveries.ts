@@ -300,6 +300,65 @@ export async function attachCreativeToDelivery(
   return {};
 }
 
+const updateDeliveryContentSchema = z.object({
+  deliveryId: z.string().cuid(),
+  planNumber: z.string().max(50).optional(),
+  theme: z.string().max(300).optional(),
+  format: z.string().max(100).optional(),
+  product: z.string().max(100).optional(),
+  postFunction: z.string().max(300).optional(),
+  objective: z.string().max(5000).optional(),
+  artCopy: z.string().max(5000).optional(),
+  copyText: z.string().max(5000).optional(),
+});
+
+export async function updateDeliveryContent(
+  raw: Record<string, unknown>,
+): Promise<{ error?: string }> {
+  const session = await auth();
+  if (!session?.user?.id) return { error: "Not authenticated" };
+
+  const parsed = updateDeliveryContentSchema.safeParse(raw);
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
+  }
+
+  const delivery = await prisma.delivery.findFirst({
+    where: { id: parsed.data.deliveryId, project: { userId: session.user.ownerId } },
+    select: { id: true, projectId: true, status: true },
+  });
+  if (!delivery) return { error: "Delivery not found" };
+
+  try {
+    assertDeliveryNotApproved(delivery);
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : "Delivery bloqueada" };
+  }
+
+  const { deliveryId, ...fields } = parsed.data;
+  const toNullable = (v?: string) => (v && v.trim() ? v.trim() : null);
+
+  await prisma.delivery.update({
+    where: { id: deliveryId },
+    data: {
+      planNumber: toNullable(fields.planNumber),
+      theme: toNullable(fields.theme),
+      format: toNullable(fields.format),
+      product: toNullable(fields.product),
+      postFunction: toNullable(fields.postFunction),
+      objective: toNullable(fields.objective),
+      artCopy: toNullable(fields.artCopy),
+      copyText: toNullable(fields.copyText),
+      // Content changed — the client needs to review it again, whatever the
+      // previous copyStatus was (already approved or changes requested).
+      copyStatus: "PENDING",
+    },
+  });
+
+  revalidatePath(`/dashboard/projects/${delivery.projectId}`);
+  return {};
+}
+
 const scheduleDeliverySchema = z.object({
   deliveryId: z.string().cuid(),
   scheduledAt: z.string().min(1),
