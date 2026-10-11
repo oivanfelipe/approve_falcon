@@ -88,12 +88,25 @@ type Filter = "pending" | "resolved" | "all";
 export default function CommentsInboxClient({
   initialDeliveries,
   freelancerName,
+  initialProjectFilter,
+  filterProjectName,
 }: {
   initialDeliveries: CommentInboxDelivery[];
   freelancerName: string;
+  initialProjectFilter?: string;
+  filterProjectName?: string;
 }) {
   const [deliveries, setDeliveries] = useState(initialDeliveries);
   const [filter, setFilter] = useState<Filter>("pending");
+  const [projectFilter, setProjectFilter] = useState(initialProjectFilter ?? "");
+
+  const projectFiltered = useMemo(
+    () =>
+      projectFilter
+        ? deliveries.filter((d) => d.projectId === projectFilter)
+        : deliveries,
+    [deliveries, projectFilter],
+  );
 
   const refetch = React.useCallback(async () => {
     try {
@@ -107,16 +120,17 @@ export default function CommentsInboxClient({
   }, []);
 
   const pendingCount = useMemo(
-    () => deliveries.filter((d) => d.pendingCount > 0).length,
-    [deliveries],
+    () => projectFiltered.filter((d) => d.pendingCount > 0).length,
+    [projectFiltered],
   );
 
   const filtered = useMemo(() => {
-    if (filter === "pending") return deliveries.filter((d) => d.pendingCount > 0);
+    if (filter === "pending")
+      return projectFiltered.filter((d) => d.pendingCount > 0);
     if (filter === "resolved")
-      return deliveries.filter((d) => d.pendingCount === 0);
-    return deliveries;
-  }, [deliveries, filter]);
+      return projectFiltered.filter((d) => d.pendingCount === 0);
+    return projectFiltered;
+  }, [projectFiltered, filter]);
 
   return (
     <div className="max-w-5xl mx-auto px-6 py-8 flex flex-col gap-8 bg-white min-h-screen">
@@ -131,6 +145,20 @@ export default function CommentsInboxClient({
           Veja exatamente o que cada cliente comentou, ajuste a copy direto
           por aqui e libere para uma nova revisão quando estiver pronto.
         </p>
+        {projectFilter && (
+          <div className="flex items-center gap-2 mt-1">
+            <Badge variant="default" size="sm">
+              Filtrado: {filterProjectName ?? "este projeto"}
+            </Badge>
+            <button
+              type="button"
+              onClick={() => setProjectFilter("")}
+              className="text-xs font-semibold text-black/50 hover:text-black underline"
+            >
+              Ver todos os projetos
+            </button>
+          </div>
+        )}
       </div>
 
       <Tabs value={filter} onValueChange={(v) => setFilter(v as Filter)}>
