@@ -88,7 +88,11 @@ model Project {
     clientName    String
     clientEmail   String?
     description   String?
+    slug          String?  @unique // short, auto-generated from clientName — identifies this client in branded review links (/{slug}/review/{token})
     calendarToken String?  @unique // public token for the shareable content-calendar link
+    clientLogoUrl String? // Supabase Storage path — client's own logo, used in post mockups
+    primaryColor  String? // hex — overrides the freelancer's own brand color for this client's mockups
+    secondaryColor String?
     createdAt     DateTime @default(now())
     updatedAt     DateTime @updatedAt
 
@@ -132,6 +136,27 @@ model Delivery {
     views                View[]
     approval             Approval?
     chatNotificationState ChatNotificationState?
+    assets                DeliveryAsset[]
+}
+
+// Extra carousel slides beyond the delivery's own primary file/link —
+// "lâmina 2", "lâmina 3"... each with its own image or Drive link.
+model DeliveryAsset {
+    @@schema("falcon")
+    id         String         @id @default(cuid())
+    deliveryId String
+    position   Int // display order among the extra slides, starting at 0
+    sourceType DeliverySource @default(FILE)
+    filePath   String? // Supabase Storage path — null when sourceType is DRIVE_LINK
+    fileName   String?
+    fileSize   Int?
+    mimeType   String?
+    driveUrl   String?
+    createdAt  DateTime       @default(now())
+
+    delivery Delivery @relation(fields: [deliveryId], references: [id], onDelete: Cascade)
+
+    @@index([deliveryId])
 }
 
 model ChatNotificationState {

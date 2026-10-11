@@ -13,7 +13,10 @@ import ImageWithComments from "@/features/review/components/ImageWithComments";
 import ArtCopyMockup from "@/features/review/components/ArtCopyMockup";
 import FilePreview from "@/features/review/components/FilePreview";
 import DriveEmbed from "@/features/review/components/DriveEmbed";
+import RealAssetCarousel from "@/features/review/components/RealAssetCarousel";
+import PostCaption from "@/features/review/components/PostCaption";
 import VersionSwitcher from "@/features/review/components/VersionSwitcher";
+import type { SignedDeliveryAsset } from "@/lib/delivery-assets";
 import { formatScheduledDate } from "@/features/calendar/lib/monthGrid";
 import { cn } from "@/lib/utils";
 import type { BadgeVariant } from "@/components/ui/Badge";
@@ -65,6 +68,7 @@ interface ReviewClientShellProps {
   clientName: string;
   initialComments: CommentData[];
   allDeliveries: DeliverySummary[];
+  extraAssets?: SignedDeliveryAsset[];
   isFreelancerPreview?: boolean;
   freelancerName?: string | null;
   freelancerDisplayName?: string | null;
@@ -167,6 +171,7 @@ export default function ReviewClientShell({
   clientName,
   initialComments,
   allDeliveries,
+  extraAssets = [],
   isFreelancerPreview = false,
   freelancerName,
   freelancerDisplayName,
@@ -186,8 +191,12 @@ export default function ReviewClientShell({
   const hasCopyContent = Boolean(
     copyText || artCopy || theme || objective || postFunction,
   );
-  const creativeRevealed = copyStatus === "APPROVED" || !hasCopyContent;
   const hasCreativeFile = Boolean(driveUrl || signedUrl);
+  // The real art, once uploaded, is always shown ahead of the planning-stage
+  // copy mockup — the client doesn't need to approve the copy separately
+  // when there's already a real creative to review.
+  const creativeRevealed =
+    hasCreativeFile || copyStatus === "APPROVED" || !hasCopyContent;
   const scheduledDate = scheduledAt ? new Date(scheduledAt) : null;
   const [comments, setComments] = useState<CommentData[]>(initialComments);
   const [showChat, setShowChat] = useState(false);
@@ -343,6 +352,7 @@ export default function ReviewClientShell({
                     primaryColor={primaryColor}
                     accountLabel={brandName}
                     caption={copyText}
+                    avatarUrl={brandLogo}
                   />
                 </div>
               )}
@@ -359,42 +369,58 @@ export default function ReviewClientShell({
                 Copy aprovada. Aguardando a arte ser enviada pelo time.
               </p>
             </div>
-          ) : isDriveLink && driveUrl ? (
-            <DriveEmbed
-              driveUrl={driveUrl}
-              fileName={fileName}
-              allowDownload={allowDownload}
-            />
-          ) : isImage && signedUrl ? (
-            <>
-              <ImageWithComments
-                signedUrl={signedUrl}
-                fileName={fileName}
-                comments={comments}
-                token={token}
-                onCommentAdded={(c) => setComments((prev) => [...prev, c])}
-                openPinCommentId={openPinCommentId}
-                onPinClick={(id) => {
-                  setShowChat(true);
-                  setOpenPinCommentId(id);
-                }}
-                primaryColor={primaryColor}
-              />
-              {allowDownload && (
-                <div className="flex justify-center mt-4">
-                  <DownloadFileButton url={signedUrl} fileName={fileName} />
-                </div>
-              )}
-            </>
           ) : (
-            signedUrl && (
-              <FilePreview
-                signedUrl={signedUrl}
-                mimeType={mimeType ?? ""}
-                fileName={fileName}
+            <div className="flex flex-col gap-4">
+              <RealAssetCarousel
                 allowDownload={allowDownload}
+                extraAssets={extraAssets}
+                renderPrimary={() =>
+                  isDriveLink && driveUrl ? (
+                    <DriveEmbed
+                      driveUrl={driveUrl}
+                      fileName={fileName}
+                      allowDownload={allowDownload}
+                    />
+                  ) : isImage && signedUrl ? (
+                    <>
+                      <ImageWithComments
+                        signedUrl={signedUrl}
+                        fileName={fileName}
+                        comments={comments}
+                        token={token}
+                        onCommentAdded={(c) =>
+                          setComments((prev) => [...prev, c])
+                        }
+                        openPinCommentId={openPinCommentId}
+                        onPinClick={(id) => {
+                          setShowChat(true);
+                          setOpenPinCommentId(id);
+                        }}
+                        primaryColor={primaryColor}
+                      />
+                      {allowDownload && (
+                        <div className="flex justify-center mt-4">
+                          <DownloadFileButton
+                            url={signedUrl}
+                            fileName={fileName}
+                          />
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    signedUrl && (
+                      <FilePreview
+                        signedUrl={signedUrl}
+                        mimeType={mimeType ?? ""}
+                        fileName={fileName}
+                        allowDownload={allowDownload}
+                      />
+                    )
+                  )
+                }
               />
-            )
+              <PostCaption caption={copyText} accountLabel={brandName} />
+            </div>
           )}
         </main>
 

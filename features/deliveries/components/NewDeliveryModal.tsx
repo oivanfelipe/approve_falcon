@@ -21,7 +21,7 @@ import { isGoogleDriveUrl } from "@/lib/google-drive";
 
 interface NewDeliveryModalProps {
   projectId: string;
-  freelancerSlug?: string | null;
+  projectSlug?: string | null;
   isOpen: boolean;
   onClose: () => void;
   onSuccess: (reviewToken: string) => void;
@@ -79,7 +79,7 @@ function ReviewLinkBox({
 
 export default function NewDeliveryModal({
   projectId,
-  freelancerSlug,
+  projectSlug,
   isOpen,
   onClose,
   onSuccess,
@@ -469,7 +469,7 @@ export default function NewDeliveryModal({
             </div>
           </div>
           {!isAttachMode && (
-            <ReviewLinkBox token={reviewToken} slug={freelancerSlug} />
+            <ReviewLinkBox token={reviewToken} slug={projectSlug} />
           )}
         </div>
       )}

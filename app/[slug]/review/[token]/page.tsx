@@ -48,10 +48,17 @@ export default async function BrandedReviewPage({
   const pageData = await loadReviewPageData(token);
   if (!pageData) notFound();
 
-  const { delivery, signedUrl, initialComments, allDeliveries, branding } =
-    pageData;
+  const {
+    delivery,
+    signedUrl,
+    initialComments,
+    allDeliveries,
+    branding,
+    assets,
+    projectSlug,
+  } = pageData;
 
-  if (!branding?.slug || branding.slug !== slug) {
+  if (!projectSlug || projectSlug !== slug) {
     notFound();
   }
 
@@ -140,6 +147,7 @@ export default async function BrandedReviewPage({
       clientName={delivery.project.clientName}
       initialComments={initialComments}
       allDeliveries={allDeliveries}
+      extraAssets={assets}
       isFreelancerPreview={isFreelancerPreview}
       freelancerName={freelancerName}
       freelancerDisplayName={delivery.project.user?.name ?? null}

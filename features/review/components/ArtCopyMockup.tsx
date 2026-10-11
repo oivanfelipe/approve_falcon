@@ -68,11 +68,13 @@ export default function ArtCopyMockup({
   primaryColor = "#e10600",
   accountLabel,
   caption,
+  avatarUrl,
 }: {
   text: string;
   primaryColor?: string;
   accountLabel?: string | null;
   caption?: string | null;
+  avatarUrl?: string | null;
 }) {
   const slides = parseArtCopySlides(text);
   const [index, setIndex] = useState(0);
@@ -86,8 +88,17 @@ export default function ArtCopyMockup({
     <div className="w-full max-w-xs mx-auto">
       {/* Header: avatar + username row */}
       <div className="flex items-center gap-2.5 px-3 py-2.5 border-2 border-black border-b-0 bg-white">
-        <div className="w-8 h-8 rounded-full shrink-0 bg-black/5 border border-black/10 flex items-center justify-center">
-          <User className="w-4 h-4 text-black/30" strokeWidth={1.75} />
+        <div className="w-8 h-8 rounded-full shrink-0 bg-black/5 border border-black/10 flex items-center justify-center overflow-hidden">
+          {avatarUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={avatarUrl}
+              alt={accountLabel ?? "Logo"}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <User className="w-4 h-4 text-black/30" strokeWidth={1.75} />
+          )}
         </div>
         {accountLabel ? (
           <span className="text-sm font-bold text-black truncate">

@@ -83,11 +83,11 @@ export async function sendNewReviewEmail(opts: {
   reviewToken: string;
   versionNumber: number;
   label: string | null;
-  freelancerSlug?: string | null;
+  projectSlug?: string | null;
   locale?: Locale;
 }) {
   const locale = opts.locale ?? "pt";
-  const url = getReviewUrl(opts.reviewToken, opts.freelancerSlug);
+  const url = getReviewUrl(opts.reviewToken, opts.projectSlug);
   const versionLabel = opts.label
     ? `${locale === "pt" ? "Versão" : "Version"} ${opts.versionNumber} — ${opts.label}`
     : `${locale === "pt" ? "Versão" : "Version"} ${opts.versionNumber}`;
@@ -211,11 +211,11 @@ export async function sendChangesRequestedEmail(opts: {
   projectName: string;
   clientName: string;
   reviewToken: string;
-  freelancerSlug?: string | null;
+  projectSlug?: string | null;
   locale?: Locale;
 }) {
   const locale = opts.locale ?? "pt";
-  const url = getReviewUrl(opts.reviewToken, opts.freelancerSlug, true);
+  const url = getReviewUrl(opts.reviewToken, opts.projectSlug, true);
 
   const t =
     locale === "pt"
@@ -261,11 +261,11 @@ export async function sendCommentNotificationEmail(opts: {
   authorName: string;
   comment: string;
   unreadCount?: number;
-  freelancerSlug?: string | null;
+  projectSlug?: string | null;
   locale?: Locale;
 }) {
   const locale = opts.locale ?? "pt";
-  const reviewUrl = getReviewUrl(opts.reviewToken, opts.freelancerSlug, true);
+  const reviewUrl = getReviewUrl(opts.reviewToken, opts.projectSlug, true);
   const safeComment = escapeHtml(opts.comment).replace(/\r?\n/g, "<br />");
   const count = opts.unreadCount ?? 1;
 
