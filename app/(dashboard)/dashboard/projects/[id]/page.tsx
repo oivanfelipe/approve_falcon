@@ -4,6 +4,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma/client";
 import ProjectDetailPageClient from "@/app/(dashboard)/dashboard/projects/[id]/ProjectDetailPageClient";
 import { getFreelancerBrandingByUserId } from "@/lib/freelancer-branding";
+import { getSignedUrl } from "@/lib/supabase/server";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -31,6 +32,16 @@ export default async function ProjectDetailPage({ params }: PageProps) {
             take: 1,
             select: { createdAt: true },
           },
+          assets: {
+            orderBy: { position: "asc" },
+            select: {
+              id: true,
+              fileName: true,
+              sourceType: true,
+              driveUrl: true,
+              mimeType: true,
+            },
+          },
         },
       },
     },
@@ -39,6 +50,9 @@ export default async function ProjectDetailPage({ params }: PageProps) {
   if (!project) notFound();
 
   const branding = await getFreelancerBrandingByUserId(session.user.ownerId);
+  const clientLogoSignedUrl = project.clientLogoUrl
+    ? await getSignedUrl(project.clientLogoUrl, 60 * 30).catch(() => null)
+    : null;
 
   const deliveries = project.deliveries.map((d) => ({
     id: d.id,
@@ -64,6 +78,7 @@ export default async function ProjectDetailPage({ params }: PageProps) {
     copyStatus: d.copyStatus as "PENDING" | "APPROVED" | "CHANGES_REQUESTED",
     copyText: d.copyText,
     artCopy: d.artCopy,
+    assets: d.assets,
   }));
 
   return (
@@ -75,6 +90,9 @@ export default async function ProjectDetailPage({ params }: PageProps) {
       deliveries={deliveries}
       freelancerSlug={branding.slug}
       calendarToken={project.calendarToken}
+      clientLogoUrl={clientLogoSignedUrl}
+      primaryColor={project.primaryColor}
+      secondaryColor={project.secondaryColor}
     />
   );
 }

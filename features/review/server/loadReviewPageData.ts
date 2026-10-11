@@ -1,6 +1,8 @@
 import { prisma } from "@/lib/prisma/client";
 import { getSignedUrl } from "@/lib/supabase/server";
 import { getFreelancerBrandingByUserId } from "@/lib/freelancer-branding";
+import { resolveEffectiveBranding } from "@/lib/project-branding";
+import { signDeliveryAssets } from "@/lib/delivery-assets";
 import type { CommentData } from "@/features/review/components/CommentSystem";
 
 type Status = "PENDING" | "APPROVED" | "CHANGES_REQUESTED";
@@ -22,10 +24,14 @@ export async function loadReviewPageData(token: string) {
   const delivery = await prisma.delivery.findUnique({
     where: { reviewToken: token },
     include: {
+      assets: { orderBy: { position: "asc" } },
       project: {
         select: {
           name: true,
           clientName: true,
+          clientLogoUrl: true,
+          primaryColor: true,
+          secondaryColor: true,
           user: {
             select: {
               id: true,
@@ -50,9 +56,23 @@ export async function loadReviewPageData(token: string) {
 
   if (!delivery) return null;
 
-  const branding = delivery.project.user?.id
+  const freelancerBranding = delivery.project.user?.id
     ? await getFreelancerBrandingByUserId(delivery.project.user.id)
     : null;
+
+  const branding = freelancerBranding
+    ? await resolveEffectiveBranding(
+        {
+          clientName: delivery.project.clientName,
+          clientLogoUrl: delivery.project.clientLogoUrl,
+          primaryColor: delivery.project.primaryColor,
+          secondaryColor: delivery.project.secondaryColor,
+        },
+        freelancerBranding,
+      )
+    : null;
+
+  const assets = await signDeliveryAssets(delivery.assets);
 
   const signedUrl =
     delivery.sourceType === "DRIVE_LINK" || !delivery.filePath
@@ -257,5 +277,6 @@ export async function loadReviewPageData(token: string) {
     initialComments,
     allDeliveries,
     branding,
+    assets,
   };
 }

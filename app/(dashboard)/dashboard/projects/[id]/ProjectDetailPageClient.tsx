@@ -7,6 +7,8 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import NewDeliveryModal from "@/features/deliveries/components/NewDeliveryModal";
 import EditDeliveryContentModal from "@/features/deliveries/components/EditDeliveryContentModal";
+import ManageSlidesModal from "@/features/deliveries/components/ManageSlidesModal";
+import EditProjectBrandingModal from "@/features/projects/components/EditProjectBrandingModal";
 import CalendarLinkButton from "@/features/calendar/components/CalendarLinkButton";
 import DashboardCalendarView from "@/features/calendar/components/DashboardCalendarView";
 import ImportSpreadsheetModal from "@/features/calendar/components/ImportSpreadsheetModal";
@@ -16,7 +18,7 @@ import {
 } from "@/features/deliveries/actions/deliveries";
 import { Tabs } from "@/components/ui/Tabs";
 import type { BadgeVariant } from "@/components/ui/Badge";
-import { Copy, Upload, Pencil } from "lucide-react";
+import { Copy, Upload, Pencil, Images, Palette } from "lucide-react";
 import { getPublicReviewPath } from "@/lib/freelancer-branding-shared";
 import { cn } from "@/lib/utils";
 
@@ -46,6 +48,13 @@ interface DeliveryRow {
   copyStatus: "PENDING" | "APPROVED" | "CHANGES_REQUESTED";
   copyText: string | null;
   artCopy: string | null;
+  assets: {
+    id: string;
+    fileName: string | null;
+    sourceType: "FILE" | "DRIVE_LINK";
+    driveUrl: string | null;
+    mimeType: string | null;
+  }[];
 }
 
 interface ProjectDetailClientProps {
@@ -56,6 +65,9 @@ interface ProjectDetailClientProps {
   deliveries: DeliveryRow[];
   freelancerSlug?: string | null;
   calendarToken?: string | null;
+  clientLogoUrl?: string | null;
+  primaryColor?: string | null;
+  secondaryColor?: string | null;
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -169,6 +181,7 @@ function DeliveryEditRow({
   onToggleSelect,
   onAttach,
   onEdit,
+  onManageSlides,
   onScheduled,
   onDeleted,
 }: {
@@ -178,6 +191,7 @@ function DeliveryEditRow({
   onToggleSelect: () => void;
   onAttach: () => void;
   onEdit: () => void;
+  onManageSlides: () => void;
   onScheduled: () => void;
   onDeleted: () => void;
 }) {
@@ -292,11 +306,9 @@ function DeliveryEditRow({
           </>
         )}
 
-        {!delivery.fileName && (
-          <Button variant="outline" size="sm" onClick={onAttach}>
-            Subir arte
-          </Button>
-        )}
+        <Button variant="outline" size="sm" onClick={onAttach}>
+          {delivery.fileName ? "Editar arte" : "Subir arte"}
+        </Button>
 
         <Button
           variant="outline"
@@ -305,6 +317,15 @@ function DeliveryEditRow({
           leftIcon={<Pencil className="w-3 h-3" />}
         >
           Editar
+        </Button>
+
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={onManageSlides}
+          leftIcon={<Images className="w-3 h-3" />}
+        >
+          Lâminas{delivery.assets.length > 0 ? ` (${delivery.assets.length + 1})` : ""}
         </Button>
 
         {error && (
@@ -438,6 +459,9 @@ export default function ProjectDetailClient({
   deliveries: initialDeliveries,
   freelancerSlug,
   calendarToken,
+  clientLogoUrl,
+  primaryColor,
+  secondaryColor,
 }: ProjectDetailClientProps) {
   const [liveDeliveries, setLiveDeliveries] = useState(initialDeliveries);
   const [uploadOpen, setUploadOpen] = useState(false);
@@ -446,6 +470,8 @@ export default function ProjectDetailClient({
   const [importOpen, setImportOpen] = useState(false);
   const [attachingId, setAttachingId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [managingSlidesId, setManagingSlidesId] = useState<string | null>(null);
+  const [brandingOpen, setBrandingOpen] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isBulkDeleting, setIsBulkDeleting] = useState(false);
   const [bulkDeleteError, setBulkDeleteError] = useState("");
@@ -458,6 +484,8 @@ export default function ProjectDetailClient({
 
   const editOrderedDeliveries = sortForEditing(liveDeliveries);
   const editingDelivery = liveDeliveries.find((d) => d.id === editingId) ?? null;
+  const managingSlidesDelivery =
+    liveDeliveries.find((d) => d.id === managingSlidesId) ?? null;
 
   const toggleSelected = (id: string) => {
     setSelectedIds((prev) => {
@@ -611,6 +639,14 @@ export default function ProjectDetailClient({
             <Button
               variant="outline"
               size="sm"
+              onClick={() => setBrandingOpen(true)}
+              leftIcon={<Palette className="w-3.5 h-3.5" />}
+            >
+              Marca do cliente
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
               onClick={() => setImportOpen(true)}
               leftIcon={<Upload className="w-3.5 h-3.5" />}
             >
@@ -733,6 +769,7 @@ export default function ProjectDetailClient({
                     onToggleSelect={() => toggleSelected(d.id)}
                     onAttach={() => setAttachingId(d.id)}
                     onEdit={() => setEditingId(d.id)}
+                    onManageSlides={() => setManagingSlidesId(d.id)}
                     onScheduled={refetch}
                     onDeleted={refetch}
                   />
@@ -810,6 +847,30 @@ export default function ProjectDetailClient({
           onSuccess={refetch}
         />
       )}
+
+      {managingSlidesDelivery && (
+        <ManageSlidesModal
+          projectId={projectId}
+          deliveryId={managingSlidesDelivery.id}
+          primaryFileName={managingSlidesDelivery.fileName}
+          assets={managingSlidesDelivery.assets}
+          isOpen
+          onClose={() => setManagingSlidesId(null)}
+          onChanged={refetch}
+        />
+      )}
+
+      <EditProjectBrandingModal
+        projectId={projectId}
+        currentLogoUrl={clientLogoUrl ?? null}
+        currentPrimaryColor={primaryColor ?? null}
+        currentSecondaryColor={secondaryColor ?? null}
+        isOpen={brandingOpen}
+        onClose={() => setBrandingOpen(false)}
+        onSuccess={() => {
+          window.location.reload();
+        }}
+      />
 
       <ImportSpreadsheetModal
         projectId={projectId}

@@ -224,14 +224,14 @@ export default function DashboardCalendarView({
               </Badge>
             </div>
 
-            {!selectedDelivery.fileName && onAttachCreative && (
+            {onAttachCreative && (
               <Button
                 variant="outline"
                 size="sm"
                 fullWidth
                 onClick={() => onAttachCreative(selectedDelivery.id)}
               >
-                Subir arte
+                {selectedDelivery.fileName ? "Edit creative" : "Subir arte"}
               </Button>
             )}
 

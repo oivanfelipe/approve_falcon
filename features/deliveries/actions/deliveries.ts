@@ -274,7 +274,13 @@ export async function attachCreativeToDelivery(
 
   const delivery = await prisma.delivery.findFirst({
     where: { id: deliveryId, project: { userId: session.user.ownerId } },
-    select: { id: true, projectId: true, status: true },
+    select: {
+      id: true,
+      projectId: true,
+      status: true,
+      sourceType: true,
+      filePath: true,
+    },
   });
   if (!delivery) return { error: "Delivery not found" };
 
@@ -283,6 +289,9 @@ export async function attachCreativeToDelivery(
   } catch (err) {
     return { error: err instanceof Error ? err.message : "Delivery bloqueada" };
   }
+
+  const previousFilePath =
+    delivery.sourceType === "FILE" ? delivery.filePath : null;
 
   await prisma.delivery.update({
     where: { id: deliveryId },
@@ -296,7 +305,135 @@ export async function attachCreativeToDelivery(
     },
   });
 
+  // Editing/replacing an already-attached file — clean up the old storage
+  // object so replaced creatives don't pile up in the bucket.
+  if (previousFilePath && previousFilePath !== filePath) {
+    deleteFile(previousFilePath).catch(() => {});
+  }
+
   revalidatePath(`/dashboard/projects/${delivery.projectId}`);
+  return {};
+}
+
+const addDeliveryAssetSchema = z
+  .object({
+    deliveryId: z.string().cuid(),
+    sourceType: z.enum(["FILE", "DRIVE_LINK"]).default("FILE"),
+    filePath: z.string().min(1).optional(),
+    fileName: z.string().min(1),
+    fileSize: z.coerce.number().int().positive().optional(),
+    mimeType: z.string().min(1).optional(),
+    driveUrl: z.string().url().max(2000).optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (data.sourceType === "DRIVE_LINK") {
+      if (!data.driveUrl || !isGoogleDriveUrl(data.driveUrl)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Cole um link válido do Google Drive.",
+          path: ["driveUrl"],
+        });
+      }
+      return;
+    }
+
+    if (!data.filePath || !data.fileSize || !data.mimeType) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Arquivo inválido.",
+        path: ["filePath"],
+      });
+    }
+  });
+
+// Adds an extra carousel slide ("lâmina 2", "lâmina 3"...) beyond the
+// delivery's own primary file/link.
+export async function addDeliveryAsset(
+  raw: Record<string, unknown>,
+): Promise<{ error?: string }> {
+  const session = await auth();
+  if (!session?.user?.id) return { error: "Not authenticated" };
+
+  const parsed = addDeliveryAssetSchema.safeParse(raw);
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
+  }
+
+  const {
+    deliveryId,
+    sourceType,
+    filePath,
+    fileName,
+    fileSize,
+    mimeType,
+    driveUrl,
+  } = parsed.data;
+
+  const delivery = await prisma.delivery.findFirst({
+    where: { id: deliveryId, project: { userId: session.user.ownerId } },
+    select: {
+      id: true,
+      projectId: true,
+      status: true,
+      assets: { select: { position: true }, orderBy: { position: "desc" }, take: 1 },
+    },
+  });
+  if (!delivery) return { error: "Delivery not found" };
+
+  try {
+    assertDeliveryNotApproved(delivery);
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : "Delivery bloqueada" };
+  }
+
+  const nextPosition = (delivery.assets[0]?.position ?? -1) + 1;
+
+  await prisma.deliveryAsset.create({
+    data: {
+      deliveryId,
+      position: nextPosition,
+      sourceType,
+      filePath: sourceType === "FILE" ? filePath : null,
+      fileName,
+      fileSize: sourceType === "FILE" ? fileSize : null,
+      mimeType: sourceType === "FILE" ? mimeType : null,
+      driveUrl: sourceType === "DRIVE_LINK" ? driveUrl : null,
+    },
+  });
+
+  revalidatePath(`/dashboard/projects/${delivery.projectId}`);
+  return {};
+}
+
+export async function deleteDeliveryAsset(
+  assetId: string,
+): Promise<{ error?: string }> {
+  const session = await auth();
+  if (!session?.user?.id) return { error: "Not authenticated" };
+
+  const asset = await prisma.deliveryAsset.findFirst({
+    where: { id: assetId, delivery: { project: { userId: session.user.ownerId } } },
+    select: {
+      id: true,
+      filePath: true,
+      sourceType: true,
+      delivery: { select: { projectId: true, status: true } },
+    },
+  });
+  if (!asset) return { error: "Lâmina não encontrada" };
+
+  try {
+    assertDeliveryNotApproved(asset.delivery);
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : "Delivery bloqueada" };
+  }
+
+  if (asset.sourceType === "FILE" && asset.filePath) {
+    await deleteFile(asset.filePath).catch(() => {});
+  }
+  await prisma.deliveryAsset.delete({ where: { id: assetId } });
+
+  revalidatePath(`/dashboard/projects/${asset.delivery.projectId}`);
   return {};
 }
 
