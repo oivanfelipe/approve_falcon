@@ -6,6 +6,7 @@ import { supabaseClient } from "@/lib/supabase/browser";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import NewDeliveryModal from "@/features/deliveries/components/NewDeliveryModal";
+import EditDeliveryContentModal from "@/features/deliveries/components/EditDeliveryContentModal";
 import CalendarLinkButton from "@/features/calendar/components/CalendarLinkButton";
 import DashboardCalendarView from "@/features/calendar/components/DashboardCalendarView";
 import ImportSpreadsheetModal from "@/features/calendar/components/ImportSpreadsheetModal";
@@ -15,7 +16,7 @@ import {
 } from "@/features/deliveries/actions/deliveries";
 import { Tabs } from "@/components/ui/Tabs";
 import type { BadgeVariant } from "@/components/ui/Badge";
-import { Copy, Upload } from "lucide-react";
+import { Copy, Upload, Pencil } from "lucide-react";
 import { getPublicReviewPath } from "@/lib/freelancer-branding-shared";
 import { cn } from "@/lib/utils";
 
@@ -44,6 +45,7 @@ interface DeliveryRow {
   postFunction: string | null;
   copyStatus: "PENDING" | "APPROVED" | "CHANGES_REQUESTED";
   copyText: string | null;
+  artCopy: string | null;
 }
 
 interface ProjectDetailClientProps {
@@ -166,6 +168,7 @@ function DeliveryEditRow({
   selected,
   onToggleSelect,
   onAttach,
+  onEdit,
   onScheduled,
   onDeleted,
 }: {
@@ -174,6 +177,7 @@ function DeliveryEditRow({
   selected: boolean;
   onToggleSelect: () => void;
   onAttach: () => void;
+  onEdit: () => void;
   onScheduled: () => void;
   onDeleted: () => void;
 }) {
@@ -293,6 +297,15 @@ function DeliveryEditRow({
             Subir arte
           </Button>
         )}
+
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={onEdit}
+          leftIcon={<Pencil className="w-3 h-3" />}
+        >
+          Editar
+        </Button>
 
         {error && (
           <span className="text-[11px] font-medium text-[#e10600]">
@@ -432,6 +445,7 @@ export default function ProjectDetailClient({
   const [viewMode, setViewMode] = useState<"edit" | "calendar">("edit");
   const [importOpen, setImportOpen] = useState(false);
   const [attachingId, setAttachingId] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isBulkDeleting, setIsBulkDeleting] = useState(false);
   const [bulkDeleteError, setBulkDeleteError] = useState("");
@@ -443,6 +457,7 @@ export default function ProjectDetailClient({
   };
 
   const editOrderedDeliveries = sortForEditing(liveDeliveries);
+  const editingDelivery = liveDeliveries.find((d) => d.id === editingId) ?? null;
 
   const toggleSelected = (id: string) => {
     setSelectedIds((prev) => {
@@ -717,6 +732,7 @@ export default function ProjectDetailClient({
                     selected={selectedIds.has(d.id)}
                     onToggleSelect={() => toggleSelected(d.id)}
                     onAttach={() => setAttachingId(d.id)}
+                    onEdit={() => setEditingId(d.id)}
                     onScheduled={refetch}
                     onDeleted={refetch}
                   />
@@ -783,6 +799,15 @@ export default function ProjectDetailClient({
           onSuccess={() => {
             refetch();
           }}
+        />
+      )}
+
+      {editingDelivery && (
+        <EditDeliveryContentModal
+          delivery={editingDelivery}
+          isOpen
+          onClose={() => setEditingId(null)}
+          onSuccess={refetch}
         />
       )}
 

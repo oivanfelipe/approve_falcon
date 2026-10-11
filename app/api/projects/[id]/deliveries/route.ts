@@ -45,6 +45,7 @@ export async function GET(
       postFunction: true,
       copyStatus: true,
       copyText: true,
+      artCopy: true,
       _count: {
         select: { comments: true, views: true },
       },
@@ -79,6 +80,7 @@ export async function GET(
     postFunction: d.postFunction,
     copyStatus: d.copyStatus,
     copyText: d.copyText,
+    artCopy: d.artCopy,
   }));
 
   return NextResponse.json(result);

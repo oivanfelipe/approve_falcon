@@ -63,6 +63,7 @@ export default async function ProjectDetailPage({ params }: PageProps) {
     postFunction: d.postFunction,
     copyStatus: d.copyStatus as "PENDING" | "APPROVED" | "CHANGES_REQUESTED",
     copyText: d.copyText,
+    artCopy: d.artCopy,
   }));
 
   return (
