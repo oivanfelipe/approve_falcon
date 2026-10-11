@@ -97,7 +97,12 @@ export default function CommentsInboxClient({
   filterProjectName?: string;
 }) {
   const [deliveries, setDeliveries] = useState(initialDeliveries);
-  const [filter, setFilter] = useState<Filter>("pending");
+  // Coming from a project's "Revisão" button, the team wants the whole
+  // conversation for that project, not just what's still open — default to
+  // "Todos" there instead of hiding already-resolved comments behind a tab.
+  const [filter, setFilter] = useState<Filter>(
+    initialProjectFilter ? "all" : "pending",
+  );
   const [projectFilter, setProjectFilter] = useState(initialProjectFilter ?? "");
 
   const projectFiltered = useMemo(
