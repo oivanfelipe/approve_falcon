@@ -12,13 +12,14 @@ import EditProjectBrandingModal from "@/features/projects/components/EditProject
 import CalendarLinkButton from "@/features/calendar/components/CalendarLinkButton";
 import DashboardCalendarView from "@/features/calendar/components/DashboardCalendarView";
 import ImportSpreadsheetModal from "@/features/calendar/components/ImportSpreadsheetModal";
+import DeliveryCommentsModal from "@/features/comments/components/DeliveryCommentsModal";
 import {
   scheduleDelivery,
   deleteDelivery,
 } from "@/features/deliveries/actions/deliveries";
 import { Tabs } from "@/components/ui/Tabs";
 import type { BadgeVariant } from "@/components/ui/Badge";
-import { Copy, Upload, Pencil, Images, Palette } from "lucide-react";
+import { Copy, Upload, Pencil, Images, Palette, MessageCircle } from "lucide-react";
 import { getPublicReviewPath } from "@/lib/freelancer-branding-shared";
 import { cn } from "@/lib/utils";
 
@@ -69,6 +70,7 @@ interface ProjectDetailClientProps {
   clientLogoUrl?: string | null;
   primaryColor?: string | null;
   secondaryColor?: string | null;
+  freelancerName: string;
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -79,11 +81,39 @@ const statusVariant: Record<string, BadgeVariant> = {
   CHANGES_REQUESTED: "error",
 };
 
-const statusLabel: Record<string, string> = {
-  PENDING: "Pendente",
-  APPROVED: "Aprovado",
-  CHANGES_REQUESTED: "Alterações",
-};
+// Whose turn it is to act, not just the raw status — this is what the team
+// actually needs to know at a glance on their own worklist.
+function copyStatusLabel(copyStatus: string): string {
+  if (copyStatus === "APPROVED") return "Aprovada";
+  if (copyStatus === "CHANGES_REQUESTED") return "Pendente (V4)";
+  return "Pendente (Cliente)";
+}
+
+function artStatusLabel(status: string, hasFile: boolean): string {
+  if (status === "APPROVED") return "Aprovada";
+  if (status === "CHANGES_REQUESTED") return "Pendente (V4)";
+  // PENDING: no file yet → we still owe the upload; file already up →
+  // the client owes the review.
+  return hasFile ? "Pendente (Cliente)" : "Pendente (V4)";
+}
+
+// What the team should do next on this post, at a glance — this is the
+// whole point of surfacing it here instead of a separate screen.
+function nextActionLabel(delivery: DeliveryRow): string | null {
+  if (delivery.pendingCommentCount > 0) {
+    return "Responder comentário do cliente";
+  }
+  if (delivery.copyStatus === "CHANGES_REQUESTED") return "Ajustar a copy";
+  if (delivery.copyStatus === "PENDING") {
+    return "Aguardando o cliente revisar a copy";
+  }
+  if (delivery.status === "CHANGES_REQUESTED") return "Ajustar a arte";
+  if (delivery.status === "PENDING" && !delivery.fileName) return "Subir a arte";
+  if (delivery.status === "PENDING") {
+    return "Aguardando o cliente aprovar a arte";
+  }
+  return null;
+}
 
 function formatSize(bytes: number | null): string {
   if (bytes === null) return "";
@@ -94,12 +124,12 @@ function formatSize(bytes: number | null): string {
 
 function timeAgo(date: Date): string {
   const secs = Math.floor((Date.now() - new Date(date).getTime()) / 1000);
-  if (secs < 60) return "just now";
+  if (secs < 60) return "agora mesmo";
   const mins = Math.floor(secs / 60);
-  if (mins < 60) return `${mins}m ago`;
+  if (mins < 60) return `há ${mins}min`;
   const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs}h ago`;
-  return `${Math.floor(hrs / 24)}d ago`;
+  if (hrs < 24) return `há ${hrs}h`;
+  return `há ${Math.floor(hrs / 24)}d`;
 }
 
 function sortForEditing(deliveries: DeliveryRow[]): DeliveryRow[] {
@@ -141,7 +171,7 @@ function ShareButtons({
         onClick={copyLink}
         variant={copiedLink ? "primary" : "outline"}
         size="sm"
-        aria-label="Copy review link"
+        aria-label="Copiar link de revisão"
       >
         {copiedLink ? (
           <>
@@ -158,11 +188,11 @@ function ShareButtons({
             >
               <polyline points="20 6 9 17 4 12" />
             </svg>
-            Copied!
+            Copiado!
           </>
         ) : (
           <>
-            <Copy className="w-4 h-4" /> Client link
+            <Copy className="w-4 h-4" /> Link do cliente
           </>
         )}
       </Button>
@@ -183,6 +213,7 @@ function DeliveryEditRow({
   onAttach,
   onEdit,
   onManageSlides,
+  onComments,
   onScheduled,
   onDeleted,
 }: {
@@ -193,6 +224,7 @@ function DeliveryEditRow({
   onAttach: () => void;
   onEdit: () => void;
   onManageSlides: () => void;
+  onComments: () => void;
   onScheduled: () => void;
   onDeleted: () => void;
 }) {
@@ -274,13 +306,19 @@ function DeliveryEditRow({
 
         <div className="flex items-center gap-2 shrink-0 flex-wrap">
           <Badge variant={statusVariant[delivery.copyStatus]} size="sm" dot>
-            Copy: {statusLabel[delivery.copyStatus]}
+            Copy: {copyStatusLabel(delivery.copyStatus)}
           </Badge>
           <Badge variant={statusVariant[delivery.status]} size="sm" dot>
-            Arte: {statusLabel[delivery.status]}
+            Arte: {artStatusLabel(delivery.status, Boolean(delivery.fileName))}
           </Badge>
         </div>
       </div>
+
+      {nextActionLabel(delivery) && (
+        <p className="text-xs font-semibold text-black/60">
+          Próxima ação: {nextActionLabel(delivery)}
+        </p>
+      )}
 
       <div className="flex items-center gap-2 flex-wrap pt-2 border-t border-black/10">
         {delivery.scheduledAt ? (
@@ -329,6 +367,20 @@ function DeliveryEditRow({
           Lâminas{delivery.assets.length > 0 ? ` (${delivery.assets.length + 1})` : ""}
         </Button>
 
+        <Button
+          variant={delivery.pendingCommentCount > 0 ? "danger" : "outline"}
+          size="sm"
+          onClick={onComments}
+          leftIcon={<MessageCircle className="w-3 h-3" />}
+        >
+          Comentários
+          {delivery.pendingCommentCount > 0
+            ? ` (${delivery.pendingCommentCount})`
+            : delivery.commentCount > 0
+              ? ` (${delivery.commentCount})`
+              : ""}
+        </Button>
+
         {error && (
           <span className="text-[11px] font-medium text-[#e10600]">
             {error}
@@ -350,9 +402,11 @@ function DeliveryEditRow({
             </>
           )}
 
-          <div
+          <button
+            type="button"
+            onClick={onComments}
             className={cn(
-              "flex items-center gap-1.5 text-xs font-mono",
+              "flex items-center gap-1.5 text-xs font-mono hover:underline",
               delivery.pendingCommentCount > 0
                 ? "font-bold text-[#e10600]"
                 : "text-black/40",
@@ -377,7 +431,7 @@ function DeliveryEditRow({
               <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
             </svg>
             {delivery.commentCount}
-          </div>
+          </button>
 
           <div className="flex items-center gap-1.5 text-xs font-mono text-black/40">
             <svg
@@ -407,7 +461,7 @@ function DeliveryEditRow({
             </span>
           ) : (
             <span className="text-[10px] font-mono text-black/25 italic">
-              Not viewed
+              Não visualizado
             </span>
           )}
 
@@ -419,7 +473,7 @@ function DeliveryEditRow({
             rel="noopener noreferrer"
             className="text-xs font-semibold text-black/60 hover:text-black transition-colors"
           >
-            Preview ↗
+            Pré-visualizar ↗
           </Link>
 
           {confirmingDelete ? (
@@ -475,6 +529,7 @@ export default function ProjectDetailClient({
   clientLogoUrl,
   primaryColor,
   secondaryColor,
+  freelancerName,
 }: ProjectDetailClientProps) {
   const [liveDeliveries, setLiveDeliveries] = useState(initialDeliveries);
   const [uploadOpen, setUploadOpen] = useState(false);
@@ -484,6 +539,7 @@ export default function ProjectDetailClient({
   const [attachingId, setAttachingId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [managingSlidesId, setManagingSlidesId] = useState<string | null>(null);
+  const [commentsId, setCommentsId] = useState<string | null>(null);
   const [brandingOpen, setBrandingOpen] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isBulkDeleting, setIsBulkDeleting] = useState(false);
@@ -783,6 +839,7 @@ export default function ProjectDetailClient({
                     onAttach={() => setAttachingId(d.id)}
                     onEdit={() => setEditingId(d.id)}
                     onManageSlides={() => setManagingSlidesId(d.id)}
+                    onComments={() => setCommentsId(d.id)}
                     onScheduled={refetch}
                     onDeleted={refetch}
                   />
@@ -818,7 +875,7 @@ export default function ProjectDetailClient({
                 </p>
               </div>
               <Button variant="primary" size="sm" onClick={() => openUpload()}>
-                Upload version
+                Enviar versão
               </Button>
             </div>
           )}
@@ -869,6 +926,16 @@ export default function ProjectDetailClient({
           assets={managingSlidesDelivery.assets}
           isOpen
           onClose={() => setManagingSlidesId(null)}
+          onChanged={refetch}
+        />
+      )}
+
+      {commentsId && (
+        <DeliveryCommentsModal
+          deliveryId={commentsId}
+          isOpen
+          onClose={() => setCommentsId(null)}
+          freelancerName={freelancerName}
           onChanged={refetch}
         />
       )}

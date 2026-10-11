@@ -4,7 +4,6 @@ import { z } from "zod";
 
 const approveSchema = z.object({
   signerName: z.string().min(1).max(100),
-  signerEmail: z.string().email().optional().or(z.literal("")),
 });
 
 export async function POST(
@@ -59,12 +58,10 @@ export async function POST(
       create: {
         deliveryId: delivery.id,
         signerName: parsed.data.signerName,
-        signerEmail: parsed.data.signerEmail || null,
         ipAddress: ip,
       },
       update: {
         signerName: parsed.data.signerName,
-        signerEmail: parsed.data.signerEmail || null,
         ipAddress: ip,
       },
     }),
