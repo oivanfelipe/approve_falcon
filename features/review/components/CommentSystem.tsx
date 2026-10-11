@@ -420,7 +420,7 @@ export default function CommentSystem({
 
     const effectiveName = isFreelancer
       ? freelancerName
-      : trimmedName || "Anonymous client";
+      : trimmedName || "Cliente anônimo";
 
     startTransition(async () => {
       let finalAudioUrl = audioUrl;
@@ -440,7 +440,7 @@ export default function CommentSystem({
 
           if (!up.ok) {
             const data = await up.json().catch(() => ({}));
-            setFormError(data.error ?? "Failed to upload audio");
+            setFormError(data.error ?? "Falha ao enviar áudio");
             return;
           }
 
@@ -498,7 +498,7 @@ export default function CommentSystem({
   const startRecording = async () => {
     setFormError("");
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-      setFormError("Audio recording not supported in this browser");
+      setFormError("Este navegador não suporta gravação de áudio");
       return;
     }
     try {
@@ -517,7 +517,7 @@ export default function CommentSystem({
           // clear content placeholder
           setContent("");
         } catch (err) {
-          setFormError("Could not prepare audio preview");
+          setFormError("Não foi possível preparar a prévia do áudio");
         }
 
         // stop all tracks
@@ -531,7 +531,7 @@ export default function CommentSystem({
       setAudioChunks(chunks);
       setIsRecording(true);
     } catch (err) {
-      setFormError("Could not start audio recording");
+      setFormError("Não foi possível iniciar a gravação de áudio");
     }
   };
 
@@ -761,8 +761,8 @@ export default function CommentSystem({
         <Modal
           isOpen={namePromptVisible}
           onClose={() => setNamePromptVisible(false)}
-          title="What's your name?"
-          description="Please enter your name so we can record who left this comment."
+          title="Qual é o seu nome?"
+          description="Informe seu nome para registrarmos quem deixou este comentário."
           size="sm"
           footer={
             <div className="flex justify-end gap-2">
@@ -771,21 +771,21 @@ export default function CommentSystem({
                 onClick={() => setNamePromptVisible(false)}
                 brandColor={primaryColor}
               >
-                Cancel
+                Cancelar
               </Button>
               <Button
                 onClick={saveNameAndContinue}
                 variant="primary"
                 brandColor={primaryColor}
               >
-                Save
+                Salvar
               </Button>
             </div>
           }
         >
           <div className="flex flex-col gap-3">
             <Input
-              placeholder="Your name"
+              placeholder="Seu nome"
               value={authorName}
               onChange={(e) => setAuthorName(e.target.value)}
               brandColor={primaryColor}

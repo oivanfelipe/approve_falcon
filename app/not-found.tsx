@@ -6,8 +6,8 @@ import { Button } from "@/components/ui/Button";
 import FalconMark from "@/components/ui/FalconMark";
 
 export const metadata: Metadata = {
-  title: "404 — Page Not Found · Approve Falcon",
-  description: "The page you were looking for doesn't exist.",
+  title: "404 — Página não encontrada · Approve Falcon",
+  description: "A página que você procurava não existe.",
 };
 
 export default function NotFound() {
@@ -20,7 +20,7 @@ export default function NotFound() {
             <Link
               href="/"
               className="flex items-center gap-2 focus-visible:outline-none"
-              aria-label="Approve Falcon home"
+              aria-label="Página inicial do Approve Falcon"
             >
               <FalconMark size={22} className="shrink-0 text-[#e10600]" />
               <span className="text-sm font-extrabold uppercase tracking-tight">
@@ -44,18 +44,18 @@ export default function NotFound() {
             {/* Text */}
             <div className="flex flex-col items-center gap-4 -mt-6">
               <h1 className="text-2xl sm:text-3xl font-extrabold uppercase text-black tracking-tight">
-                Page not found
+                Página não encontrada
               </h1>
               <p className="text-base text-black/50 max-w-sm leading-relaxed">
-                The page you&apos;re looking for doesn&apos;t exist or was
-                moved. Let&apos;s get you back on track.
+                A página que você procura não existe ou foi movida. Vamos
+                te levar de volta.
               </p>
             </div>
 
             {/* Actions */}
             <div className="flex flex-wrap items-center justify-center gap-3">
               <Button variant="primary" size="md" href="/dashboard">
-                Go to dashboard
+                Ir para o painel
               </Button>
             </div>
           </div>

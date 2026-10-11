@@ -26,6 +26,10 @@ export default async function ProjectDetailPage({ params }: PageProps) {
         orderBy: { versionNumber: "desc" },
         include: {
           _count: { select: { comments: true, views: true } },
+          comments: {
+            where: { authorType: "CLIENT", resolvedAt: null },
+            select: { id: true },
+          },
           views: {
             orderBy: { createdAt: "desc" },
             take: 1,
@@ -64,6 +68,7 @@ export default async function ProjectDetailPage({ params }: PageProps) {
     status: d.status as "PENDING" | "APPROVED" | "CHANGES_REQUESTED",
     reviewToken: d.reviewToken,
     commentCount: d._count.comments,
+    pendingCommentCount: d.comments.length,
     viewCount: d._count.views,
     createdAt: d.createdAt,
     lastViewedAt: d.views[0]?.createdAt ?? null,

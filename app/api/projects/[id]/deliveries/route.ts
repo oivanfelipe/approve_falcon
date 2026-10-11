@@ -59,6 +59,10 @@ export async function GET(
       _count: {
         select: { comments: true, views: true },
       },
+      comments: {
+        where: { authorType: "CLIENT", resolvedAt: null },
+        select: { id: true },
+      },
       views: {
         orderBy: { createdAt: "desc" },
         take: 1,
@@ -79,6 +83,7 @@ export async function GET(
     status: d.status,
     reviewToken: d.reviewToken,
     commentCount: d._count.comments,
+    pendingCommentCount: d.comments.length,
     viewCount: d._count.views,
     createdAt: d.createdAt,
     lastViewedAt: d.views[0]?.createdAt ?? null,

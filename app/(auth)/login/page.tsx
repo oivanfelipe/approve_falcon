@@ -31,7 +31,7 @@ function SignInForm({ next, email }: { next?: string; email?: string }) {
       });
 
       if (result?.error) {
-        setError("Invalid email or password");
+        setError("E-mail ou senha inválidos");
       } else {
         const target = next ?? new URLSearchParams(window.location.search).get("next");
         window.location.href = target ?? "/dashboard";
@@ -43,9 +43,9 @@ function SignInForm({ next, email }: { next?: string; email?: string }) {
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       <Input
         name="email"
-        label="Email"
+        label="E-mail"
         type="email"
-        placeholder="you@example.com"
+        placeholder="voce@exemplo.com"
         autoComplete="email"
         defaultValue={email}
         required
@@ -53,7 +53,7 @@ function SignInForm({ next, email }: { next?: string; email?: string }) {
       />
       <Input
         name="password"
-        label="Password"
+        label="Senha"
         type="password"
         placeholder="••••••••"
         autoComplete="current-password"
@@ -72,7 +72,7 @@ function SignInForm({ next, email }: { next?: string; email?: string }) {
         loading={isPending}
         className="mt-1"
       >
-        Sign in
+        Entrar
       </Button>
     </form>
   );
@@ -103,17 +103,17 @@ function RegisterForm({ next, email }: { next?: string; email?: string }) {
       <input type="hidden" name="next" value={next ?? ""} />
       <Input
         name="name"
-        label="Full name"
-        placeholder="Jane Smith"
+        label="Nome completo"
+        placeholder="Maria Silva"
         autoComplete="name"
         required
         fullWidth
       />
       <Input
         name="email"
-        label="Email"
+        label="E-mail"
         type="email"
-        placeholder="you@example.com"
+        placeholder="voce@exemplo.com"
         autoComplete="email"
         defaultValue={email}
         required
@@ -121,13 +121,13 @@ function RegisterForm({ next, email }: { next?: string; email?: string }) {
       />
       <Input
         name="password"
-        label="Password"
+        label="Senha"
         type="password"
-        placeholder="Min. 8 characters"
+        placeholder="Mín. 8 caracteres"
         autoComplete="new-password"
         required
         fullWidth
-        hint="At least 8 characters"
+        hint="Pelo menos 8 caracteres"
       />
       {error && (
         <p className="text-xs font-medium text-[#e10600]" role="alert">
@@ -141,7 +141,7 @@ function RegisterForm({ next, email }: { next?: string; email?: string }) {
         loading={isPending}
         className="mt-1"
       >
-        Create account
+        Criar conta
       </Button>
     </form>
   );
@@ -183,7 +183,7 @@ export default function LoginPage() {
                   : "text-black/50 hover:text-black",
               )}
             >
-              {tab === "signin" ? "Sign in" : "Create account"}
+              {tab === "signin" ? "Entrar" : "Criar conta"}
             </button>
           ))}
         </div>

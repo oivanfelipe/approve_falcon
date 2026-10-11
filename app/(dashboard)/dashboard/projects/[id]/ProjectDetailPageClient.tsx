@@ -36,6 +36,7 @@ interface DeliveryRow {
   status: "PENDING" | "APPROVED" | "CHANGES_REQUESTED";
   reviewToken: string;
   commentCount: number;
+  pendingCommentCount: number;
   viewCount: number;
   createdAt: Date;
   lastViewedAt: Date | null;
@@ -79,9 +80,9 @@ const statusVariant: Record<string, BadgeVariant> = {
 };
 
 const statusLabel: Record<string, string> = {
-  PENDING: "Pending",
-  APPROVED: "Approved",
-  CHANGES_REQUESTED: "Changes requested",
+  PENDING: "Pendente",
+  APPROVED: "Aprovado",
+  CHANGES_REQUESTED: "Alterações",
 };
 
 function formatSize(bytes: number | null): string {
@@ -349,7 +350,19 @@ function DeliveryEditRow({
             </>
           )}
 
-          <div className="flex items-center gap-1.5 text-xs font-mono text-black/40">
+          <div
+            className={cn(
+              "flex items-center gap-1.5 text-xs font-mono",
+              delivery.pendingCommentCount > 0
+                ? "font-bold text-[#e10600]"
+                : "text-black/40",
+            )}
+            title={
+              delivery.pendingCommentCount > 0
+                ? `${delivery.pendingCommentCount} comentário${delivery.pendingCommentCount !== 1 ? "s" : ""} do cliente aguardando resposta`
+                : undefined
+            }
+          >
             <svg
               width="10"
               height="10"
