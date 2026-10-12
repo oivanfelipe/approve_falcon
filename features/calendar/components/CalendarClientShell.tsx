@@ -22,6 +22,7 @@ import {
   formatScheduledDate,
   buildMonthGrid,
 } from "@/features/calendar/lib/monthGrid";
+import { getPendingStageBadge } from "@/features/calendar/lib/pendingStage";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -338,24 +339,20 @@ export default function CalendarClientShell({
           {grid.map((date) => {
             const inMonth = date.getMonth() === monthDate.getMonth();
             const delivery = deliveriesByDay.get(dayKey(date));
-            const copyStatus = delivery
-              ? copyStatuses[delivery.id] ?? (delivery.copyStatus as Status)
-              : null;
-            const creativeRevealed =
-              !delivery ||
-              Boolean(delivery.driveUrl || delivery.signedUrl) ||
-              copyStatus === "APPROVED" ||
-              !(
-                delivery.copyText ||
-                delivery.artCopy ||
-                delivery.theme ||
-                delivery.objective ||
-                delivery.postFunction
-              );
-            const status = delivery
-              ? creativeRevealed
-                ? statuses[delivery.id] ?? (delivery.status as Status)
-                : copyStatus
+            const badge = delivery
+              ? getPendingStageBadge({
+                  copyStatus: copyStatuses[delivery.id] ?? (delivery.copyStatus as Status),
+                  artStatus: statuses[delivery.id] ?? (delivery.status as Status),
+                  hasFile: Boolean(delivery.driveUrl || delivery.signedUrl),
+                  hasCopyContent: Boolean(
+                    delivery.copyText ||
+                      delivery.artCopy ||
+                      delivery.theme ||
+                      delivery.objective ||
+                      delivery.postFunction,
+                  ),
+                  agencyLabel,
+                })
               : null;
 
             return (
@@ -378,20 +375,16 @@ export default function CalendarClientShell({
                 >
                   {date.getDate()}
                 </span>
-                {delivery && status && (
+                {delivery && badge && (
                   <div className="mt-auto flex flex-col gap-1 w-full">
                     <span
                       className={cn(
                         "w-2 h-2 rounded-full",
-                        statusDot[status],
+                        statusDot[badge.status],
                       )}
                     />
-                    <Badge variant={statusVariant[status]} className="w-fit text-[9px]">
-                      {status === "PENDING"
-                        ? "Pendente (Cliente)"
-                        : status === "APPROVED"
-                          ? "Ok"
-                          : `Pendente (${agencyLabel})`}
+                    <Badge variant={statusVariant[badge.status]} className="w-fit text-[9px]">
+                      {badge.label}
                     </Badge>
                   </div>
                 )}

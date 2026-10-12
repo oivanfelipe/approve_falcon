@@ -18,6 +18,7 @@ import {
   buildMonthGrid,
   toDateInputValue,
 } from "@/features/calendar/lib/monthGrid";
+import { getPendingStageBadge } from "@/features/calendar/lib/pendingStage";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -32,6 +33,10 @@ interface CalendarDeliveryRow {
   reviewToken: string;
   fileName?: string | null;
   theme?: string | null;
+  copyText?: string | null;
+  artCopy?: string | null;
+  objective?: string | null;
+  postFunction?: string | null;
   copyStatus?: Status;
   pendingCommentCount?: number;
 }
@@ -188,14 +193,30 @@ export default function DashboardCalendarView({
                   {delivery.pendingCommentCount}
                 </span>
               )}
-              {delivery && (
-                <div className="mt-auto flex flex-col gap-1 w-full">
-                  <span className={cn("w-2 h-2 rounded-full", statusDot[delivery.status])} />
-                  <span className="hidden sm:block text-[10px] font-semibold text-black/70 truncate">
-                    {delivery.label ?? `v${delivery.versionNumber}`}
-                  </span>
-                </div>
-              )}
+              {delivery &&
+                (() => {
+                  const badge = getPendingStageBadge({
+                    copyStatus: delivery.copyStatus ?? "APPROVED",
+                    artStatus: delivery.status,
+                    hasFile: Boolean(delivery.fileName),
+                    hasCopyContent: Boolean(
+                      delivery.copyText ||
+                        delivery.artCopy ||
+                        delivery.theme ||
+                        delivery.objective ||
+                        delivery.postFunction,
+                    ),
+                    agencyLabel: "V4",
+                  });
+                  return (
+                    <div className="mt-auto flex flex-col gap-1 w-full">
+                      <span className={cn("w-2 h-2 rounded-full", statusDot[badge.status])} />
+                      <Badge variant={statusVariant[badge.status]} className="w-fit text-[9px]">
+                        {badge.label}
+                      </Badge>
+                    </div>
+                  );
+                })()}
             </button>
           );
         })}

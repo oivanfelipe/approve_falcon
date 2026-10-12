@@ -601,6 +601,7 @@ export default function ReviewClientShell({
             artCopy: artCopy ?? null,
             copyText: copyText ?? null,
             copyStatus,
+            status,
             fileName: rawFileName ?? null,
             assets: deliveryAssets,
           }}
