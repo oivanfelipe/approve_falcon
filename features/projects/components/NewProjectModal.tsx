@@ -92,14 +92,6 @@ export default function NewProjectModal({
           required
           fullWidth
         />
-        <Input
-          name="clientEmail"
-          label="E-mail do cliente (opcional)"
-          type="email"
-          placeholder="cliente@empresa.com"
-          fullWidth
-          hint="Usado para notificações de revisão por e-mail"
-        />
         <Textarea
           name="description"
           label="Descrição (opcional)"

@@ -13,6 +13,7 @@ import {
   attachCreativeToDelivery,
   addDeliveryAsset,
   deleteDeliveryAsset,
+  promoteAssetToPrimary,
   revokeCopyApproval,
   revokeArtApproval,
   releaseArtForReview,
@@ -84,6 +85,7 @@ function ArtAndSlidesTab({
   const [driveName, setDriveName] = useState("");
   const [error, setError] = useState("");
   const [removingId, setRemovingId] = useState<string | null>(null);
+  const [promotingId, setPromotingId] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const [isRevoking, setIsRevoking] = useState(false);
   const [revokeError, setRevokeError] = useState("");
@@ -212,6 +214,20 @@ function ArtAndSlidesTab({
     });
   };
 
+  const handlePromote = (assetId: string) => {
+    setPromotingId(assetId);
+    setError("");
+    startTransition(async () => {
+      const result = await promoteAssetToPrimary(assetId);
+      setPromotingId(null);
+      if (result.error) {
+        setError(result.error);
+        return;
+      }
+      onChanged();
+    });
+  };
+
   if (artStatus === "APPROVED") {
     return (
       <div className="flex flex-col gap-4">
@@ -268,7 +284,7 @@ function ArtAndSlidesTab({
         </p>
         <div className="flex items-center justify-between px-3 py-2 border-2 border-black bg-black/[0.03]">
           <span className="text-sm font-semibold text-black truncate">
-            1. {primaryFileName ?? "Arte principal (sem arquivo ainda)"}
+            1. {primaryFileName ?? "Lâmina 1 (sem arquivo ainda)"}
           </span>
         </div>
         {assets.map((asset, i) => (
@@ -279,14 +295,28 @@ function ArtAndSlidesTab({
             <span className="text-sm text-black truncate">
               {i + 2}. {asset.fileName ?? "Lâmina"}
             </span>
-            <button
-              type="button"
-              onClick={() => handleRemove(asset.id)}
-              disabled={isPending && removingId === asset.id}
-              className="text-xs font-bold text-black/40 hover:text-[#e10600] transition-colors shrink-0 ml-2 disabled:opacity-50"
-            >
-              {isPending && removingId === asset.id ? "..." : "Remover"}
-            </button>
+            <div className="flex items-center gap-3 shrink-0 ml-2">
+              {!primaryFileName && (
+                <button
+                  type="button"
+                  onClick={() => handlePromote(asset.id)}
+                  disabled={isPending && promotingId === asset.id}
+                  className="text-xs font-bold text-black/50 hover:text-black transition-colors disabled:opacity-50"
+                >
+                  {isPending && promotingId === asset.id
+                    ? "..."
+                    : "Tornar lâmina 1"}
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => handleRemove(asset.id)}
+                disabled={isPending && removingId === asset.id}
+                className="text-xs font-bold text-black/40 hover:text-[#e10600] transition-colors disabled:opacity-50"
+              >
+                {isPending && removingId === asset.id ? "..." : "Remover"}
+              </button>
+            </div>
           </div>
         ))}
       </div>
@@ -335,7 +365,7 @@ function ArtAndSlidesTab({
             loading={isPending}
             onClick={() => handleUpload("primary")}
           >
-            {primaryFileName ? "Substituir arte principal" : "Definir como arte principal"}
+            {primaryFileName ? "Substituir lâmina 1" : "Definir como lâmina 1"}
           </Button>
           <Button
             variant="outline"
@@ -350,8 +380,9 @@ function ArtAndSlidesTab({
 
         {!primaryFileName && (
           <p className="text-xs text-black/40">
-            Ainda não há arte principal — o primeiro envio vira a lâmina 1,
-            mesmo clicando em &quot;Adicionar como lâmina&quot;.
+            Ainda não há lâmina 1 — o próximo envio vira a lâmina 1, mesmo
+            clicando em &quot;Adicionar como lâmina&quot;. Se já tem lâminas
+            enviadas, use &quot;Tornar lâmina 1&quot; em uma delas.
           </p>
         )}
 
