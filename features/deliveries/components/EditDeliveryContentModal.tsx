@@ -13,6 +13,9 @@ import {
   attachCreativeToDelivery,
   addDeliveryAsset,
   deleteDeliveryAsset,
+  revokeCopyApproval,
+  revokeArtApproval,
+  releaseArtForReview,
 } from "@/features/deliveries/actions/deliveries";
 import { supabaseClient } from "@/lib/supabase/browser";
 import { isGoogleDriveUrl } from "@/lib/google-drive";
@@ -36,6 +39,8 @@ interface EditableDelivery {
   artCopy: string | null;
   copyText: string | null;
   copyStatus: "PENDING" | "APPROVED" | "CHANGES_REQUESTED";
+  /** Art approval status — a separate, later stage from copyStatus. */
+  status: "PENDING" | "APPROVED" | "CHANGES_REQUESTED";
   fileName?: string | null;
   assets?: SlideAsset[];
 }
@@ -63,12 +68,14 @@ function ArtAndSlidesTab({
   projectId,
   primaryFileName,
   assets,
+  artStatus,
   onChanged,
 }: {
   deliveryId: string;
   projectId: string;
   primaryFileName: string | null;
   assets: SlideAsset[];
+  artStatus: "PENDING" | "APPROVED" | "CHANGES_REQUESTED";
   onChanged: () => void;
 }) {
   const [sourceMode, setSourceMode] = useState<UploadSourceMode>("file");
@@ -78,6 +85,34 @@ function ArtAndSlidesTab({
   const [error, setError] = useState("");
   const [removingId, setRemovingId] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const [isRevoking, setIsRevoking] = useState(false);
+  const [revokeError, setRevokeError] = useState("");
+  const [isReleasing, setIsReleasing] = useState(false);
+  const [releaseError, setReleaseError] = useState("");
+
+  const handleRevokeApproval = async () => {
+    setIsRevoking(true);
+    setRevokeError("");
+    const result = await revokeArtApproval(deliveryId);
+    setIsRevoking(false);
+    if (result.error) {
+      setRevokeError(result.error);
+      return;
+    }
+    onChanged();
+  };
+
+  const handleRelease = async () => {
+    setIsReleasing(true);
+    setReleaseError("");
+    const result = await releaseArtForReview(deliveryId);
+    setIsReleasing(false);
+    if (result.error) {
+      setReleaseError(result.error);
+      return;
+    }
+    onChanged();
+  };
 
   const trimmedDriveUrl = driveUrl.trim();
   const isDriveUrlValid =
@@ -172,8 +207,56 @@ function ArtAndSlidesTab({
     });
   };
 
+  if (artStatus === "APPROVED") {
+    return (
+      <div className="flex flex-col gap-4">
+        <p className="text-sm text-black/60">
+          Esta arte já foi aprovada pelo cliente. Para subir uma nova versão
+          ou editar as lâminas, remova a aprovação primeiro.
+        </p>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleRevokeApproval}
+          loading={isRevoking}
+          disabled={isRevoking}
+        >
+          Remover aprovação da arte
+        </Button>
+        {revokeError && (
+          <p className="text-xs font-medium text-[#e10600]" role="alert">
+            {revokeError}
+          </p>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-5">
+      {artStatus === "CHANGES_REQUESTED" && (
+        <div className="flex items-center justify-between gap-3 px-3 py-2.5 border-2 border-[#e10600]/30 bg-[#e10600]/5">
+          <p className="text-xs text-black/70">
+            O cliente pediu ajustes na arte. Depois de atualizar, libere para
+            uma nova revisão.
+          </p>
+          <Button
+            variant="primary"
+            size="sm"
+            onClick={handleRelease}
+            loading={isReleasing}
+            disabled={isReleasing}
+          >
+            Liberar arte para revisão
+          </Button>
+        </div>
+      )}
+      {releaseError && (
+        <p className="text-xs font-medium text-[#e10600]" role="alert">
+          {releaseError}
+        </p>
+      )}
+
       <div className="flex flex-col gap-2">
         <p className="text-xs font-mono font-bold uppercase tracking-wider text-black/40">
           Lâminas deste post
@@ -293,6 +376,9 @@ export default function EditDeliveryContentModal({
   const [copyText, setCopyText] = useState(delivery.copyText ?? "");
   const [isPending, setIsPending] = useState(false);
   const [error, setError] = useState("");
+  const [isRevokingCopy, setIsRevokingCopy] = useState(false);
+  const [revokeCopyError, setRevokeCopyError] = useState("");
+  const copyApproved = delivery.copyStatus === "APPROVED";
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -318,33 +404,58 @@ export default function EditDeliveryContentModal({
     onClose();
   };
 
+  const handleRevokeCopyApproval = async () => {
+    setIsRevokingCopy(true);
+    setRevokeCopyError("");
+    const result = await revokeCopyApproval(delivery.id);
+    setIsRevokingCopy(false);
+    if (result.error) {
+      setRevokeCopyError(result.error);
+      return;
+    }
+    onSuccess();
+  };
+
   return (
     <Modal
       isOpen={isOpen}
       onClose={onClose}
       title="Editar post"
-      description={
-        delivery.copyStatus === "APPROVED"
-          ? "Esta copy já foi aprovada pelo cliente — salvar aqui volta o status para pendente, e o cliente verá a versão atualizada."
-          : "Ajuste a copy, o roteiro da arte, a legenda e as lâminas deste post."
-      }
+      description="Ajuste a copy, o roteiro da arte, a legenda e as lâminas deste post."
       size="lg"
       footer={
         tab === "content" ? (
-          <div className="flex justify-end gap-3">
-            <Button variant="ghost" size="sm" type="button" onClick={onClose}>
-              Cancelar
-            </Button>
-            <Button
-              variant="primary"
-              size="sm"
-              type="submit"
-              form="edit-delivery-content-form"
-              loading={isPending}
-            >
-              Salvar alterações
-            </Button>
-          </div>
+          copyApproved ? (
+            <div className="flex justify-end gap-3">
+              <Button variant="ghost" size="sm" type="button" onClick={onClose}>
+                Fechar
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                type="button"
+                onClick={handleRevokeCopyApproval}
+                loading={isRevokingCopy}
+              >
+                Remover aprovação da copy
+              </Button>
+            </div>
+          ) : (
+            <div className="flex justify-end gap-3">
+              <Button variant="ghost" size="sm" type="button" onClick={onClose}>
+                Cancelar
+              </Button>
+              <Button
+                variant="primary"
+                size="sm"
+                type="submit"
+                form="edit-delivery-content-form"
+                loading={isPending}
+              >
+                Salvar alterações
+              </Button>
+            </div>
+          )
         ) : (
           <div className="flex justify-end">
             <Button variant="ghost" size="sm" onClick={onClose}>
@@ -368,7 +479,21 @@ export default function EditDeliveryContentModal({
         </Tabs>
       )}
 
-      {tab === "content" && (
+      {tab === "content" && copyApproved && (
+        <div className="flex flex-col gap-4">
+          <p className="text-sm text-black/60">
+            Esta copy já foi aprovada pelo cliente. Para editar, remova a
+            aprovação primeiro — o post volta ao fluxo normal de revisão.
+          </p>
+          {revokeCopyError && (
+            <p className="text-xs font-medium text-[#e10600]" role="alert">
+              {revokeCopyError}
+            </p>
+          )}
+        </div>
+      )}
+
+      {tab === "content" && !copyApproved && (
         <form
           id="edit-delivery-content-form"
           onSubmit={handleSubmit}
@@ -452,6 +577,7 @@ export default function EditDeliveryContentModal({
           projectId={projectId}
           primaryFileName={delivery.fileName ?? null}
           assets={delivery.assets ?? []}
+          artStatus={delivery.status}
           onChanged={onSuccess}
         />
       )}

@@ -11,7 +11,17 @@ import { isGoogleDriveUrl } from "@/lib/google-drive";
 
 function assertDeliveryNotApproved(delivery: { status: string }) {
   if (delivery.status === "APPROVED") {
-    throw new Error("Esta versão já foi aprovada e não pode ser modificada.");
+    throw new Error(
+      "Esta arte já foi aprovada pelo cliente — remova a aprovação da arte (aba Editar → Arte e lâminas) antes de alterar este post.",
+    );
+  }
+}
+
+function assertCopyNotApproved(delivery: { copyStatus: string }) {
+  if (delivery.copyStatus === "APPROVED") {
+    throw new Error(
+      "Esta copy já foi aprovada pelo cliente — remova a aprovação da copy antes de editar.",
+    );
   }
 }
 
@@ -430,12 +440,13 @@ export async function updateDeliveryContent(
 
   const delivery = await prisma.delivery.findFirst({
     where: { id: parsed.data.deliveryId, project: { userId: session.user.ownerId } },
-    select: { id: true, projectId: true, status: true },
+    select: { id: true, projectId: true, status: true, copyStatus: true },
   });
   if (!delivery) return { error: "Post não encontrado" };
 
   try {
     assertDeliveryNotApproved(delivery);
+    assertCopyNotApproved(delivery);
   } catch (err) {
     return { error: err instanceof Error ? err.message : "Delivery bloqueada" };
   }
@@ -454,8 +465,9 @@ export async function updateDeliveryContent(
       objective: toNullable(fields.objective),
       artCopy: toNullable(fields.artCopy),
       copyText: toNullable(fields.copyText),
-      // Content changed — the client needs to review it again, whatever the
-      // previous copyStatus was (already approved or changes requested).
+      // Content changed — the client needs to review it again. Reaching
+      // here already guarantees copyStatus wasn't APPROVED (blocked above),
+      // so this only ever moves CHANGES_REQUESTED/PENDING back to PENDING.
       copyStatus: "PENDING",
     },
   });
@@ -489,6 +501,83 @@ export async function scheduleDelivery(
   await prisma.delivery.update({
     where: { id: delivery.id },
     data: { scheduledAt: new Date(parsed.data.scheduledAt) },
+  });
+
+  revalidatePath(`/dashboard/projects/${delivery.projectId}`);
+  return {};
+}
+
+// Explicit, deliberate undo for an approved stage — editing never flips an
+// approval back on its own; the team has to ask for it here first.
+export async function revokeCopyApproval(
+  deliveryId: string,
+): Promise<{ error?: string }> {
+  const session = await auth();
+  if (!session?.user?.id) return { error: "Não autenticado" };
+
+  const delivery = await prisma.delivery.findFirst({
+    where: { id: deliveryId, project: { userId: session.user.ownerId } },
+    select: { id: true, projectId: true, copyStatus: true },
+  });
+  if (!delivery) return { error: "Post não encontrado" };
+  if (delivery.copyStatus !== "APPROVED") return {};
+
+  await prisma.delivery.update({
+    where: { id: deliveryId },
+    data: { copyStatus: "PENDING" },
+  });
+
+  revalidatePath(`/dashboard/projects/${delivery.projectId}`);
+  return {};
+}
+
+export async function revokeArtApproval(
+  deliveryId: string,
+): Promise<{ error?: string }> {
+  const session = await auth();
+  if (!session?.user?.id) return { error: "Não autenticado" };
+
+  const delivery = await prisma.delivery.findFirst({
+    where: { id: deliveryId, project: { userId: session.user.ownerId } },
+    select: { id: true, projectId: true, status: true },
+  });
+  if (!delivery) return { error: "Post não encontrado" };
+  if (delivery.status !== "APPROVED") return {};
+
+  await prisma.delivery.update({
+    where: { id: deliveryId },
+    data: { status: "PENDING" },
+  });
+
+  revalidatePath(`/dashboard/projects/${delivery.projectId}`);
+  return {};
+}
+
+// After the team uploads/replaces the art (or decides the existing one
+// already addresses the client's requested changes), this is the explicit
+// "ready for the client to look again" signal — uploading alone never
+// changes the art's status.
+export async function releaseArtForReview(
+  deliveryId: string,
+): Promise<{ error?: string }> {
+  const session = await auth();
+  if (!session?.user?.id) return { error: "Não autenticado" };
+
+  const delivery = await prisma.delivery.findFirst({
+    where: { id: deliveryId, project: { userId: session.user.ownerId } },
+    select: { id: true, projectId: true, status: true },
+  });
+  if (!delivery) return { error: "Post não encontrado" };
+
+  try {
+    assertDeliveryNotApproved(delivery);
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : "Delivery bloqueada" };
+  }
+
+  await prisma.delivery.update({
+    where: { id: deliveryId },
+    data: { status: "PENDING" },
   });
 
   revalidatePath(`/dashboard/projects/${delivery.projectId}`);
