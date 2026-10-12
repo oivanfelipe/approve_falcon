@@ -2,6 +2,7 @@
 
 import React, { useMemo, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { Modal } from "@/components/ui/Modal";
 import { Badge } from "@/components/ui/Badge";
 import type { BadgeVariant } from "@/components/ui/Badge";
@@ -280,7 +281,10 @@ export default function CalendarClientShell({
   const [statuses, setStatuses] = useState<Record<string, Status>>({});
   const [copyStatuses, setCopyStatuses] = useState<Record<string, Status>>({});
   const [openDeliveryId, setOpenDeliveryId] = useState<string | null>(null);
-  const [view, setView] = useState<"calendar" | "grid">("calendar");
+  const searchParams = useSearchParams();
+  const [view, setView] = useState<"calendar" | "grid">(
+    searchParams.get("view") === "grid" ? "grid" : "calendar",
+  );
   const [overviewFilter, setOverviewFilter] = useState<"all" | OverviewGroup>("all");
 
   const deliveriesByDay = useMemo(() => {
