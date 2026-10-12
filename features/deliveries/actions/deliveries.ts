@@ -415,6 +415,62 @@ export async function deleteDeliveryAsset(
   return {};
 }
 
+// Covers posts that ended up with lâminas but no lâmina 1 (every slide
+// added via "Adicionar como lâmina", none ever set as the first one) — the
+// client's view never reveals any art without a lâmina 1, however many
+// other lâminas exist. Only offered while there's no lâmina 1 yet; once
+// there is one, "Substituir lâmina 1" is the normal way to change it.
+export async function promoteAssetToPrimary(
+  assetId: string,
+): Promise<{ error?: string }> {
+  const session = await auth();
+  if (!session?.user?.id) return { error: "Não autenticado" };
+
+  const asset = await prisma.deliveryAsset.findFirst({
+    where: { id: assetId, delivery: { project: { userId: session.user.ownerId } } },
+    select: {
+      id: true,
+      sourceType: true,
+      filePath: true,
+      fileName: true,
+      fileSize: true,
+      mimeType: true,
+      driveUrl: true,
+      delivery: { select: { id: true, projectId: true, status: true, fileName: true } },
+    },
+  });
+  if (!asset) return { error: "Lâmina não encontrada" };
+  if (asset.delivery.fileName) {
+    return {
+      error: "Este post já tem uma lâmina 1 — use \"Substituir lâmina 1\" para trocá-la.",
+    };
+  }
+
+  try {
+    assertDeliveryNotApproved(asset.delivery);
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : "Delivery bloqueada" };
+  }
+
+  await prisma.$transaction([
+    prisma.delivery.update({
+      where: { id: asset.delivery.id },
+      data: {
+        sourceType: asset.sourceType,
+        filePath: asset.sourceType === "FILE" ? asset.filePath : null,
+        fileName: asset.fileName,
+        fileSize: asset.sourceType === "FILE" ? asset.fileSize : null,
+        mimeType: asset.sourceType === "FILE" ? asset.mimeType : null,
+        driveUrl: asset.sourceType === "DRIVE_LINK" ? asset.driveUrl : null,
+      },
+    }),
+    prisma.deliveryAsset.delete({ where: { id: asset.id } }),
+  ]);
+
+  revalidatePath(`/dashboard/projects/${asset.delivery.projectId}`);
+  return {};
+}
+
 const updateDeliveryContentSchema = z.object({
   deliveryId: z.string().cuid(),
   planNumber: z.string().max(50).optional(),
