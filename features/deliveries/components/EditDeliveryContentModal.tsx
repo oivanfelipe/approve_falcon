@@ -522,31 +522,32 @@ export default function EditDeliveryContentModal({
         </Tabs>
       )}
 
-      {tab === "content" && copyApproved && (
-        <div className="flex flex-col gap-4">
-          <p className="text-sm text-black/60">
-            Esta copy já foi aprovada pelo cliente. Para editar, remova a
-            aprovação primeiro — o post volta ao fluxo normal de revisão.
-          </p>
-          {revokeCopyError && (
-            <p className="text-xs font-medium text-[#e10600]" role="alert">
-              {revokeCopyError}
-            </p>
-          )}
-        </div>
-      )}
-
-      {tab === "content" && !copyApproved && (
+      {tab === "content" && (
         <form
           id="edit-delivery-content-form"
           onSubmit={handleSubmit}
           className="flex flex-col gap-4"
         >
+          {copyApproved && (
+            <div className="px-3 py-2.5 border-2 border-black/15 bg-black/[0.03]">
+              <p className="text-sm text-black/60">
+                Esta copy já foi aprovada pelo cliente — os campos abaixo são
+                somente leitura. Para editar, remova a aprovação primeiro.
+              </p>
+              {revokeCopyError && (
+                <p className="mt-2 text-xs font-medium text-[#e10600]" role="alert">
+                  {revokeCopyError}
+                </p>
+              )}
+            </div>
+          )}
+
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <Input
               label="Nº"
               value={planNumber}
               onChange={(e) => setPlanNumber(e.target.value)}
+              disabled={copyApproved}
               fullWidth
             />
             <Input
@@ -554,6 +555,7 @@ export default function EditDeliveryContentModal({
               value={format}
               onChange={(e) => setFormat(e.target.value)}
               placeholder="Carrossel, Reels…"
+              disabled={copyApproved}
               fullWidth
             />
             <Input
@@ -561,12 +563,14 @@ export default function EditDeliveryContentModal({
               value={postFunction}
               onChange={(e) => setPostFunction(e.target.value)}
               placeholder="Institucional…"
+              disabled={copyApproved}
               fullWidth
             />
             <Input
               label="Produto"
               value={product}
               onChange={(e) => setProduct(e.target.value)}
+              disabled={copyApproved}
               fullWidth
             />
           </div>
@@ -575,6 +579,7 @@ export default function EditDeliveryContentModal({
             label="Tema"
             value={theme}
             onChange={(e) => setTheme(e.target.value)}
+            disabled={copyApproved}
             fullWidth
           />
 
@@ -582,6 +587,7 @@ export default function EditDeliveryContentModal({
             label="Objetivo / Pilar"
             value={objective}
             onChange={(e) => setObjective(e.target.value)}
+            disabled={copyApproved}
             rows={2}
             fullWidth
             resize="vertical"
@@ -592,6 +598,7 @@ export default function EditDeliveryContentModal({
             hint='Use "Slide 1:", "Slide 2:"… em linhas separadas por uma linha em branco para cada lâmina.'
             value={artCopy}
             onChange={(e) => setArtCopy(e.target.value)}
+            disabled={copyApproved}
             rows={6}
             fullWidth
             resize="vertical"
@@ -601,6 +608,7 @@ export default function EditDeliveryContentModal({
             label="Legenda e CTA"
             value={copyText}
             onChange={(e) => setCopyText(e.target.value)}
+            disabled={copyApproved}
             rows={6}
             fullWidth
             resize="vertical"

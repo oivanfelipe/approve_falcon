@@ -352,6 +352,7 @@ export default function CalendarClientShell({
                       delivery.postFunction,
                   ),
                   agencyLabel,
+                  published: Boolean(delivery.publishedAt),
                 })
               : null;
 

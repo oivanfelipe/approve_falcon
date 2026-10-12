@@ -124,6 +124,7 @@ model Delivery {
     driveUrl      String? // Google Drive share link — set when sourceType is DRIVE_LINK
     reviewToken   String         @unique
     status        DeliveryStatus @default(PENDING) // creative approval — gated behind copyStatus === APPROVED
+    publishedAt   DateTime? // set once the team confirms this post went live — moves it to the Publicados tab
     expiresAt     DateTime?
     requiresEmail Boolean        @default(false)
     allowDownload Boolean        @default(true)

@@ -30,6 +30,7 @@ interface CalendarDeliveryRow {
   label: string | null;
   scheduledAt: Date | null;
   status: Status;
+  publishedAt?: Date | null;
   reviewToken: string;
   fileName?: string | null;
   theme?: string | null;
@@ -62,8 +63,12 @@ function copyStatusLabel(status: Status): string {
   return "Pendente (Cliente)";
 }
 
-function artStatusLabel(status: Status, hasFile: boolean): string {
-  if (status === "APPROVED") return "Aprovada";
+function artStatusLabel(
+  status: Status,
+  hasFile: boolean,
+  published: boolean,
+): string {
+  if (status === "APPROVED") return published ? "Publicado" : "Aprovada";
   if (status === "CHANGES_REQUESTED") return "Pendente (V4)";
   return hasFile ? "Pendente (Cliente)" : "Pendente (V4)";
 }
@@ -207,6 +212,7 @@ export default function DashboardCalendarView({
                         delivery.postFunction,
                     ),
                     agencyLabel: "V4",
+                    published: Boolean(delivery.publishedAt),
                   });
                   return (
                     <div className="mt-auto flex flex-col gap-1 w-full">
@@ -261,6 +267,7 @@ export default function DashboardCalendarView({
                 {artStatusLabel(
                   selectedDelivery.status,
                   Boolean(selectedDelivery.fileName),
+                  Boolean(selectedDelivery.publishedAt),
                 )}
               </Badge>
               {!!selectedDelivery.pendingCommentCount && (

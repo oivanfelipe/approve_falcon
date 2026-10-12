@@ -15,11 +15,14 @@ import DeliveryCommentsModal from "@/features/comments/components/DeliveryCommen
 import {
   scheduleDelivery,
   deleteDelivery,
+  markAsPublished,
+  unmarkPublished,
 } from "@/features/deliveries/actions/deliveries";
 import { Tabs } from "@/components/ui/Tabs";
 import type { BadgeVariant } from "@/components/ui/Badge";
-import { Upload, Pencil, Palette, MessageCircle } from "lucide-react";
+import { Upload, Pencil, Palette, MessageCircle, Check } from "lucide-react";
 import { toDateInputValue } from "@/features/calendar/lib/monthGrid";
+import { getPublicReviewPath } from "@/lib/freelancer-branding-shared";
 import { cn } from "@/lib/utils";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -34,6 +37,7 @@ interface DeliveryRow {
   mimeType: string | null;
   sourceType: "FILE" | "DRIVE_LINK";
   status: "PENDING" | "APPROVED" | "CHANGES_REQUESTED";
+  publishedAt: Date | null;
   reviewToken: string;
   commentCount: number;
   pendingCommentCount: number;
@@ -111,6 +115,9 @@ function nextActionLabel(delivery: DeliveryRow): string | null {
   if (delivery.status === "PENDING") {
     return "Aguardando o cliente aprovar a arte";
   }
+  if (delivery.status === "APPROVED" && !delivery.publishedAt) {
+    return "Marcar como publicado";
+  }
   return null;
 }
 
@@ -119,6 +126,14 @@ function formatSize(bytes: number | null): string {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function formatPublishedDate(date: Date): string {
+  return new Intl.DateTimeFormat("pt-BR", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  }).format(new Date(date));
 }
 
 function timeAgo(date: Date): string {
@@ -158,6 +173,7 @@ function DeliveryEditRow({
   onComments,
   onScheduled,
   onDeleted,
+  onPublished,
 }: {
   delivery: DeliveryRow;
   selected: boolean;
@@ -166,6 +182,7 @@ function DeliveryEditRow({
   onComments: () => void;
   onScheduled: () => void;
   onDeleted: () => void;
+  onPublished: () => void;
 }) {
   const [date, setDate] = useState(
     delivery.scheduledAt ? toDateInputValue(new Date(delivery.scheduledAt)) : "",
@@ -175,6 +192,8 @@ function DeliveryEditRow({
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState("");
+  const [isPublishing, setIsPublishing] = useState(false);
+  const [publishError, setPublishError] = useState("");
 
   const handleDateChange = async (value: string) => {
     setDate(value);
@@ -203,6 +222,18 @@ function DeliveryEditRow({
       return;
     }
     onDeleted();
+  };
+
+  const handleMarkPublished = async () => {
+    setIsPublishing(true);
+    setPublishError("");
+    const result = await markAsPublished(delivery.id);
+    setIsPublishing(false);
+    if (result.error) {
+      setPublishError(result.error);
+      return;
+    }
+    onPublished();
   };
 
   return (
@@ -294,9 +325,27 @@ function DeliveryEditRow({
               : ""}
         </Button>
 
+        {delivery.status === "APPROVED" && (
+          <Button
+            variant="primary"
+            size="sm"
+            onClick={handleMarkPublished}
+            loading={isPublishing}
+            leftIcon={<Check className="w-3 h-3" />}
+          >
+            Marcar como publicado
+          </Button>
+        )}
+
         {error && (
           <span className="text-[11px] font-medium text-[#e10600]">
             {error}
+          </span>
+        )}
+
+        {publishError && (
+          <span className="text-[11px] font-medium text-[#e10600]">
+            {publishError}
           </span>
         )}
 
@@ -418,6 +467,86 @@ function DeliveryEditRow({
   );
 }
 
+// ─── Published delivery row ────────────────────────────────────────────────────
+// A fully-approved post the team confirmed went live — read-only history,
+// not something to keep tweaking. Just the date, the review link, and a way
+// back to "Edição" in case of a mistaken click.
+
+function PublishedDeliveryRow({
+  delivery,
+  projectSlug,
+  onUnpublished,
+}: {
+  delivery: DeliveryRow;
+  projectSlug?: string | null;
+  onUnpublished: () => void;
+}) {
+  const [isUndoing, setIsUndoing] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleUndo = async () => {
+    setIsUndoing(true);
+    setError("");
+    const result = await unmarkPublished(delivery.id);
+    setIsUndoing(false);
+    if (result.error) {
+      setError(result.error);
+      return;
+    }
+    onUnpublished();
+  };
+
+  return (
+    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 bg-white border-2 border-black shadow-hard-sm">
+      <div className="flex items-center gap-3 min-w-0">
+        {delivery.planNumber && (
+          <span className="shrink-0 font-mono text-xs font-bold text-white bg-black px-2 py-0.5">
+            {delivery.planNumber}
+          </span>
+        )}
+        <div className="min-w-0">
+          <p className="text-sm font-semibold text-black truncate">
+            {delivery.theme ??
+              delivery.label ??
+              delivery.fileName ??
+              `Versão ${delivery.versionNumber}`}
+          </p>
+          <p className="text-xs text-black/40">
+            Publicado em{" "}
+            {delivery.publishedAt
+              ? formatPublishedDate(delivery.publishedAt)
+              : "—"}
+          </p>
+        </div>
+      </div>
+
+      <div className="flex items-center gap-3 shrink-0 flex-wrap">
+        <Link
+          href={getPublicReviewPath(delivery.reviewToken, projectSlug)}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-xs font-bold text-black/50 hover:text-black underline"
+        >
+          Ver revisão
+        </Link>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleUndo}
+          loading={isUndoing}
+        >
+          Desfazer
+        </Button>
+        {error && (
+          <span className="text-[11px] font-medium text-[#e10600]">
+            {error}
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function ProjectDetailClient({
@@ -436,7 +565,9 @@ export default function ProjectDetailClient({
   const [liveDeliveries, setLiveDeliveries] = useState(initialDeliveries);
   const [uploadOpen, setUploadOpen] = useState(false);
   const [uploadInitialDate, setUploadInitialDate] = useState<string | undefined>();
-  const [viewMode, setViewMode] = useState<"edit" | "calendar">("edit");
+  const [viewMode, setViewMode] = useState<"edit" | "calendar" | "published">(
+    "edit",
+  );
   const [importOpen, setImportOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editInitialTab, setEditInitialTab] = useState<"content" | "art">("content");
@@ -452,7 +583,16 @@ export default function ProjectDetailClient({
     setUploadOpen(true);
   };
 
-  const editOrderedDeliveries = sortForEditing(liveDeliveries);
+  const editOrderedDeliveries = sortForEditing(
+    liveDeliveries.filter((d) => !d.publishedAt),
+  );
+  const publishedDeliveries = liveDeliveries
+    .filter((d) => d.publishedAt)
+    .sort(
+      (a, b) =>
+        new Date(b.publishedAt as Date).getTime() -
+        new Date(a.publishedAt as Date).getTime(),
+    );
   const editingDelivery = liveDeliveries.find((d) => d.id === editingId) ?? null;
   const totalPendingComments = liveDeliveries.reduce(
     (sum, d) => sum + d.pendingCommentCount,
@@ -488,6 +628,7 @@ export default function ProjectDetailClient({
           createdAt: new Date(d.createdAt),
           lastViewedAt: d.lastViewedAt ? new Date(d.lastViewedAt) : null,
           scheduledAt: d.scheduledAt ? new Date(d.scheduledAt) : null,
+          publishedAt: d.publishedAt ? new Date(d.publishedAt) : null,
         })),
       );
     } catch {
@@ -641,11 +782,17 @@ export default function ProjectDetailClient({
       {/* View toggle */}
       <Tabs
         value={viewMode}
-        onValueChange={(v) => setViewMode(v as "edit" | "calendar")}
+        onValueChange={(v) => setViewMode(v as "edit" | "calendar" | "published")}
       >
         <Tabs.List>
           <Tabs.Tab value="edit">Edição</Tabs.Tab>
           <Tabs.Tab value="calendar">Calendário</Tabs.Tab>
+          <Tabs.Tab value="published">
+            Publicados
+            {publishedDeliveries.length > 0
+              ? ` (${publishedDeliveries.length})`
+              : ""}
+          </Tabs.Tab>
         </Tabs.List>
 
         <Tabs.Panel value="calendar" className="mt-4">
@@ -734,6 +881,7 @@ export default function ProjectDetailClient({
                     onComments={() => setCommentsId(d.id)}
                     onScheduled={refetch}
                     onDeleted={refetch}
+                    onPublished={refetch}
                   />
                 ))}
               </div>
@@ -769,6 +917,31 @@ export default function ProjectDetailClient({
               <Button variant="primary" size="sm" onClick={() => openUpload()}>
                 Enviar versão
               </Button>
+            </div>
+          )}
+        </Tabs.Panel>
+
+        <Tabs.Panel value="published" className="mt-4">
+          {publishedDeliveries.length > 0 ? (
+            <div className="flex flex-col gap-2">
+              {publishedDeliveries.map((d) => (
+                <PublishedDeliveryRow
+                  key={d.id}
+                  delivery={d}
+                  projectSlug={projectSlug}
+                  onUnpublished={refetch}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-20 gap-2 text-center">
+              <p className="text-sm font-semibold text-black">
+                Nenhum post publicado ainda
+              </p>
+              <p className="text-xs text-black/45">
+                Quando um post for aprovado e publicado, clique em
+                &quot;Marcar como publicado&quot; na aba Edição.
+              </p>
             </div>
           )}
         </Tabs.Panel>
