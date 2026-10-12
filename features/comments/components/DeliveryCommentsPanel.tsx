@@ -1,10 +1,12 @@
 "use client";
 
 import React, { useState, useTransition } from "react";
+import { Calendar } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import CommentSystem from "@/features/review/components/CommentSystem";
 import EditDeliveryContentModal from "@/features/deliveries/components/EditDeliveryContentModal";
 import { markReadyForClientReview } from "@/features/comments/actions/comments";
+import { formatScheduledDate } from "@/features/calendar/lib/monthGrid";
 import type { CommentInboxDelivery } from "@/features/comments/server/loadCommentsInboxData";
 
 // The comment thread + "edit copy" + "liberar para o cliente" flow for one
@@ -37,6 +39,18 @@ export default function DeliveryCommentsPanel({
 
   return (
     <div className="flex flex-col">
+      {delivery.scheduledAt && (
+        <div className="flex items-center gap-1.5 pt-2 text-xs font-semibold text-black/50">
+          <Calendar className="w-3.5 h-3.5" />
+          Publicação prevista:{" "}
+          {formatScheduledDate(new Date(delivery.scheduledAt), "pt-BR", {
+            day: "2-digit",
+            month: "long",
+            year: "numeric",
+          })}
+        </div>
+      )}
+
       <div className="py-2">
         <CommentSystem
           token={delivery.reviewToken}
