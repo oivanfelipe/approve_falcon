@@ -33,6 +33,7 @@ export async function loadReviewPageData(token: string) {
           primaryColor: true,
           secondaryColor: true,
           slug: true,
+          calendarToken: true,
           user: {
             select: {
               id: true,
@@ -280,5 +281,6 @@ export async function loadReviewPageData(token: string) {
     branding,
     assets,
     projectSlug: delivery.project.slug,
+    calendarToken: delivery.project.calendarToken,
   };
 }

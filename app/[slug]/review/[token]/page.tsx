@@ -62,6 +62,7 @@ export default async function BrandedReviewPage({
     branding,
     assets,
     projectSlug,
+    calendarToken,
   } = pageData;
 
   if (!projectSlug || projectSlug !== slug) {
@@ -166,6 +167,7 @@ export default async function BrandedReviewPage({
       freelancerDisplayName={delivery.project.user?.name ?? null}
       branding={branding}
       reviewPathSlug={slug}
+      calendarToken={calendarToken}
     />
   );
 }

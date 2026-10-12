@@ -65,6 +65,7 @@ export default async function ReviewPage({ params, searchParams }: PageProps) {
     branding,
     assets,
     projectSlug,
+    calendarToken,
   } = pageData;
 
   if (delivery.expiresAt && delivery.expiresAt < new Date()) {
@@ -165,6 +166,7 @@ export default async function ReviewPage({ params, searchParams }: PageProps) {
       freelancerDisplayName={delivery.project.user?.name ?? null}
       branding={branding}
       reviewPathSlug={projectSlug}
+      calendarToken={calendarToken}
     />
   );
 }
