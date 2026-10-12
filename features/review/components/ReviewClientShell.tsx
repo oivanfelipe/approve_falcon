@@ -22,7 +22,8 @@ import { formatScheduledDate } from "@/features/calendar/lib/monthGrid";
 import { cn } from "@/lib/utils";
 import type { BadgeVariant } from "@/components/ui/Badge";
 import { Button } from "@/components/ui";
-import { X, Calendar, MessageCircle, ChevronLeft } from "lucide-react";
+import { X, Calendar, MessageCircle, ChevronLeft, Check } from "lucide-react";
+import { releaseArtForReview } from "@/features/deliveries/actions/deliveries";
 import {
   DEFAULT_PRIMARY_COLOR,
   DEFAULT_SECONDARY_COLOR,
@@ -102,6 +103,14 @@ const statusLabel: Record<Status, string> = {
   PENDING: "Aguardando revisão",
   APPROVED: "Aprovado",
   CHANGES_REQUESTED: "Alterações solicitadas",
+};
+
+// Team-facing phrasing for the same statuses — the decision belongs to the
+// client, so this reads as a report, never a call to action.
+const teamStatusLabel: Record<Status, string> = {
+  PENDING: "Aguardando decisão do cliente",
+  APPROVED: "Aprovado pelo cliente",
+  CHANGES_REQUESTED: "Cliente pediu alterações",
 };
 
 // Download helper (blob fetch bypasses cross-origin anchor restriction)
@@ -225,6 +234,20 @@ export default function ReviewClientShell({
   const [showChat, setShowChat] = useState(initialComments.length > 0);
   const [openPinCommentId, setOpenPinCommentId] = useState<string | null>(null);
   const [editOpen, setEditOpen] = useState(false);
+  const [isReleasing, setIsReleasing] = useState(false);
+  const [releaseError, setReleaseError] = useState("");
+
+  const handleReleaseArt = async () => {
+    setIsReleasing(true);
+    setReleaseError("");
+    const result = await releaseArtForReview(deliveryId);
+    setIsReleasing(false);
+    if (result.error) {
+      setReleaseError(result.error);
+      return;
+    }
+    setStatus("PENDING");
+  };
 
   // Build pin number map for comment system
   const pinnedComments = comments.filter(
@@ -468,7 +491,44 @@ export default function ReviewClientShell({
           )}
         >
           <div className="flex flex-col gap-6 p-5 h-full">
-            {!isFreelancerPreview && (
+            {canComment ? (
+              <>
+                <div className="flex flex-col gap-3">
+                  <p className="text-xs text-black/50 uppercase tracking-wider font-bold font-mono">
+                    Status da revisão
+                  </p>
+                  <div className="flex items-center gap-2.5 p-4 bg-white border-2 border-black">
+                    <Badge
+                      variant={statusVariant[creativeRevealed ? status : copyStatus]}
+                      dot
+                      size="sm"
+                    >
+                      {teamStatusLabel[creativeRevealed ? status : copyStatus]}
+                    </Badge>
+                  </div>
+
+                  {creativeRevealed && status === "CHANGES_REQUESTED" && (
+                    <div className="flex flex-col gap-2">
+                      <Button
+                        variant="primary"
+                        fullWidth
+                        onClick={handleReleaseArt}
+                        loading={isReleasing}
+                        leftIcon={<Check className="w-4 h-4" />}
+                      >
+                        Liberar para aprovação do cliente
+                      </Button>
+                      {releaseError && (
+                        <p className="text-xs font-medium text-[#e10600]" role="alert">
+                          {releaseError}
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
+                <hr className="border-black/10" />
+              </>
+            ) : (
               <>
                 {creativeRevealed ? (
                   <ApprovalPanel
@@ -535,7 +595,7 @@ export default function ReviewClientShell({
                   backgroundColor: hexToRgba(primaryColor, 0.06),
                 }}
               >
-                Conversa
+                {canComment ? "Ver comentários do cliente" : "Conversa"}
                 {comments.length > 0 && (
                   <span
                     className="ml-1.5 inline-flex items-center justify-center min-w-[18px] h-[18px] rounded-full text-[11px] font-bold text-white"

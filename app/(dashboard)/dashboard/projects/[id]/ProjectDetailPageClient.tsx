@@ -18,6 +18,7 @@ import {
   markAsPublished,
   unmarkPublished,
 } from "@/features/deliveries/actions/deliveries";
+import { getOrCreateCalendarToken } from "@/features/calendar/actions/calendar";
 import { Tabs } from "@/components/ui/Tabs";
 import type { BadgeVariant } from "@/components/ui/Badge";
 import { Upload, Pencil, Palette, MessageCircle, Check } from "lucide-react";
@@ -577,10 +578,26 @@ export default function ProjectDetailClient({
   const [isBulkDeleting, setIsBulkDeleting] = useState(false);
   const [bulkDeleteError, setBulkDeleteError] = useState("");
   const [confirmingBulkDelete, setConfirmingBulkDelete] = useState(false);
+  const [reviewLinkToken, setReviewLinkToken] = useState(calendarToken ?? null);
+  const [isOpeningReview, setIsOpeningReview] = useState(false);
 
   const openUpload = (dateInputValue?: string) => {
     setUploadInitialDate(dateInputValue);
     setUploadOpen(true);
+  };
+
+  const handleOpenReview = async () => {
+    if (reviewLinkToken) {
+      window.open(`/calendar/${reviewLinkToken}`, "_blank", "noopener,noreferrer");
+      return;
+    }
+    setIsOpeningReview(true);
+    const result = await getOrCreateCalendarToken(projectId);
+    setIsOpeningReview(false);
+    if (result.token) {
+      setReviewLinkToken(result.token);
+      window.open(`/calendar/${result.token}`, "_blank", "noopener,noreferrer");
+    }
   };
 
   const editOrderedDeliveries = sortForEditing(
@@ -594,10 +611,6 @@ export default function ProjectDetailClient({
         new Date(a.publishedAt as Date).getTime(),
     );
   const editingDelivery = liveDeliveries.find((d) => d.id === editingId) ?? null;
-  const totalPendingComments = liveDeliveries.reduce(
-    (sum, d) => sum + d.pendingCommentCount,
-    0,
-  );
 
   const toggleSelected = (id: string) => {
     setSelectedIds((prev) => {
@@ -765,16 +778,15 @@ export default function ProjectDetailClient({
             >
               Importar planilha
             </Button>
-            <Link href={`/dashboard/comments?project=${projectId}`}>
-              <Button
-                variant={totalPendingComments > 0 ? "danger" : "primary"}
-                size="sm"
-                leftIcon={<MessageCircle className="w-3.5 h-3.5" />}
-              >
-                Revisão
-                {totalPendingComments > 0 ? ` (${totalPendingComments})` : ""}
-              </Button>
-            </Link>
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={handleOpenReview}
+              loading={isOpeningReview}
+              leftIcon={<MessageCircle className="w-3.5 h-3.5" />}
+            >
+              Revisão
+            </Button>
           </div>
         </div>
       </div>
