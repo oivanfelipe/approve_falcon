@@ -640,3 +640,55 @@ export async function releaseArtForReview(
   return {};
 }
 
+// The team's explicit confirmation that a fully-approved post actually went
+// live — moves it from the working "Edição" list to "Publicados". Only
+// offered once the final (art) approval stage is done.
+export async function markAsPublished(
+  deliveryId: string,
+): Promise<{ error?: string }> {
+  const session = await auth();
+  if (!session?.user?.id) return { error: "Não autenticado" };
+
+  const delivery = await prisma.delivery.findFirst({
+    where: { id: deliveryId, project: { userId: session.user.ownerId } },
+    select: { id: true, projectId: true, status: true, publishedAt: true },
+  });
+  if (!delivery) return { error: "Post não encontrado" };
+  if (delivery.status !== "APPROVED") {
+    return { error: "Este post ainda não foi aprovado pelo cliente." };
+  }
+  if (delivery.publishedAt) return {};
+
+  await prisma.delivery.update({
+    where: { id: deliveryId },
+    data: { publishedAt: new Date() },
+  });
+
+  revalidatePath(`/dashboard/projects/${delivery.projectId}`);
+  return {};
+}
+
+// Explicit undo — brings a post back from "Publicados" to "Edição" after a
+// mistaken click, same pattern as the approval-revoke actions above.
+export async function unmarkPublished(
+  deliveryId: string,
+): Promise<{ error?: string }> {
+  const session = await auth();
+  if (!session?.user?.id) return { error: "Não autenticado" };
+
+  const delivery = await prisma.delivery.findFirst({
+    where: { id: deliveryId, project: { userId: session.user.ownerId } },
+    select: { id: true, projectId: true, publishedAt: true },
+  });
+  if (!delivery) return { error: "Post não encontrado" };
+  if (!delivery.publishedAt) return {};
+
+  await prisma.delivery.update({
+    where: { id: deliveryId },
+    data: { publishedAt: null },
+  });
+
+  revalidatePath(`/dashboard/projects/${delivery.projectId}`);
+  return {};
+}
+

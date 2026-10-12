@@ -12,6 +12,8 @@ interface PendingStageInput {
   hasFile: boolean;
   hasCopyContent: boolean;
   agencyLabel: string;
+  /** Set once the team confirms the post actually went live. */
+  published?: boolean;
 }
 
 // Same "whose turn is it, and on what" signal for both the client and the
@@ -23,6 +25,7 @@ export function getPendingStageBadge({
   hasFile,
   hasCopyContent,
   agencyLabel,
+  published = false,
 }: PendingStageInput): PendingStageBadge {
   const copyStageActive = hasCopyContent && copyStatus !== "APPROVED";
 
@@ -35,7 +38,7 @@ export function getPendingStageBadge({
   }
 
   if (artStatus === "APPROVED") {
-    return { status: "APPROVED", label: "Ok" };
+    return { status: "APPROVED", label: published ? "Publicado" : "Ok" };
   }
 
   const label =

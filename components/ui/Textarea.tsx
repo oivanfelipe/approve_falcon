@@ -68,6 +68,7 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
             "w-full bg-white border-2 text-black placeholder:text-black/35",
             "px-4 py-3 text-sm rounded-md",
             "transition-colors duration-150 outline-none",
+            "disabled:bg-black/[0.03] disabled:text-black/50 disabled:cursor-not-allowed",
             error
               ? "border-[#e10600] focus:ring-2 focus:ring-[#e10600]/25"
               : "border-black focus:ring-2 focus:ring-[#e10600]/25",

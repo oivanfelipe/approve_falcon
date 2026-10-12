@@ -66,6 +66,7 @@ export default async function ProjectDetailPage({ params }: PageProps) {
     mimeType: d.mimeType,
     sourceType: d.sourceType as "FILE" | "DRIVE_LINK",
     status: d.status as "PENDING" | "APPROVED" | "CHANGES_REQUESTED",
+    publishedAt: d.publishedAt,
     reviewToken: d.reviewToken,
     commentCount: d._count.comments,
     pendingCommentCount: d.comments.length,
