@@ -22,7 +22,7 @@ import { formatScheduledDate } from "@/features/calendar/lib/monthGrid";
 import { cn } from "@/lib/utils";
 import type { BadgeVariant } from "@/components/ui/Badge";
 import { Button } from "@/components/ui";
-import { ChevronLeft, Calendar } from "lucide-react";
+import { X, Calendar, MessageCircle, ChevronLeft } from "lucide-react";
 import {
   DEFAULT_PRIMARY_COLOR,
   DEFAULT_SECONDARY_COLOR,
@@ -75,6 +75,8 @@ interface ReviewClientShellProps {
   freelancerDisplayName?: string | null;
   branding?: FreelancerBranding | null;
   reviewPathSlug?: string | null;
+  /** Lets this page link back to the "todas as peças" overview, when the project has one. */
+  calendarToken?: string | null;
   /** Logged-in member of the owning agency viewing the client's own link. */
   isTeamMember?: boolean;
   projectId?: string;
@@ -189,6 +191,7 @@ export default function ReviewClientShell({
   freelancerDisplayName,
   branding,
   reviewPathSlug,
+  calendarToken,
   isTeamMember = false,
   projectId,
   rawFileName,
@@ -273,6 +276,18 @@ export default function ReviewClientShell({
           </Badge>
         </div>
       </header>
+
+      {calendarToken && (
+        <div className="px-4 md:px-8 py-2 border-b border-black/10">
+          <Link
+            href={`/calendar/${calendarToken}`}
+            className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-black/50 hover:text-black transition-colors"
+          >
+            <ChevronLeft className="w-3.5 h-3.5" />
+            Todas as peças
+          </Link>
+        </div>
+      )}
 
       {/* Body */}
       <div className="flex flex-1 lg:overflow-hidden flex-col lg:flex-row lg:max-h-[calc(100vh-100px)]">
@@ -445,137 +460,163 @@ export default function ReviewClientShell({
           )}
         </main>
 
-        {/* Sidebar */}
+        {/* Sidebar — the decision block stays visible even with the chat open */}
         <aside
           className={cn(
             "w-full lg:w-80 shrink-0 border-t-2 lg:border-t-0 lg:border-l-2 border-black",
             "bg-white flex flex-col lg:h-[calc(100vh-112px)] overflow-y-auto",
           )}
         >
-          {showChat ? (
-            <div className="flex flex-col h-full">
-              <div className="flex items-center justify-between px-2 py-2 border-b-2 border-black">
-                <Button
-                  onClick={() => setShowChat(false)}
-                  variant="outline"
-                  className="p-2"
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                </Button>
-                <span className="text-base font-extrabold uppercase text-black">
-                  Conversa
-                </span>
-                <span className="w-12" />
-              </div>
-
-              <div className="flex-1 min-h-0 flex flex-col p-1">
-                <CommentSystem
-                  token={token}
-                  deliveryId={deliveryId}
-                  initialComments={comments}
-                  pinnedComments={pinnedCommentNumbers}
-                  mode={canComment ? "freelancer" : "client"}
-                  freelancerName={freelancerName ?? undefined}
-                  onCommentsChange={setComments}
-                  onOpenPin={(id) => setOpenPinCommentId(id)}
-                  openCommentId={openPinCommentId}
-                  scrollable
-                  primaryColor={primaryColor}
-                />
-              </div>
-            </div>
-          ) : (
-            <div className="flex flex-col gap-6 p-5 h-full">
-              {!isFreelancerPreview && (
-                <>
-                  {creativeRevealed ? (
-                    <ApprovalPanel
-                      token={token}
-                      status={status}
-                      onStatusChange={setStatus}
-                    />
-                  ) : (
-                    <ApprovalPanel
-                      token={token}
-                      status={copyStatus}
-                      onStatusChange={setCopyStatus}
-                      actionPrefix="copy-"
-                      labels={{
-                        heading: "Decisão sobre a copy",
-                        approveButton: "Aprovar copy",
-                        approveConfirmTitle: "Confirmar aprovação da copy",
-                        requestButton: "Solicitar alterações na copy",
-                        requestConfirmTitle: "Solicitar alterações na copy",
-                      }}
-                    />
-                  )}
-                  <hr className="border-black/10" />
-                </>
-              )}
-
-              {canComment && (
-                <div
-                  className="flex items-center gap-2.5 border-2 border-black px-3.5 py-3"
-                  style={{
-                    backgroundColor: hexToRgba(primaryColor, 0.1),
-                    borderColor: hexToRgba(primaryColor, 0.24),
-                  }}
-                >
-                  <div
-                    className="h-2 w-2 shrink-0 rounded-full"
-                    style={{ backgroundColor: primaryColor }}
+          <div className="flex flex-col gap-6 p-5 h-full">
+            {!isFreelancerPreview && (
+              <>
+                {creativeRevealed ? (
+                  <ApprovalPanel
+                    token={token}
+                    status={status}
+                    onStatusChange={setStatus}
                   />
-                  <p
-                    className="text-xs leading-snug"
-                    style={{ color: hexToRgba(primaryColor, 0.88) }}
-                  >
-                    <span
-                      className="font-semibold"
-                      style={{ color: primaryColor }}
-                    >
-                      {isTeamMember ? "Visão da equipe" : "Modo de visualização"}
-                    </span>
-                    {" — "} o cliente vê este link; você pode editar a copy e
-                    responder os comentários abaixo.
-                  </p>
-                </div>
-              )}
-
-              <div className="flex gap-2 flex-wrap">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setShowChat(true)}
-                  style={{
-                    borderColor: hexToRgba(primaryColor, 0.45),
-                    color: primaryColor,
-                    backgroundColor: hexToRgba(primaryColor, 0.06),
-                  }}
-                >
-                  Abrir conversa
-                </Button>
-
-                {isTeamMember && projectId && (
-                  <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
-                    Editar copy
-                  </Button>
+                ) : (
+                  <ApprovalPanel
+                    token={token}
+                    status={copyStatus}
+                    onStatusChange={setCopyStatus}
+                    actionPrefix="copy-"
+                    labels={{
+                      heading: "Decisão sobre a copy",
+                      approveButton: "Aprovar copy",
+                      approveConfirmTitle: "Confirmar aprovação da copy",
+                      requestButton: "Solicitar alterações na copy",
+                      requestConfirmTitle: "Solicitar alterações na copy",
+                    }}
+                  />
                 )}
-              </div>
+                <hr className="border-black/10" />
+              </>
+            )}
 
-              {allDeliveries.length > 1 && (
-                <>
-                  <hr className="border-black/10" />
-                  <VersionSwitcher
-                    deliveries={allDeliveries}
-                    currentToken={token}
-                    slug={reviewPathSlug}
-                    preview={isFreelancerPreview}
-                  />
-                </>
+            {canComment && (
+              <div
+                className="flex items-center gap-2.5 border-2 border-black px-3.5 py-3"
+                style={{
+                  backgroundColor: hexToRgba(primaryColor, 0.1),
+                  borderColor: hexToRgba(primaryColor, 0.24),
+                }}
+              >
+                <div
+                  className="h-2 w-2 shrink-0 rounded-full"
+                  style={{ backgroundColor: primaryColor }}
+                />
+                <p
+                  className="text-xs leading-snug"
+                  style={{ color: hexToRgba(primaryColor, 0.88) }}
+                >
+                  <span
+                    className="font-semibold"
+                    style={{ color: primaryColor }}
+                  >
+                    {isTeamMember ? "Visão da equipe" : "Modo de visualização"}
+                  </span>
+                  {" — "} o cliente vê este link; você pode editar a copy e
+                  responder os comentários abaixo.
+                </p>
+              </div>
+            )}
+
+            <div className="flex gap-2 flex-wrap">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowChat(true)}
+                leftIcon={<MessageCircle className="w-4 h-4" />}
+                style={{
+                  borderColor: hexToRgba(primaryColor, 0.45),
+                  color: primaryColor,
+                  backgroundColor: hexToRgba(primaryColor, 0.06),
+                }}
+              >
+                Conversa
+                {comments.length > 0 && (
+                  <span
+                    className="ml-1.5 inline-flex items-center justify-center min-w-[18px] h-[18px] rounded-full text-[11px] font-bold text-white"
+                    style={{ backgroundColor: primaryColor }}
+                  >
+                    {comments.length}
+                  </span>
+                )}
+              </Button>
+
+              {isTeamMember && projectId && (
+                <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
+                  Editar copy
+                </Button>
               )}
             </div>
-          )}
+
+            <p className="text-[11px] text-black/40">
+              A conversa abre por cima, sem esconder a decisão.
+            </p>
+
+            {allDeliveries.length > 1 && (
+              <>
+                <hr className="border-black/10" />
+                <VersionSwitcher
+                  deliveries={allDeliveries}
+                  currentToken={token}
+                  slug={reviewPathSlug}
+                  preview={isFreelancerPreview}
+                />
+              </>
+            )}
+          </div>
         </aside>
+      </div>
+
+      {/* Conversation drawer — overlays the page without hiding the decision block */}
+      <button
+        aria-label="Fechar conversa"
+        onClick={() => setShowChat(false)}
+        className={cn(
+          "fixed inset-0 z-40 bg-black/25 transition-opacity",
+          showChat ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none",
+        )}
+      />
+      <div
+        className={cn(
+          "fixed inset-y-0 right-0 z-50 w-full max-w-sm border-l-2 border-black bg-white",
+          "flex flex-col transition-transform duration-300",
+          showChat ? "translate-x-0" : "translate-x-full",
+        )}
+      >
+        <div className="flex items-center justify-between px-4 py-3 border-b-2 border-black shrink-0">
+          <span className="text-base font-extrabold uppercase text-black">
+            Conversa
+          </span>
+          <Button
+            onClick={() => setShowChat(false)}
+            variant="outline"
+            className="p-2"
+            aria-label="Fechar conversa"
+          >
+            <X className="w-4 h-4" />
+          </Button>
+        </div>
+
+        <div className="flex-1 min-h-0 flex flex-col p-1">
+          <CommentSystem
+            token={token}
+            deliveryId={deliveryId}
+            initialComments={comments}
+            pinnedComments={pinnedCommentNumbers}
+            mode={canComment ? "freelancer" : "client"}
+            freelancerName={freelancerName ?? undefined}
+            onCommentsChange={setComments}
+            onOpenPin={(id) => setOpenPinCommentId(id)}
+            openCommentId={openPinCommentId}
+            scrollable
+            primaryColor={primaryColor}
+          />
+        </div>
       </div>
 
       {/* Footer */}

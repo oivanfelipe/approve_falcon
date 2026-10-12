@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
+import Link from "next/link";
 import { Modal } from "@/components/ui/Modal";
 import { Badge } from "@/components/ui/Badge";
 import type { BadgeVariant } from "@/components/ui/Badge";
@@ -23,6 +24,7 @@ import {
   buildMonthGrid,
 } from "@/features/calendar/lib/monthGrid";
 import { getPendingStageBadge } from "@/features/calendar/lib/pendingStage";
+import { getPublicReviewPath } from "@/lib/freelancer-branding-shared";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -47,6 +49,16 @@ const statusDot: Record<Status, string> = {
   APPROVED: "bg-black",
   CHANGES_REQUESTED: "bg-[#e10600]",
 };
+
+type OverviewGroup = "pending_client" | "pending_team" | "approved" | "published";
+
+const OVERVIEW_FILTERS: { key: "all" | OverviewGroup; label: string }[] = [
+  { key: "all", label: "Todos" },
+  { key: "pending_client", label: "Pendente de você" },
+  { key: "pending_team", label: "Com a agência" },
+  { key: "approved", label: "Aprovados" },
+  { key: "published", label: "Publicados" },
+];
 
 // ─── Day detail modal ─────────────────────────────────────────────────────────
 
@@ -268,6 +280,8 @@ export default function CalendarClientShell({
   const [statuses, setStatuses] = useState<Record<string, Status>>({});
   const [copyStatuses, setCopyStatuses] = useState<Record<string, Status>>({});
   const [openDeliveryId, setOpenDeliveryId] = useState<string | null>(null);
+  const [view, setView] = useState<"calendar" | "grid">("calendar");
+  const [overviewFilter, setOverviewFilter] = useState<"all" | OverviewGroup>("all");
 
   const deliveriesByDay = useMemo(() => {
     const map = new Map<string, CalendarDelivery>();
@@ -283,6 +297,51 @@ export default function CalendarClientShell({
 
   const primaryColor = data.branding?.primaryColor;
   const agencyLabel = data.branding?.displayName ?? "Agência";
+
+  const overviewItems = useMemo(() => {
+    return data.deliveries.map((d) => {
+      const copyStatus = copyStatuses[d.id] ?? (d.copyStatus as Status);
+      const artStatus = statuses[d.id] ?? (d.status as Status);
+      const hasFile = Boolean(d.driveUrl || d.signedUrl);
+      const hasCopyContent = Boolean(
+        d.copyText || d.artCopy || d.theme || d.objective || d.postFunction,
+      );
+      const badge = getPendingStageBadge({
+        copyStatus,
+        artStatus,
+        hasFile,
+        hasCopyContent,
+        agencyLabel,
+        published: Boolean(d.publishedAt),
+      });
+      const group: OverviewGroup =
+        badge.status === "APPROVED"
+          ? d.publishedAt
+            ? "published"
+            : "approved"
+          : badge.label.startsWith("Pendente (Cliente)")
+            ? "pending_client"
+            : "pending_team";
+      return { delivery: d, badge, group };
+    });
+  }, [data.deliveries, statuses, copyStatuses, agencyLabel]);
+
+  const overviewCounts = useMemo(() => {
+    const counts: Record<"all" | OverviewGroup, number> = {
+      all: overviewItems.length,
+      pending_client: 0,
+      pending_team: 0,
+      approved: 0,
+      published: 0,
+    };
+    for (const item of overviewItems) counts[item.group] += 1;
+    return counts;
+  }, [overviewItems]);
+
+  const filteredOverviewItems =
+    overviewFilter === "all"
+      ? overviewItems
+      : overviewItems.filter((item) => item.group === overviewFilter);
 
   return (
     <div className="min-h-screen bg-white">
@@ -301,28 +360,147 @@ export default function CalendarClientShell({
         </div>
       </header>
 
-      {/* Month navigation */}
-      <div className="flex items-center justify-between px-6 py-4 max-w-4xl mx-auto w-full">
+      {/* View toggle */}
+      <div className="flex items-center justify-center gap-2 px-6 py-4">
         <button
-          onClick={() =>
-            setMonthDate((d) => new Date(d.getFullYear(), d.getMonth() - 1, 1))
-          }
-          className="px-3 py-1.5 text-xs font-bold uppercase border-2 border-black hover:bg-black/5 transition-colors"
+          type="button"
+          onClick={() => setView("calendar")}
+          className={cn(
+            "px-3.5 h-9 text-xs font-bold uppercase tracking-wide border-2 border-black transition-colors",
+            view === "calendar"
+              ? "bg-black text-white"
+              : "bg-white text-black hover:bg-black/5",
+          )}
         >
-          ‹ Anterior
+          Calendário
         </button>
-        <h2 className="text-sm font-extrabold uppercase tracking-wide text-black">
-          {monthLabel(monthDate)}
-        </h2>
         <button
-          onClick={() =>
-            setMonthDate((d) => new Date(d.getFullYear(), d.getMonth() + 1, 1))
-          }
-          className="px-3 py-1.5 text-xs font-bold uppercase border-2 border-black hover:bg-black/5 transition-colors"
+          type="button"
+          onClick={() => setView("grid")}
+          className={cn(
+            "px-3.5 h-9 text-xs font-bold uppercase tracking-wide border-2 border-black transition-colors",
+            view === "grid"
+              ? "bg-black text-white"
+              : "bg-white text-black hover:bg-black/5",
+          )}
         >
-          Próximo ›
+          Todas as peças
         </button>
       </div>
+
+      {view === "grid" ? (
+        <div className="max-w-5xl mx-auto w-full px-6 pb-10 flex flex-col gap-5">
+          <div className="flex items-center gap-1.5 flex-wrap">
+            {OVERVIEW_FILTERS.map(({ key, label }) => (
+              <button
+                key={key}
+                type="button"
+                onClick={() => setOverviewFilter(key)}
+                className={cn(
+                  "px-3.5 h-9 text-xs font-bold uppercase tracking-wide border-2 border-black transition-colors",
+                  overviewFilter === key
+                    ? "bg-black text-white"
+                    : "bg-white text-black hover:bg-black/5",
+                )}
+              >
+                {label} ({overviewCounts[key]})
+              </button>
+            ))}
+          </div>
+
+          {filteredOverviewItems.length === 0 ? (
+            <p className="text-sm text-black/40 text-center py-16">
+              Nenhuma peça neste filtro.
+            </p>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+              {filteredOverviewItems.map(({ delivery, badge }) => (
+                <Link
+                  key={delivery.id}
+                  href={getPublicReviewPath(delivery.reviewToken)}
+                  className="block border-2 border-black bg-white shadow-hard-sm hover:bg-black/[0.02] transition-colors overflow-hidden"
+                >
+                  <div className="relative aspect-[4/5] bg-black/[0.03] flex items-center justify-center">
+                    {delivery.signedUrl && delivery.mimeType?.startsWith("image/") ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={delivery.signedUrl}
+                        alt={delivery.theme ?? delivery.fileName ?? "Arte"}
+                        className="absolute inset-0 w-full h-full object-cover"
+                      />
+                    ) : (
+                      <svg
+                        width="26"
+                        height="26"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="rgba(0,0,0,.3)"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        aria-hidden="true"
+                      >
+                        <rect x="3" y="3" width="18" height="18" rx="2" />
+                        <circle cx="8.5" cy="8.5" r="1.5" />
+                        <polyline points="21 15 16 10 5 21" />
+                      </svg>
+                    )}
+                    {delivery.planNumber && (
+                      <span className="absolute top-2 left-2 font-mono text-[10px] font-bold text-white bg-black px-1.5 py-0.5">
+                        {delivery.planNumber}
+                      </span>
+                    )}
+                    <Badge
+                      variant={statusVariant[badge.status]}
+                      className="absolute top-2 right-2 text-[9px]"
+                    >
+                      {badge.label}
+                    </Badge>
+                  </div>
+                  <div className="p-3 flex flex-col gap-1">
+                    <span className="text-sm font-bold text-black truncate">
+                      {delivery.theme ?? delivery.label ?? `Versão ${delivery.versionNumber}`}
+                    </span>
+                    <span className="text-xs text-black/45">
+                      {[delivery.format, delivery.scheduledAt
+                        ? formatScheduledDate(new Date(delivery.scheduledAt), "pt-BR", {
+                            day: "2-digit",
+                            month: "short",
+                          })
+                        : null]
+                        .filter(Boolean)
+                        .join(" · ")}
+                    </span>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
+      ) : (
+        <>
+          {/* Month navigation */}
+          <div className="flex items-center justify-between px-6 py-4 max-w-4xl mx-auto w-full">
+            <button
+              onClick={() =>
+                setMonthDate((d) => new Date(d.getFullYear(), d.getMonth() - 1, 1))
+              }
+              className="px-3 py-1.5 text-xs font-bold uppercase border-2 border-black hover:bg-black/5 transition-colors"
+            >
+              ‹ Anterior
+            </button>
+            <h2 className="text-sm font-extrabold uppercase tracking-wide text-black">
+              {monthLabel(monthDate)}
+            </h2>
+            <button
+              onClick={() =>
+                setMonthDate((d) => new Date(d.getFullYear(), d.getMonth() + 1, 1))
+              }
+              className="px-3 py-1.5 text-xs font-bold uppercase border-2 border-black hover:bg-black/5 transition-colors"
+            >
+              Próximo ›
+            </button>
+          </div>
 
       {/* Grid */}
       <div className="max-w-4xl mx-auto w-full px-6 pb-10">
@@ -394,6 +572,8 @@ export default function CalendarClientShell({
           })}
         </div>
       </div>
+        </>
+      )}
 
       {openDelivery && (
         <DayDetailModal
