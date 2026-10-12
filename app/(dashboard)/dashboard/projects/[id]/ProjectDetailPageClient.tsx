@@ -18,7 +18,6 @@ import {
   markAsPublished,
   unmarkPublished,
 } from "@/features/deliveries/actions/deliveries";
-import { getOrCreateCalendarToken } from "@/features/calendar/actions/calendar";
 import { Tabs } from "@/components/ui/Tabs";
 import type { BadgeVariant } from "@/components/ui/Badge";
 import { Upload, Pencil, Palette, MessageCircle, Check } from "lucide-react";
@@ -578,27 +577,18 @@ export default function ProjectDetailClient({
   const [isBulkDeleting, setIsBulkDeleting] = useState(false);
   const [bulkDeleteError, setBulkDeleteError] = useState("");
   const [confirmingBulkDelete, setConfirmingBulkDelete] = useState(false);
-  const [reviewLinkToken, setReviewLinkToken] = useState(calendarToken ?? null);
-  const [isOpeningReview, setIsOpeningReview] = useState(false);
 
   const openUpload = (dateInputValue?: string) => {
     setUploadInitialDate(dateInputValue);
     setUploadOpen(true);
   };
 
-  const handleOpenReview = async () => {
-    if (reviewLinkToken) {
-      window.open(`/calendar/${reviewLinkToken}`, "_blank", "noopener,noreferrer");
-      return;
-    }
-    setIsOpeningReview(true);
-    const result = await getOrCreateCalendarToken(projectId);
-    setIsOpeningReview(false);
-    if (result.token) {
-      setReviewLinkToken(result.token);
-      window.open(`/calendar/${result.token}`, "_blank", "noopener,noreferrer");
-    }
-  };
+  // The most recently created post — its review screen also lists every
+  // other post in the sidebar (Histórico de versões), so this one link is
+  // the whole project's review flow.
+  const latestDelivery = [...liveDeliveries].sort(
+    (a, b) => b.versionNumber - a.versionNumber,
+  )[0];
 
   const editOrderedDeliveries = sortForEditing(
     liveDeliveries.filter((d) => !d.publishedAt),
@@ -778,15 +768,21 @@ export default function ProjectDetailClient({
             >
               Importar planilha
             </Button>
-            <Button
-              variant="primary"
-              size="sm"
-              onClick={handleOpenReview}
-              loading={isOpeningReview}
-              leftIcon={<MessageCircle className="w-3.5 h-3.5" />}
-            >
-              Revisão
-            </Button>
+            {latestDelivery && (
+              <Link
+                href={getPublicReviewPath(latestDelivery.reviewToken, projectSlug)}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <Button
+                  variant="primary"
+                  size="sm"
+                  leftIcon={<MessageCircle className="w-3.5 h-3.5" />}
+                >
+                  Revisão
+                </Button>
+              </Link>
+            )}
           </div>
         </div>
       </div>

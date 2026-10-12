@@ -16,7 +16,6 @@ import DriveEmbed from "@/features/review/components/DriveEmbed";
 import RealAssetCarousel from "@/features/review/components/RealAssetCarousel";
 import PostCaption from "@/features/review/components/PostCaption";
 import VersionSwitcher from "@/features/review/components/VersionSwitcher";
-import EditDeliveryContentModal from "@/features/deliveries/components/EditDeliveryContentModal";
 import type { SignedDeliveryAsset } from "@/lib/delivery-assets";
 import { formatScheduledDate } from "@/features/calendar/lib/monthGrid";
 import { cn } from "@/lib/utils";
@@ -202,9 +201,6 @@ export default function ReviewClientShell({
   reviewPathSlug,
   calendarToken,
   isTeamMember = false,
-  projectId,
-  rawFileName,
-  deliveryAssets = [],
 }: ReviewClientShellProps) {
   const isDriveLink = sourceType === "DRIVE_LINK";
   const isImage = !isDriveLink && (mimeType?.startsWith("image/") ?? false);
@@ -233,7 +229,6 @@ export default function ReviewClientShell({
   // note, without having to discover "Abrir conversa" first.
   const [showChat, setShowChat] = useState(initialComments.length > 0);
   const [openPinCommentId, setOpenPinCommentId] = useState<string | null>(null);
-  const [editOpen, setEditOpen] = useState(false);
   const [isReleasing, setIsReleasing] = useState(false);
   const [releaseError, setReleaseError] = useState("");
 
@@ -577,8 +572,9 @@ export default function ReviewClientShell({
                   >
                     {isTeamMember ? "Visão da equipe" : "Modo de visualização"}
                   </span>
-                  {" — "} o cliente vê este link; você pode editar a copy e
-                  responder os comentários abaixo.
+                  {" — "} o cliente vê este link; a decisão é dele. Use
+                  &ldquo;Editar&rdquo; na página do projeto pra alterar a copy
+                  ou a arte.
                 </p>
               </div>
             )}
@@ -605,12 +601,6 @@ export default function ReviewClientShell({
                   </span>
                 )}
               </Button>
-
-              {isTeamMember && projectId && (
-                <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
-                  Editar copy
-                </Button>
-              )}
             </div>
 
             <p className="text-[11px] text-black/40">
@@ -686,30 +676,6 @@ export default function ReviewClientShell({
           <span style={{ color: secondaryColor }}>{brandName}</span>
         </p>
       </footer>
-
-      {isTeamMember && projectId && editOpen && (
-        <EditDeliveryContentModal
-          delivery={{
-            id: deliveryId,
-            planNumber: planNumber ?? null,
-            theme: theme ?? null,
-            format: format ?? null,
-            product: product ?? null,
-            postFunction: postFunction ?? null,
-            objective: objective ?? null,
-            artCopy: artCopy ?? null,
-            copyText: copyText ?? null,
-            copyStatus,
-            status,
-            fileName: rawFileName ?? null,
-            assets: deliveryAssets,
-          }}
-          projectId={projectId}
-          isOpen
-          onClose={() => setEditOpen(false)}
-          onSuccess={() => window.location.reload()}
-        />
-      )}
     </div>
   );
 }
