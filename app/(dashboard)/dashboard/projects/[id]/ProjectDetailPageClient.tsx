@@ -10,7 +10,6 @@ import EditDeliveryContentModal from "@/features/deliveries/components/EditDeliv
 import EditProjectBrandingModal from "@/features/projects/components/EditProjectBrandingModal";
 import CalendarLinkButton from "@/features/calendar/components/CalendarLinkButton";
 import DashboardCalendarView from "@/features/calendar/components/DashboardCalendarView";
-import ImportSpreadsheetModal from "@/features/calendar/components/ImportSpreadsheetModal";
 import DeliveryCommentsModal from "@/features/comments/components/DeliveryCommentsModal";
 import {
   scheduleDelivery,
@@ -20,7 +19,7 @@ import {
 } from "@/features/deliveries/actions/deliveries";
 import { Tabs } from "@/components/ui/Tabs";
 import type { BadgeVariant } from "@/components/ui/Badge";
-import { Upload, Pencil, Palette, MessageCircle, Check } from "lucide-react";
+import { Plus, Pencil, Palette, MessageCircle, Check } from "lucide-react";
 import { toDateInputValue } from "@/features/calendar/lib/monthGrid";
 import { getPublicReviewPath } from "@/lib/freelancer-branding-shared";
 import { cn } from "@/lib/utils";
@@ -568,7 +567,6 @@ export default function ProjectDetailClient({
   const [viewMode, setViewMode] = useState<"edit" | "calendar" | "published">(
     "edit",
   );
-  const [importOpen, setImportOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editInitialTab, setEditInitialTab] = useState<"content" | "art">("content");
   const [commentsId, setCommentsId] = useState<string | null>(null);
@@ -754,12 +752,12 @@ export default function ProjectDetailClient({
               Marca do cliente
             </Button>
             <Button
-              variant="outline"
+              variant="primary"
               size="sm"
-              onClick={() => setImportOpen(true)}
-              leftIcon={<Upload className="w-3.5 h-3.5" />}
+              onClick={() => openUpload()}
+              leftIcon={<Plus className="w-3.5 h-3.5" />}
             >
-              Importar planilha
+              Novo post
             </Button>
           </div>
         </div>
@@ -977,16 +975,6 @@ export default function ProjectDetailClient({
         onClose={() => setBrandingOpen(false)}
         onSuccess={() => {
           window.location.reload();
-        }}
-      />
-
-      <ImportSpreadsheetModal
-        projectId={projectId}
-        isOpen={importOpen}
-        onClose={() => setImportOpen(false)}
-        onSuccess={() => {
-          refetch();
-          setViewMode("edit");
         }}
       />
     </div>
