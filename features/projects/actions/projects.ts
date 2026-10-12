@@ -13,7 +13,6 @@ const HEX_COLOR = /^#?[0-9a-fA-F]{6}$/;
 // ─── Schemas ──────────────────────────────────────────────────────────────────
 
 const createProjectSchema = z.object({
-  name: z.string().min(1).max(100),
   clientName: z.string().min(1).max(100),
   clientEmail: z.string().email().optional().or(z.literal("")),
   description: z.string().max(500).optional(),
@@ -40,7 +39,6 @@ export async function createProject(
   const userId = await requireAuth();
 
   const raw = {
-    name: formData.get("name"),
     clientName: formData.get("clientName"),
     clientEmail: formData.get("clientEmail") || undefined,
     description: formData.get("description") || undefined,
@@ -59,7 +57,9 @@ export async function createProject(
   const project = await prisma.project.create({
     data: {
       userId,
-      name: parsed.data.name,
+      // No separate project-name field in the creation form anymore — the
+      // client's own name is the project's identity everywhere it's shown.
+      name: parsed.data.clientName,
       clientName: parsed.data.clientName,
       clientEmail: parsed.data.clientEmail || null,
       description: parsed.data.description || null,
@@ -87,7 +87,6 @@ export async function updateProject(
   if (!project) return { error: "Projeto não encontrado" };
 
   const raw = {
-    name: formData.get("name") ?? undefined,
     clientName: formData.get("clientName") ?? undefined,
     clientEmail: formData.get("clientEmail") ?? undefined,
     description: formData.get("description") ?? undefined,

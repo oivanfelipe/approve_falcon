@@ -216,12 +216,10 @@ export default function ReviewClientShell({
   const scheduledDate = scheduledAt ? new Date(scheduledAt) : null;
   const [comments, setComments] = useState<CommentData[]>(initialComments);
   const canComment = isFreelancerPreview || isTeamMember;
-  // The team opens this link specifically to see what the client said —
-  // land them straight on the conversation instead of making them
-  // discover "Abrir conversa" first.
-  const [showChat, setShowChat] = useState(
-    canComment && initialComments.length > 0,
-  );
+  // Whoever opens this link — client or team — wants to see what was
+  // already said, including the client's own past "solicitar alterações"
+  // note, without having to discover "Abrir conversa" first.
+  const [showChat, setShowChat] = useState(initialComments.length > 0);
   const [openPinCommentId, setOpenPinCommentId] = useState<string | null>(null);
   const [editOpen, setEditOpen] = useState(false);
 

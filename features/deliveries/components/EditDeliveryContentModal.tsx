@@ -127,7 +127,12 @@ function ArtAndSlidesTab({
 
   // Uploads to whichever slide this is for: slide 1 (the main art) replaces
   // the delivery's own file; any other slide is added to its asset list.
+  // A post with no primary art yet isn't "at the art stage" at all for the
+  // client (nothing reveals until there's a primary) — so the very first
+  // upload always becomes the primary, even if "Adicionar como lâmina" was
+  // clicked, instead of silently piling up orphan slides nobody can see.
   const handleUpload = (target: "primary" | "extra") => {
+    const effectiveTarget = primaryFileName ? target : "primary";
     setError("");
     startTransition(async () => {
       try {
@@ -148,7 +153,7 @@ function ArtAndSlidesTab({
           if (uploadError) throw new Error(uploadError.message);
 
           const result =
-            target === "primary"
+            effectiveTarget === "primary"
               ? await attachCreativeToDelivery({
                   deliveryId,
                   sourceType: "FILE",
@@ -169,7 +174,7 @@ function ArtAndSlidesTab({
         } else {
           if (!isDriveUrlValid) return;
           const result =
-            target === "primary"
+            effectiveTarget === "primary"
               ? await attachCreativeToDelivery({
                   deliveryId,
                   sourceType: "DRIVE_LINK",
@@ -342,6 +347,13 @@ function ArtAndSlidesTab({
             Adicionar como lâmina
           </Button>
         </div>
+
+        {!primaryFileName && (
+          <p className="text-xs text-black/40">
+            Ainda não há arte principal — o primeiro envio vira a lâmina 1,
+            mesmo clicando em &quot;Adicionar como lâmina&quot;.
+          </p>
+        )}
 
         {error && (
           <p className="text-xs font-medium text-[#e10600]" role="alert">

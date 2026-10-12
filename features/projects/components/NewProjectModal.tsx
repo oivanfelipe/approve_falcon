@@ -86,13 +86,6 @@ export default function NewProjectModal({
         className="flex flex-col gap-4"
       >
         <Input
-          name="name"
-          label="Nome do projeto"
-          placeholder="Identidade visual, Redesign do site…"
-          required
-          fullWidth
-        />
-        <Input
           name="clientName"
           label="Nome do cliente"
           placeholder="Empresa Ltda, João Silva…"
