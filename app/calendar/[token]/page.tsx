@@ -6,7 +6,7 @@ import CalendarClientShell from "@/features/calendar/components/CalendarClientSh
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Calendário de conteúdo — Approve Falcon",
+  title: "Calendário de conteúdo — Approve",
 };
 
 interface PageProps {

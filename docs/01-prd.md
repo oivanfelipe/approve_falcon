@@ -1,12 +1,12 @@
 # PRD — Documento de Requisitos do Produto
 
-> Documento gerado por engenharia reversa do código existente (Approve Falcon), não antes da construção. Serve como baseline de revisão e como contexto persistente para qualquer agente que for evoluir o app a partir daqui.
+> Documento gerado por engenharia reversa do código existente (Approve), não antes da construção. Serve como baseline de revisão e como contexto persistente para qualquer agente que for evoluir o app a partir daqui.
 
 ## Resumo do app
-Approve Falcon é uma ferramenta interna para times/agências enviarem criativos a clientes e coletarem aprovação ou pedido de alterações por um link seguro, sem exigir e-mail, WhatsApp, planilha ou conta do cliente.
+Approve é uma ferramenta interna para times/agências enviarem criativos a clientes e coletarem aprovação ou pedido de alterações por um link seguro, sem exigir e-mail, WhatsApp, planilha ou conta do cliente.
 
 ## Problema que resolve
-Hoje a aprovação de criativos costuma acontecer espalhada em e-mail, WhatsApp ou planilhas: sem histórico de versões centralizado, sem comentários posicionados na peça, sem status visível em tempo real de quem aprovou o quê. Approve Falcon centraliza isso em um único link por versão de entrega, com comentários posicionais e status ao vivo.
+Hoje a aprovação de criativos costuma acontecer espalhada em e-mail, WhatsApp ou planilhas: sem histórico de versões centralizado, sem comentários posicionados na peça, sem status visível em tempo real de quem aprovou o quê. Approve centraliza isso em um único link por versão de entrega, com comentários posicionais e status ao vivo.
 
 ## Público-alvo
 - **Usuário interno (time/agência)** — cria projetos, envia entregas (arquivo ou link do Google Drive), acompanha aprovações e comentários, personaliza a identidade da própria página de revisão.

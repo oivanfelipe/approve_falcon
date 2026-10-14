@@ -23,7 +23,7 @@ interface BadgeProps {
 }
 
 // ─── Variant maps ─────────────────────────────────────────────────────────────
-// Approve Falcon system: white/black/red only. Red is reserved for the one
+// Approve system: white/black/red only. Red is reserved for the one
 // status that needs attention ("changes requested"); everything resolved or
 // waiting stays neutral black/white.
 

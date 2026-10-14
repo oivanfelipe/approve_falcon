@@ -1,6 +1,6 @@
-# Approve Falcon -- Technical Architecture Guide
+# Approve -- Technical Architecture Guide
 
-This document describes the technical architecture for the Approve Falcon
+This document describes the technical architecture for the Approve
 internal creative-approval tool.
 
 Topics covered:

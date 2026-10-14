@@ -25,13 +25,13 @@ export async function generateMetadata({
       select: { project: { select: { name: true } } },
     });
   } catch {
-    return { title: "Review - Approve Falcon" };
+    return { title: "Review - Approve" };
   }
 
-  if (!delivery) return { title: "Review - Approve Falcon" };
+  if (!delivery) return { title: "Review - Approve" };
 
   return {
-    title: `Review: ${delivery.project?.name ?? "Review"} - Approve Falcon`,
+    title: `Review: ${delivery.project?.name ?? "Review"} - Approve`,
     robots: { index: false },
   };
 }

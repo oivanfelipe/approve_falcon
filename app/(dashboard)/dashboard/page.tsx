@@ -6,7 +6,7 @@ import type { Metadata } from "next";
 import DashboardPageClient from "@/app/(dashboard)/dashboard/DashboardPageClient";
 
 export const metadata: Metadata = {
-  title: "Projetos — Approve Falcon",
+  title: "Projetos — Approve",
 };
 
 // ─── Types ────────────────────────────────────────────────────────────────────

@@ -7,7 +7,7 @@ import { getSignedUrl } from "@/lib/supabase/server";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Projeto — Approve Falcon",
+  title: "Projeto — Approve",
 };
 
 interface PageProps {

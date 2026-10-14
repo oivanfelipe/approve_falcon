@@ -67,14 +67,14 @@ export default function CalendarLinkButton({
           </svg>
         }
       >
-        Calendário
+        Acessos
       </Button>
 
       <Modal
         isOpen={isOpen}
         onClose={() => setIsOpen(false)}
-        title="Link do calendário"
-        description="Um único link para o cliente ver todas as peças com data de publicação marcada, aprovar ou pedir alterações direto no dia."
+        title="Acesso do cliente"
+        description="Um único link, sempre no mesmo lugar: o cliente vê todas as peças com data marcada, aprova ou pede alterações direto no dia. É o único link que você precisa compartilhar com ele."
         size="md"
       >
         {token ? (
@@ -94,14 +94,14 @@ export default function CalendarLinkButton({
               </button>
             </div>
             <p className="text-xs text-black/50">
-              Só aparecem no calendário as peças que tiverem uma data de
-              publicação definida no envio.
+              Só aparecem nele as peças que tiverem uma data de publicação
+              definida no envio.
             </p>
           </div>
         ) : (
           <div className="flex flex-col gap-4">
             <p className="text-sm text-black/60">
-              Gere um link único de calendário para este projeto.
+              Gere o link único de acesso do cliente para este projeto.
             </p>
             {error && (
               <p className="text-xs font-medium text-[#e10600]" role="alert">
@@ -114,7 +114,7 @@ export default function CalendarLinkButton({
               loading={isPending}
               onClick={handleGenerate}
             >
-              Gerar link de calendário
+              Gerar link de acesso
             </Button>
           </div>
         )}

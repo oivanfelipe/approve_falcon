@@ -7,7 +7,7 @@ import CommentsInboxClient from "./CommentsInboxClient";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Comentários — Approve Falcon",
+  title: "Comentários — Approve",
 };
 
 interface PageProps {
