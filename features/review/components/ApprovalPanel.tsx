@@ -222,8 +222,13 @@ export default function ApprovalPanel({
 
   const handleRequestChanges = () => {
     const trimmedName = signerName.trim();
+    const trimmedNote = changeNote.trim();
     if (!trimmedName) {
       setFormError("Seu nome é obrigatório");
+      return;
+    }
+    if (!trimmedNote) {
+      setFormError("Descreva o que precisa mudar");
       return;
     }
     setFormError("");
@@ -239,7 +244,7 @@ export default function ApprovalPanel({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           signerName: trimmedName,
-          note: changeNote.trim() || undefined,
+          note: trimmedNote,
         }),
       });
 
@@ -361,13 +366,14 @@ export default function ApprovalPanel({
             required
           />
           <Textarea
-            label="Nota (opcional)"
+            label="O que precisa mudar?"
             placeholder="Descreva as alterações que gostaria…"
             value={changeNote}
             onChange={(e) => setChangeNote(e.target.value)}
             rows={3}
             resize="none"
             fullWidth
+            required
           />
           {formError && (
             <p className="text-xs font-medium text-[#e10600]" role="alert">
