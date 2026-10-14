@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/Button";
 import FalconMark from "@/components/ui/FalconMark";
 
 export const metadata: Metadata = {
-  title: "404 — Página não encontrada · Approve Falcon",
+  title: "404 — Página não encontrada · Approve",
   description: "A página que você procurava não existe.",
 };
 
@@ -20,12 +20,11 @@ export default function NotFound() {
             <Link
               href="/"
               className="flex items-center gap-2 focus-visible:outline-none"
-              aria-label="Página inicial do Approve Falcon"
+              aria-label="Página inicial do Approve"
             >
               <FalconMark size={22} className="shrink-0 text-[#e10600]" />
-              <span className="text-sm font-extrabold uppercase tracking-tight">
-                <span className="text-black">Approve</span>
-                <span className="text-[#e10600]">Falcon</span>
+              <span className="text-sm font-extrabold uppercase tracking-tight text-black">
+                Approve
               </span>
             </Link>
           </div>

@@ -78,7 +78,7 @@ model VerificationToken {
     @@unique([identifier, token])
 }
 
-// ─── Approve Falcon domain models ────────────────────────────────────────────
+// ─── Approve domain models ────────────────────────────────────────────
 
 model Project {
     @@schema("falcon")

@@ -641,7 +641,7 @@ export default function CalendarClientShell({
         className="text-center text-[11px] text-black/30 py-6"
         style={primaryColor ? { color: primaryColor } : undefined}
       >
-        Powered by Approve Falcon
+        Powered by Approve
       </footer>
     </div>
   );

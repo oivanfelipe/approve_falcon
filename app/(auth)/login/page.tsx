@@ -160,9 +160,8 @@ export default function LoginPage() {
       {/* Logo */}
       <Link href="/" className="flex items-center gap-2.5 justify-center">
         <FalconMark size={26} className="shrink-0 text-[#e10600]" />
-        <span className="text-lg font-extrabold uppercase tracking-tight">
-          <span className="text-black">Approve</span>
-          <span className="text-[#e10600]">Falcon</span>
+        <span className="text-lg font-extrabold uppercase tracking-tight text-black">
+          Approve
         </span>
       </Link>
 

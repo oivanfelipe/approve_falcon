@@ -79,9 +79,8 @@ export default function GuestReviewShell({
       <header className="sticky top-0 z-40 flex items-center justify-between h-14 px-4 md:px-8 border-b-2 border-black bg-white">
         <Link href="/" className="flex items-center gap-2">
           <FalconMark size={20} className="shrink-0 text-[#e10600]" />
-          <span className="text-sm font-extrabold uppercase tracking-tight">
-            <span className="text-black">Approve</span>
-            <span className="text-[#e10600]">Falcon</span>
+          <span className="text-sm font-extrabold uppercase tracking-tight text-black">
+            Approve
           </span>
         </Link>
 
@@ -195,7 +194,7 @@ export default function GuestReviewShell({
 
       {/* ── Footer ───────────────────────────────────────────────────────────── */}
       <footer className="shrink-0 py-3 px-4 text-center border-t-2 border-black/10">
-        <p className="text-[11px] text-black/40">Review powered by Approve Falcon</p>
+        <p className="text-[11px] text-black/40">Review powered by Approve</p>
       </footer>
     </div>
   );

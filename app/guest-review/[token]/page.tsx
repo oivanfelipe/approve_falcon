@@ -22,8 +22,8 @@ export async function generateMetadata({
 
   return {
     title: upload
-      ? `Review: ${upload.fileName} — Approve Falcon`
-      : "Review — Approve Falcon",
+      ? `Review: ${upload.fileName} — Approve`
+      : "Review — Approve",
     robots: { index: false },
   };
 }

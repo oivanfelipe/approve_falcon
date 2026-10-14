@@ -207,7 +207,7 @@ export default function ReviewClientShell({
   const primaryColor = branding?.primaryColor ?? DEFAULT_PRIMARY_COLOR;
   const secondaryColor = branding?.secondaryColor ?? DEFAULT_SECONDARY_COLOR;
   const brandName =
-    branding?.displayName ?? freelancerDisplayName ?? "Approve Falcon";
+    branding?.displayName ?? freelancerDisplayName ?? "Approve";
   const brandLogo = branding?.logoUrl ?? null;
 
   const [status, setStatus] = useState<Status>(initialStatus);
