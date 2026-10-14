@@ -13,7 +13,8 @@ import ArtCopyMockup from "@/features/review/components/ArtCopyMockup";
 import RealAssetCarousel from "@/features/review/components/RealAssetCarousel";
 import PostCaption from "@/features/review/components/PostCaption";
 import { Button } from "@/components/ui/Button";
-import DeliveryCommentsModal from "@/features/comments/components/DeliveryCommentsModal";
+import { Check } from "lucide-react";
+import { releaseArtForReview } from "@/features/deliveries/actions/deliveries";
 import { cn } from "@/lib/utils";
 import type { CalendarPageData, CalendarDelivery } from "@/features/calendar/server/loadCalendarPageData";
 import {
@@ -51,6 +52,15 @@ const statusDot: Record<Status, string> = {
   CHANGES_REQUESTED: "bg-[#e10600]",
 };
 
+// Team-facing phrasing for the same statuses — the decision belongs to the
+// client, so this reads as a report, never a call to action (same treatment
+// as the single-post review page).
+const teamStatusLabel: Record<Status, string> = {
+  PENDING: "Aguardando decisão do cliente",
+  APPROVED: "Aprovado pelo cliente",
+  CHANGES_REQUESTED: "Cliente pediu alterações",
+};
+
 type OverviewGroup = "pending_client" | "pending_team" | "approved" | "published";
 
 const OVERVIEW_FILTERS: { key: "all" | OverviewGroup; label: string }[] = [
@@ -73,7 +83,6 @@ function DayDetailModal({
   accountLabel,
   avatarUrl,
   isTeamMember,
-  freelancerName,
 }: {
   delivery: CalendarDelivery;
   copyStatus: Status;
@@ -84,9 +93,9 @@ function DayDetailModal({
   accountLabel?: string | null;
   avatarUrl?: string | null;
   isTeamMember?: boolean;
-  freelancerName?: string | null;
 }) {
-  const [commentsOpen, setCommentsOpen] = useState(false);
+  const [isReleasing, setIsReleasing] = useState(false);
+  const [releaseError, setReleaseError] = useState("");
   const date = new Date(delivery.scheduledAt!);
   const hasCopyContent = Boolean(
     delivery.copyText ||
@@ -100,6 +109,18 @@ function DayDetailModal({
   // planning-stage copy mockup.
   const creativeRevealed =
     hasCreativeFile || copyStatus === "APPROVED" || !hasCopyContent;
+
+  const handleReleaseArt = async () => {
+    setIsReleasing(true);
+    setReleaseError("");
+    const result = await releaseArtForReview(delivery.id);
+    setIsReleasing(false);
+    if (result.error) {
+      setReleaseError(result.error);
+      return;
+    }
+    onStatusChange("PENDING");
+  };
 
   return (
     <Modal
@@ -225,7 +246,41 @@ function DayDetailModal({
           )}
         </div>
 
-        {creativeRevealed ? (
+        {isTeamMember ? (
+          <div className="flex flex-col gap-3">
+            <p className="text-xs text-black/50 uppercase tracking-wider font-bold font-mono">
+              Status da revisão
+            </p>
+            <div className="flex items-center gap-2.5 p-4 bg-white border-2 border-black">
+              <Badge
+                variant={statusVariant[creativeRevealed ? delivery.status : copyStatus]}
+                dot
+                size="sm"
+              >
+                {teamStatusLabel[creativeRevealed ? delivery.status : copyStatus]}
+              </Badge>
+            </div>
+
+            {creativeRevealed && delivery.status === "CHANGES_REQUESTED" && (
+              <div className="flex flex-col gap-2">
+                <Button
+                  variant="primary"
+                  fullWidth
+                  onClick={handleReleaseArt}
+                  loading={isReleasing}
+                  leftIcon={<Check className="w-4 h-4" />}
+                >
+                  Liberar para aprovação do cliente
+                </Button>
+                {releaseError && (
+                  <p className="text-xs font-medium text-[#e10600]" role="alert">
+                    {releaseError}
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
+        ) : creativeRevealed ? (
           <ApprovalPanel
             token={delivery.reviewToken}
             status={delivery.status as Status}
@@ -246,23 +301,7 @@ function DayDetailModal({
             }}
           />
         )}
-
-        {isTeamMember && (
-          <Button variant="outline" size="sm" fullWidth onClick={() => setCommentsOpen(true)}>
-            Editar copy e comentários
-          </Button>
-        )}
       </div>
-
-      {isTeamMember && commentsOpen && (
-        <DeliveryCommentsModal
-          deliveryId={delivery.id}
-          isOpen
-          onClose={() => setCommentsOpen(false)}
-          freelancerName={freelancerName ?? "Equipe"}
-          onChanged={() => window.location.reload()}
-        />
-      )}
     </Modal>
   );
 }
@@ -272,7 +311,6 @@ function DayDetailModal({
 export default function CalendarClientShell({
   data,
   isTeamMember = false,
-  freelancerName,
 }: CalendarClientShellProps) {
   const [monthDate, setMonthDate] = useState(() => {
     const today = new Date();
@@ -596,7 +634,6 @@ export default function CalendarClientShell({
           accountLabel={data.branding?.displayName}
           avatarUrl={data.branding?.logoUrl}
           isTeamMember={isTeamMember}
-          freelancerName={freelancerName}
         />
       )}
 
