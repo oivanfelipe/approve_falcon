@@ -30,10 +30,19 @@ const createDeliverySchema = z
     projectId: z.string().cuid(),
     label: z.string().max(100).optional(),
     scheduledAt: z.string().optional(),
-    copyText: z.string().max(2000).optional(),
-    sourceType: z.enum(["FILE", "DRIVE_LINK"]).default("FILE"),
+    copyText: z.string().max(5000).optional(),
+    planNumber: z.string().max(50).optional(),
+    theme: z.string().max(300).optional(),
+    format: z.string().max(100).optional(),
+    product: z.string().max(100).optional(),
+    postFunction: z.string().max(300).optional(),
+    objective: z.string().max(5000).optional(),
+    artCopy: z.string().max(5000).optional(),
+    // Omitted entirely → a planning-only post, no creative attached yet
+    // (the art is added later, same as an imported content-plan row).
+    sourceType: z.enum(["FILE", "DRIVE_LINK"]).optional(),
     filePath: z.string().min(1).optional(),
-    fileName: z.string().min(1),
+    fileName: z.string().min(1).optional(),
     fileSize: z.coerce.number().int().positive().optional(),
     mimeType: z.string().min(1).optional(),
     driveUrl: z.string().url().max(2000).optional(),
@@ -43,6 +52,8 @@ const createDeliverySchema = z
     password: z.string().max(100).optional(),
   })
   .superRefine((data, ctx) => {
+    if (!data.sourceType) return; // no creative yet — nothing to validate
+
     if (data.sourceType === "DRIVE_LINK") {
       if (!data.driveUrl || !isGoogleDriveUrl(data.driveUrl)) {
         ctx.addIssue({
@@ -54,7 +65,7 @@ const createDeliverySchema = z
       return;
     }
 
-    if (!data.filePath || !data.fileSize || !data.mimeType) {
+    if (!data.filePath || !data.fileSize || !data.mimeType || !data.fileName) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message: "Arquivo inválido.",
@@ -108,6 +119,13 @@ export async function createDelivery(
     label,
     scheduledAt,
     copyText,
+    planNumber,
+    theme,
+    format,
+    product,
+    postFunction,
+    objective,
+    artCopy,
     sourceType,
     filePath,
     fileName,
@@ -139,6 +157,12 @@ export async function createDelivery(
     expiresAt.setDate(expiresAt.getDate() + expiresInDays);
   }
 
+  // Nothing to review in the planning stage → skip straight to the
+  // creative stage instead of blocking on an empty copy approval.
+  const hasCopyContent = Boolean(
+    copyText || artCopy || theme || objective || postFunction,
+  );
+
   await prisma.delivery.create({
     data: {
       projectId,
@@ -146,11 +170,17 @@ export async function createDelivery(
       label: label || null,
       scheduledAt: scheduledAt ? new Date(scheduledAt) : null,
       copyText: copyText || null,
-      // No copy to review → skip straight to the creative stage.
-      copyStatus: copyText ? "PENDING" : "APPROVED",
-      sourceType,
+      planNumber: planNumber || null,
+      theme: theme || null,
+      format: format || null,
+      product: product || null,
+      postFunction: postFunction || null,
+      objective: objective || null,
+      artCopy: artCopy || null,
+      copyStatus: hasCopyContent ? "PENDING" : "APPROVED",
+      sourceType: sourceType ?? "FILE",
       filePath: sourceType === "FILE" ? filePath : null,
-      fileName,
+      fileName: sourceType ? fileName : null,
       fileSize: sourceType === "FILE" ? fileSize : null,
       mimeType: sourceType === "FILE" ? mimeType : null,
       driveUrl: sourceType === "DRIVE_LINK" ? driveUrl : null,

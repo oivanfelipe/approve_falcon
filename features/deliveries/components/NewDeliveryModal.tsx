@@ -87,6 +87,13 @@ export default function NewDeliveryModal({
   const [label, setLabel] = useState("");
   const [scheduledAt, setScheduledAt] = useState(initialScheduledAt ?? "");
   const [copyText, setCopyText] = useState("");
+  const [planNumber, setPlanNumber] = useState("");
+  const [theme, setTheme] = useState("");
+  const [format, setFormat] = useState("");
+  const [product, setProduct] = useState("");
+  const [postFunction, setPostFunction] = useState("");
+  const [objective, setObjective] = useState("");
+  const [artCopy, setArtCopy] = useState("");
 
   useEffect(() => {
     if (isOpen) setScheduledAt(initialScheduledAt ?? "");
@@ -100,8 +107,9 @@ export default function NewDeliveryModal({
 
   const trimmedDriveUrl = driveUrl.trim();
   const isDriveUrlValid = trimmedDriveUrl.length > 0 && isGoogleDriveUrl(trimmedDriveUrl);
+  const hasCreative = sourceMode === "file" ? !!selectedFile : isDriveUrlValid;
   const canSubmit =
-    sourceMode === "file" ? !!selectedFile : isDriveUrlValid;
+    hasCreative || theme.trim().length > 0 || planNumber.trim().length > 0;
 
   const handleClose = () => {
     if (step === "uploading") return; // prevent close while uploading
@@ -113,6 +121,13 @@ export default function NewDeliveryModal({
     setLabel("");
     setScheduledAt("");
     setCopyText("");
+    setPlanNumber("");
+    setTheme("");
+    setFormat("");
+    setProduct("");
+    setPostFunction("");
+    setObjective("");
+    setArtCopy("");
     setPassword("");
     setAllowDownload(true);
     setReviewToken("");
@@ -120,6 +135,21 @@ export default function NewDeliveryModal({
     setProgress(0);
     onClose();
   };
+
+  const planningFields = () => ({
+    label: label.trim() || undefined,
+    scheduledAt: scheduledAt || undefined,
+    copyText: copyText.trim() || undefined,
+    planNumber: planNumber.trim() || undefined,
+    theme: theme.trim() || undefined,
+    format: format.trim() || undefined,
+    product: product.trim() || undefined,
+    postFunction: postFunction.trim() || undefined,
+    objective: objective.trim() || undefined,
+    artCopy: artCopy.trim() || undefined,
+    allowDownload,
+    password: password.trim() || undefined,
+  });
 
   const handleUploadFile = () => {
     if (!selectedFile) return;
@@ -154,16 +184,12 @@ export default function NewDeliveryModal({
         // 3) Create the delivery record
         const result = await createDelivery({
           projectId,
-          label: label.trim() || undefined,
-          scheduledAt: scheduledAt || undefined,
-          copyText: copyText.trim() || undefined,
+          ...planningFields(),
           sourceType: "FILE",
           filePath: urlResult.path,
           fileName: selectedFile.name,
           fileSize: selectedFile.size,
           mimeType: selectedFile.type,
-          allowDownload,
-          password: password.trim() || undefined,
         });
         if (result.error) throw new Error(result.error);
         const token = result.reviewToken ?? "";
@@ -189,14 +215,14 @@ export default function NewDeliveryModal({
       try {
         const result = await createDelivery({
           projectId,
-          label: label.trim() || undefined,
-          scheduledAt: scheduledAt || undefined,
-          copyText: copyText.trim() || undefined,
+          ...planningFields(),
           sourceType: "DRIVE_LINK",
           driveUrl: trimmedDriveUrl,
-          fileName: driveName.trim() || label.trim() || "Criativo do Google Drive",
-          allowDownload,
-          password: password.trim() || undefined,
+          fileName:
+            driveName.trim() ||
+            label.trim() ||
+            theme.trim() ||
+            "Criativo do Google Drive",
         });
         if (result.error) throw new Error(result.error);
         const token = result.reviewToken ?? "";
@@ -212,17 +238,44 @@ export default function NewDeliveryModal({
     });
   };
 
+  // No file selected and no Drive link pasted — save just the plan (same
+  // fields a spreadsheet row would carry). The art is attached later.
+  const handleCreatePlanOnly = () => {
+    startTransition(async () => {
+      setStep("uploading");
+      setProgress(50);
+
+      try {
+        const result = await createDelivery({
+          projectId,
+          ...planningFields(),
+        });
+        if (result.error) throw new Error(result.error);
+        const token = result.reviewToken ?? "";
+
+        setProgress(100);
+        setReviewToken(token);
+        setStep("done");
+        onSuccess(token);
+      } catch (e) {
+        setErrorMsg(e instanceof Error ? e.message : "Falha ao salvar");
+        setStep("error");
+      }
+    });
+  };
+
   const handleSubmit = () => {
-    if (sourceMode === "file") handleUploadFile();
-    else handleSubmitDriveLink();
+    if (sourceMode === "file" && selectedFile) handleUploadFile();
+    else if (sourceMode === "drive" && isDriveUrlValid) handleSubmitDriveLink();
+    else handleCreatePlanOnly();
   };
 
   return (
     <Modal
       isOpen={isOpen}
       onClose={handleClose}
-      title="Enviar nova versão"
-      description="Envie um arquivo ou cole o link de um criativo no Google Drive para gerar um link de revisão seguro para o cliente."
+      title="Novo post"
+      description="Preencha o planejamento e, se já tiver a arte pronta, envie o arquivo ou cole o link do Google Drive. Dá pra salvar só o planejamento e anexar a arte depois."
       size="md"
       closeOnOverlayClick={step !== "uploading"}
       footer={
@@ -238,7 +291,7 @@ export default function NewDeliveryModal({
               loading={isPending}
               onClick={handleSubmit}
             >
-              Enviar e obter link
+              {hasCreative ? "Enviar e obter link" : "Salvar post"}
             </Button>
           </div>
         ) : step === "done" ? (
@@ -251,6 +304,73 @@ export default function NewDeliveryModal({
       {/* ── Upload form ───────────────────────────────────────────────────── */}
       {step === "upload" && (
         <div className="flex flex-col gap-5">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <Input
+              label="Nº"
+              value={planNumber}
+              onChange={(e) => setPlanNumber(e.target.value)}
+              fullWidth
+            />
+            <Input
+              label="Formato"
+              placeholder="Carrossel, Reels…"
+              value={format}
+              onChange={(e) => setFormat(e.target.value)}
+              fullWidth
+            />
+            <Input
+              label="Função"
+              placeholder="Institucional…"
+              value={postFunction}
+              onChange={(e) => setPostFunction(e.target.value)}
+              fullWidth
+            />
+            <Input
+              label="Produto"
+              value={product}
+              onChange={(e) => setProduct(e.target.value)}
+              fullWidth
+            />
+          </div>
+
+          <Input
+            label="Tema"
+            value={theme}
+            onChange={(e) => setTheme(e.target.value)}
+            fullWidth
+          />
+
+          <Textarea
+            label="Objetivo / Pilar"
+            value={objective}
+            onChange={(e) => setObjective(e.target.value)}
+            rows={2}
+            fullWidth
+            resize="vertical"
+          />
+
+          <Textarea
+            label="Copy da arte (lâminas)"
+            hint='Use "Slide 1:", "Slide 2:"… em linhas separadas por uma linha em branco para cada lâmina.'
+            value={artCopy}
+            onChange={(e) => setArtCopy(e.target.value)}
+            rows={4}
+            fullWidth
+            resize="vertical"
+          />
+
+          <Textarea
+            label="Legenda e CTA (opcional)"
+            placeholder="Texto que o cliente vai ler e aprovar antes do criativo…"
+            value={copyText}
+            onChange={(e) => setCopyText(e.target.value)}
+            rows={3}
+            fullWidth
+            hint="Se preenchida, o cliente só vê o criativo depois de aprovar essa copy"
+          />
+
+          <hr className="border-black/10" />
+
           <Tabs
             value={sourceMode}
             onValueChange={(v) => setSourceMode(v as SourceMode)}
@@ -291,16 +411,6 @@ export default function NewDeliveryModal({
               </div>
             </Tabs.Panel>
           </Tabs>
-
-          <Textarea
-            label="Copy / legenda (opcional)"
-            placeholder="Texto que o cliente vai ler e aprovar antes do criativo…"
-            value={copyText}
-            onChange={(e) => setCopyText(e.target.value)}
-            rows={3}
-            fullWidth
-            hint="Se preenchida, o cliente só vê o criativo depois de aprovar essa copy"
-          />
 
           <Input
             label="Rótulo da versão (opcional)"
