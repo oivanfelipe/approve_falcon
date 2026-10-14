@@ -4,7 +4,7 @@ import { z } from "zod";
 
 const requestChangesSchema = z.object({
   signerName: z.string().min(1).max(100),
-  note: z.string().max(2000).optional(),
+  note: z.string().trim().min(1, "Descreva o que precisa mudar").max(2000),
 });
 
 export async function POST(
@@ -51,16 +51,14 @@ export async function POST(
     data: { status: "CHANGES_REQUESTED" },
   });
 
-  if (parsed.data.note?.trim()) {
-    await prisma.comment.create({
-      data: {
-        deliveryId: delivery.id,
-        authorType: "CLIENT",
-        authorName: parsed.data.signerName,
-        content: parsed.data.note.trim(),
-      },
-    });
-  }
+  await prisma.comment.create({
+    data: {
+      deliveryId: delivery.id,
+      authorType: "CLIENT",
+      authorName: parsed.data.signerName,
+      content: parsed.data.note,
+    },
+  });
 
   return NextResponse.json({ ok: true });
 }
