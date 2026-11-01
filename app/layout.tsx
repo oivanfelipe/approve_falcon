@@ -15,7 +15,7 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Approve Falcon",
+  title: "Approve",
   description: "Aprovação de criativos para uso interno.",
   icons: {
     icon: [

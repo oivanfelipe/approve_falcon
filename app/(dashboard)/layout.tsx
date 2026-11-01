@@ -6,7 +6,7 @@ import { countPendingClientComments } from "@/features/comments/server/loadComme
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Dashboard — Approve Falcon",
+  title: "Dashboard — Approve",
 };
 
 export default async function DashboardLayout({

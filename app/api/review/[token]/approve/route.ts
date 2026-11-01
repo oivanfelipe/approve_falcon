@@ -51,7 +51,9 @@ export async function POST(
   await prisma.$transaction([
     prisma.delivery.update({
       where: { id: delivery.id },
-      data: { status: "APPROVED" },
+      // One approval covers the whole post: the client reviewed art and
+      // caption together, so the copy stage can't be left dangling.
+      data: { status: "APPROVED", copyStatus: "APPROVED" },
     }),
     prisma.approval.upsert({
       where: { deliveryId: delivery.id },

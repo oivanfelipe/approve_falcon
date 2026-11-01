@@ -5,7 +5,7 @@ import { listTeam } from "@/features/team/actions/team";
 import TeamPageClient from "./TeamPageClient";
 
 export const metadata: Metadata = {
-  title: "Time — Approve Falcon",
+  title: "Time — Approve",
 };
 
 export default async function TeamPage() {

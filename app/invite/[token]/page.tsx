@@ -7,7 +7,7 @@ import FalconMark from "@/components/ui/FalconMark";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Convite de time — Approve Falcon",
+  title: "Convite de time — Approve",
 };
 
 interface PageProps {
@@ -20,9 +20,8 @@ function Card({ children }: { children: React.ReactNode }) {
       <div className="w-full max-w-sm flex flex-col gap-8">
         <Link href="/" className="flex items-center gap-2.5 justify-center">
           <FalconMark size={26} className="shrink-0 text-[#e10600]" />
-          <span className="text-lg font-extrabold uppercase tracking-tight">
-            <span className="text-black">Approve</span>
-            <span className="text-[#e10600]">Falcon</span>
+          <span className="text-lg font-extrabold uppercase tracking-tight text-black">
+            Approve
           </span>
         </Link>
         <div className="bg-white border-2 border-black shadow-[8px_8px_0_0_#000] p-7 flex flex-col gap-4">
@@ -61,7 +60,7 @@ export default async function InvitePage({ params }: PageProps) {
         </h1>
         <p className="text-sm text-black/60">
           <span className="font-semibold text-black">{inviterName}</span>{" "}
-          convidou você pra entrar no time no Approve Falcon como{" "}
+          convidou você pra entrar no time no Approve como{" "}
           <span className="font-semibold text-black">
             {invite.role === "ADMIN" ? "Administrador" : "Editor"}
           </span>
@@ -110,7 +109,7 @@ export default async function InvitePage({ params }: PageProps) {
       </h1>
       <p className="text-sm text-black/60">
         <span className="font-semibold text-black">{inviterName}</span>{" "}
-        convidou você pra entrar no time no Approve Falcon.
+        convidou você pra entrar no time no Approve.
       </p>
       <InviteAcceptCard token={token} role={invite.role} />
     </Card>

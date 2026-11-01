@@ -8,6 +8,8 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import bcrypt from "bcryptjs";
 import { isGoogleDriveUrl } from "@/lib/google-drive";
+import { isCaptionRequired } from "@/lib/caption-rules";
+import { splitCopyIntoSlides } from "@/features/deliveries/server/splitCopyIntoSlides";
 
 function assertDeliveryNotApproved(delivery: { status: string }) {
   if (delivery.status === "APPROVED") {
@@ -25,15 +27,43 @@ function assertCopyNotApproved(delivery: { copyStatus: string }) {
   }
 }
 
+const MISSING_CAPTION_ERROR =
+  "Falta a legenda do post. Cole a legenda e o CTA antes de enviar a arte — o cliente aprova arte e legenda juntas.";
+
+// Separates pasted "copy da arte" into Slide 1 / Slide 2… blocks. Words are
+// never changed (see splitCopyIntoSlides) — only where each slide breaks.
+export async function splitArtCopyIntoSlides(
+  text: string,
+): Promise<{ text?: string; method?: "ai" | "paragraphs"; error?: string }> {
+  const session = await auth();
+  if (!session?.user?.id) return { error: "Não autenticado" };
+
+  const clean = text.trim();
+  if (!clean) return { error: "Cole o texto da arte primeiro." };
+  if (clean.length > 5000) return { error: "Texto muito longo (máx. 5000)." };
+
+  const result = await splitCopyIntoSlides(clean);
+  return { text: result.text, method: result.method };
+}
+
 const createDeliverySchema = z
   .object({
     projectId: z.string().cuid(),
     label: z.string().max(100).optional(),
     scheduledAt: z.string().optional(),
-    copyText: z.string().max(2000).optional(),
-    sourceType: z.enum(["FILE", "DRIVE_LINK"]).default("FILE"),
+    copyText: z.string().max(5000).optional(),
+    planNumber: z.string().max(50).optional(),
+    theme: z.string().max(300).optional(),
+    format: z.string().max(100).optional(),
+    product: z.string().max(100).optional(),
+    postFunction: z.string().max(300).optional(),
+    objective: z.string().max(5000).optional(),
+    artCopy: z.string().max(5000).optional(),
+    // Omitted entirely → a planning-only post, no creative attached yet
+    // (the art is added later, same as an imported content-plan row).
+    sourceType: z.enum(["FILE", "DRIVE_LINK"]).optional(),
     filePath: z.string().min(1).optional(),
-    fileName: z.string().min(1),
+    fileName: z.string().min(1).optional(),
     fileSize: z.coerce.number().int().positive().optional(),
     mimeType: z.string().min(1).optional(),
     driveUrl: z.string().url().max(2000).optional(),
@@ -43,6 +73,8 @@ const createDeliverySchema = z
     password: z.string().max(100).optional(),
   })
   .superRefine((data, ctx) => {
+    if (!data.sourceType) return; // no creative yet — nothing to validate
+
     if (data.sourceType === "DRIVE_LINK") {
       if (!data.driveUrl || !isGoogleDriveUrl(data.driveUrl)) {
         ctx.addIssue({
@@ -54,7 +86,7 @@ const createDeliverySchema = z
       return;
     }
 
-    if (!data.filePath || !data.fileSize || !data.mimeType) {
+    if (!data.filePath || !data.fileSize || !data.mimeType || !data.fileName) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message: "Arquivo inválido.",
@@ -108,6 +140,13 @@ export async function createDelivery(
     label,
     scheduledAt,
     copyText,
+    planNumber,
+    theme,
+    format,
+    product,
+    postFunction,
+    objective,
+    artCopy,
     sourceType,
     filePath,
     fileName,
@@ -119,6 +158,12 @@ export async function createDelivery(
     expiresInDays,
     password,
   } = parsed.data;
+
+  // A post with art but no caption leaves the client with nothing to
+  // approve alongside it — block it here, not only in the form.
+  if (sourceType && isCaptionRequired(format) && !copyText?.trim()) {
+    return { error: MISSING_CAPTION_ERROR };
+  }
 
   const project = await prisma.project.findFirst({
     where: { id: projectId, userId: session.user.ownerId },
@@ -139,6 +184,12 @@ export async function createDelivery(
     expiresAt.setDate(expiresAt.getDate() + expiresInDays);
   }
 
+  // Nothing to review in the planning stage → skip straight to the
+  // creative stage instead of blocking on an empty copy approval.
+  const hasCopyContent = Boolean(
+    copyText || artCopy || theme || objective || postFunction,
+  );
+
   await prisma.delivery.create({
     data: {
       projectId,
@@ -146,11 +197,17 @@ export async function createDelivery(
       label: label || null,
       scheduledAt: scheduledAt ? new Date(scheduledAt) : null,
       copyText: copyText || null,
-      // No copy to review → skip straight to the creative stage.
-      copyStatus: copyText ? "PENDING" : "APPROVED",
-      sourceType,
+      planNumber: planNumber || null,
+      theme: theme || null,
+      format: format || null,
+      product: product || null,
+      postFunction: postFunction || null,
+      objective: objective || null,
+      artCopy: artCopy || null,
+      copyStatus: hasCopyContent ? "PENDING" : "APPROVED",
+      sourceType: sourceType ?? "FILE",
       filePath: sourceType === "FILE" ? filePath : null,
-      fileName,
+      fileName: sourceType ? fileName : null,
       fileSize: sourceType === "FILE" ? fileSize : null,
       mimeType: sourceType === "FILE" ? mimeType : null,
       driveUrl: sourceType === "DRIVE_LINK" ? driveUrl : null,
@@ -258,6 +315,8 @@ export async function attachCreativeToDelivery(
       status: true,
       sourceType: true,
       filePath: true,
+      copyText: true,
+      format: true,
     },
   });
   if (!delivery) return { error: "Post não encontrado" };
@@ -267,6 +326,8 @@ export async function attachCreativeToDelivery(
   } catch (err) {
     return { error: err instanceof Error ? err.message : "Delivery bloqueada" };
   }
+
+  if (isCaptionRequired(delivery.format) && !delivery.copyText?.trim()) return { error: MISSING_CAPTION_ERROR };
 
   const previousFilePath =
     delivery.sourceType === "FILE" ? delivery.filePath : null;

@@ -3,7 +3,7 @@
 /* ─── Design token overrides ────────────────────────────────────────────────── */
 
 /* Static color tokens — available as bg-canvas, bg-surface, bg-elevated, etc.
-   Approve Falcon system: white canvas, black structure, red accent. */
+   Approve system: white canvas, black structure, red accent. */
 @theme {
   /* App canvas / background */
   --color-canvas: #ffffff;
@@ -57,7 +57,7 @@ body {
 }
 
 /* ─── Custom utilities ─────────────────────────────────────────────────────────
-   Approve Falcon system: solid offset "poster" shadows, no blur/gradient/glow. */
+   Approve system: solid offset "poster" shadows, no blur/gradient/glow. */
 
 @layer utilities {
   /* Improved text wrapping for headlines */

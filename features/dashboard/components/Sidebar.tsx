@@ -89,9 +89,8 @@ function SidebarLogo() {
   return (
     <Link href="/dashboard" className="flex items-center gap-2.5 px-4 py-5">
       <FalconMark size={22} className="shrink-0 text-[#e10600]" />
-      <span className="text-sm font-extrabold uppercase tracking-tight">
-        <span className="text-white">Approve</span>
-        <span className="text-[#e10600]">Falcon</span>
+      <span className="text-sm font-extrabold uppercase tracking-tight text-white">
+        Approve
       </span>
     </Link>
   );

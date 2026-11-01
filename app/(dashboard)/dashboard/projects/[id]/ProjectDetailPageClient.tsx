@@ -20,7 +20,7 @@ import {
 } from "@/features/deliveries/actions/deliveries";
 import { Tabs } from "@/components/ui/Tabs";
 import type { BadgeVariant } from "@/components/ui/Badge";
-import { Upload, Pencil, Palette, MessageCircle, Check } from "lucide-react";
+import { Plus, Upload, Pencil, Palette, MessageCircle, Check } from "lucide-react";
 import { toDateInputValue } from "@/features/calendar/lib/monthGrid";
 import { getPublicReviewPath } from "@/lib/freelancer-branding-shared";
 import { cn } from "@/lib/utils";
@@ -92,6 +92,12 @@ function copyStatusLabel(copyStatus: string): string {
   return "Pendente (Cliente)";
 }
 
+function postStatusLabel(status: string): string {
+  if (status === "APPROVED") return "Post aprovado";
+  if (status === "CHANGES_REQUESTED") return "Ajustes pedidos (V4)";
+  return "Aguardando o cliente";
+}
+
 function artStatusLabel(status: string, hasFile: boolean): string {
   if (status === "APPROVED") return "Aprovada";
   if (status === "CHANGES_REQUESTED") return "Pendente (V4)";
@@ -106,11 +112,16 @@ function nextActionLabel(delivery: DeliveryRow): string | null {
   if (delivery.pendingCommentCount > 0) {
     return "Responder comentário do cliente";
   }
-  if (delivery.copyStatus === "CHANGES_REQUESTED") return "Ajustar a copy";
-  if (delivery.copyStatus === "PENDING") {
+  const hasArt = Boolean(delivery.fileName);
+  if (!hasArt && delivery.copyStatus === "CHANGES_REQUESTED") {
+    return "Ajustar a copy";
+  }
+  if (!hasArt && delivery.copyStatus === "PENDING") {
     return "Aguardando o cliente revisar a copy";
   }
-  if (delivery.status === "CHANGES_REQUESTED") return "Ajustar a arte";
+  if (delivery.status === "CHANGES_REQUESTED") {
+    return "Ajustar o post (arte ou legenda) e devolver ao cliente";
+  }
   if (delivery.status === "PENDING" && !delivery.fileName) return "Subir a arte";
   if (delivery.status === "PENDING") {
     return "Aguardando o cliente aprovar a arte";
@@ -144,6 +155,41 @@ function timeAgo(date: Date): string {
   const hrs = Math.floor(mins / 60);
   if (hrs < 24) return `há ${hrs}h`;
   return `há ${Math.floor(hrs / 24)}d`;
+}
+
+function monthKey(date: Date | null): string {
+  if (!date) return "none";
+  const d = new Date(date);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+}
+
+function monthLabelFromKey(key: string): string {
+  if (key === "none") return "Sem data";
+  const [year, month] = key.split("-").map(Number);
+  const label = new Intl.DateTimeFormat("pt-BR", {
+    month: "long",
+    year: "numeric",
+  }).format(new Date(year, month - 1, 1));
+  return label.charAt(0).toUpperCase() + label.slice(1);
+}
+
+// Which stage is holding this post up — drives the Edição tab's status
+// filter, same two-stage model used everywhere else in the app.
+function editStage(delivery: DeliveryRow): "pending_copy" | "pending_art" | "ready" {
+  const hasCopyContent = Boolean(
+    delivery.copyText ||
+      delivery.artCopy ||
+      delivery.theme ||
+      delivery.objective ||
+      delivery.postFunction,
+  );
+  // With the art attached the client approves art + caption once, so the
+  // copy-only stage only exists while there is no art yet.
+  const copyStageActive =
+    hasCopyContent && delivery.copyStatus !== "APPROVED" && !delivery.fileName;
+  if (copyStageActive) return "pending_copy";
+  if (delivery.status !== "APPROVED") return "pending_art";
+  return "ready";
 }
 
 function sortForEditing(deliveries: DeliveryRow[]): DeliveryRow[] {
@@ -278,12 +324,21 @@ function DeliveryEditRow({
         </div>
 
         <div className="flex items-center gap-2 shrink-0 flex-wrap">
-          <Badge variant={statusVariant[delivery.copyStatus]} size="sm" dot>
-            Copy: {copyStatusLabel(delivery.copyStatus)}
-          </Badge>
-          <Badge variant={statusVariant[delivery.status]} size="sm" dot>
-            Arte: {artStatusLabel(delivery.status, Boolean(delivery.fileName))}
-          </Badge>
+          {delivery.fileName ? (
+            // Art attached → the client approves art + caption as one post.
+            <Badge variant={statusVariant[delivery.status]} size="sm" dot>
+              {postStatusLabel(delivery.status)}
+            </Badge>
+          ) : (
+            <>
+              <Badge variant={statusVariant[delivery.copyStatus]} size="sm" dot>
+                Copy: {copyStatusLabel(delivery.copyStatus)}
+              </Badge>
+              <Badge variant={statusVariant[delivery.status]} size="sm" dot>
+                Arte: {artStatusLabel(delivery.status, false)}
+              </Badge>
+            </>
+          )}
         </div>
       </div>
 
@@ -577,6 +632,10 @@ export default function ProjectDetailClient({
   const [isBulkDeleting, setIsBulkDeleting] = useState(false);
   const [bulkDeleteError, setBulkDeleteError] = useState("");
   const [confirmingBulkDelete, setConfirmingBulkDelete] = useState(false);
+  const [editMonthFilter, setEditMonthFilter] = useState<string>("all");
+  const [editStatusFilter, setEditStatusFilter] = useState<
+    "all" | "pending_copy" | "pending_art"
+  >("all");
 
   const openUpload = (dateInputValue?: string) => {
     setUploadInitialDate(dateInputValue);
@@ -586,6 +645,24 @@ export default function ProjectDetailClient({
   const editOrderedDeliveries = sortForEditing(
     liveDeliveries.filter((d) => !d.publishedAt),
   );
+
+  const editMonthOptions = Array.from(
+    new Set(editOrderedDeliveries.map((d) => monthKey(d.scheduledAt))),
+  ).sort((a, b) => {
+    if (a === "none") return 1;
+    if (b === "none") return -1;
+    return a.localeCompare(b);
+  });
+
+  const editFilteredDeliveries = editOrderedDeliveries.filter((d) => {
+    if (editMonthFilter !== "all" && monthKey(d.scheduledAt) !== editMonthFilter) {
+      return false;
+    }
+    if (editStatusFilter !== "all" && editStage(d) !== editStatusFilter) {
+      return false;
+    }
+    return true;
+  });
   const publishedDeliveries = liveDeliveries
     .filter((d) => d.publishedAt)
     .sort(
@@ -606,9 +683,9 @@ export default function ProjectDetailClient({
 
   const toggleSelectAll = () => {
     setSelectedIds((prev) =>
-      prev.size === editOrderedDeliveries.length
+      prev.size === editFilteredDeliveries.length
         ? new Set()
-        : new Set(editOrderedDeliveries.map((d) => d.id)),
+        : new Set(editFilteredDeliveries.map((d) => d.id)),
     );
   };
 
@@ -761,6 +838,14 @@ export default function ProjectDetailClient({
             >
               Importar planilha
             </Button>
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => openUpload()}
+              leftIcon={<Plus className="w-3.5 h-3.5" />}
+            >
+              Novo post
+            </Button>
           </div>
         </div>
       </div>
@@ -796,18 +881,56 @@ export default function ProjectDetailClient({
         <Tabs.Panel value="edit" className="mt-4">
           {editOrderedDeliveries.length > 0 ? (
             <div className="flex flex-col gap-3">
+              <div className="flex items-center gap-2 flex-wrap">
+                {(
+                  [
+                    { key: "all", label: "Todos" },
+                    { key: "pending_copy", label: "Pendente copy" },
+                    { key: "pending_art", label: "Pendente arte" },
+                  ] as const
+                ).map(({ key, label }) => (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => setEditStatusFilter(key)}
+                    className={cn(
+                      "px-3.5 h-9 text-xs font-bold uppercase tracking-wide border-2 border-black transition-colors",
+                      editStatusFilter === key
+                        ? "bg-black text-white"
+                        : "bg-white text-black hover:bg-black/5",
+                    )}
+                  >
+                    {label}
+                  </button>
+                ))}
+
+                <select
+                  value={editMonthFilter}
+                  onChange={(e) => setEditMonthFilter(e.target.value)}
+                  className="h-9 px-3 text-xs font-bold uppercase tracking-wide border-2 border-black bg-white text-black"
+                  aria-label="Filtrar por mês"
+                >
+                  <option value="all">Todos os meses</option>
+                  {editMonthOptions.map((key) => (
+                    <option key={key} value={key}>
+                      {monthLabelFromKey(key)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
               <div className="flex items-center gap-3 flex-wrap">
                 <label className="flex items-center gap-1.5 text-xs font-mono font-bold text-black/40 uppercase tracking-wider cursor-pointer">
                   <input
                     type="checkbox"
                     checked={
                       selectedIds.size > 0 &&
-                      selectedIds.size === editOrderedDeliveries.length
+                      selectedIds.size === editFilteredDeliveries.length
                     }
                     onChange={toggleSelectAll}
                   />
-                  {editOrderedDeliveries.length} post
-                  {editOrderedDeliveries.length !== 1 ? "s" : ""}
+                  {editFilteredDeliveries.length} post
+                  {editFilteredDeliveries.length !== 1 ? "s" : ""}
                 </label>
 
                 {selectedIds.size > 0 && (
@@ -853,24 +976,30 @@ export default function ProjectDetailClient({
                   {bulkDeleteError}
                 </p>
               )}
-              <div className="flex flex-col gap-2">
-                {editOrderedDeliveries.map((d) => (
-                  <DeliveryEditRow
-                    key={d.id}
-                    delivery={d}
-                    selected={selectedIds.has(d.id)}
-                    onToggleSelect={() => toggleSelected(d.id)}
-                    onEdit={() => {
-                      setEditingId(d.id);
-                      setEditInitialTab("content");
-                    }}
-                    onComments={() => setCommentsId(d.id)}
-                    onScheduled={refetch}
-                    onDeleted={refetch}
-                    onPublished={refetch}
-                  />
-                ))}
-              </div>
+              {editFilteredDeliveries.length > 0 ? (
+                <div className="flex flex-col gap-2">
+                  {editFilteredDeliveries.map((d) => (
+                    <DeliveryEditRow
+                      key={d.id}
+                      delivery={d}
+                      selected={selectedIds.has(d.id)}
+                      onToggleSelect={() => toggleSelected(d.id)}
+                      onEdit={() => {
+                        setEditingId(d.id);
+                        setEditInitialTab("content");
+                      }}
+                      onComments={() => setCommentsId(d.id)}
+                      onScheduled={refetch}
+                      onDeleted={refetch}
+                      onPublished={refetch}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-black/40 text-center py-10">
+                  Nenhum post nesse filtro.
+                </p>
+              )}
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center py-20 gap-4 text-center">

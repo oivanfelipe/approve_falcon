@@ -1,9 +1,8 @@
 import React from "react";
 
 /**
- * The Approve Falcon mark: a squared-off checkmark with a bladed tip —
- * "approve" (the check) and "falcon" (the angled dive) in one geometric
- * shape. Single flat stroke via currentColor, no gradient, no soft caps.
+ * The Approve mark: a squared-off checkmark with a bladed tip. Single
+ * flat stroke via currentColor, no gradient, no soft caps.
  */
 export default function FalconMark({
   className,

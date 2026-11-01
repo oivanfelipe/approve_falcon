@@ -13,7 +13,8 @@ import ArtCopyMockup from "@/features/review/components/ArtCopyMockup";
 import RealAssetCarousel from "@/features/review/components/RealAssetCarousel";
 import PostCaption from "@/features/review/components/PostCaption";
 import { Button } from "@/components/ui/Button";
-import DeliveryCommentsModal from "@/features/comments/components/DeliveryCommentsModal";
+import { Check } from "lucide-react";
+import { releaseArtForReview } from "@/features/deliveries/actions/deliveries";
 import { cn } from "@/lib/utils";
 import type { CalendarPageData, CalendarDelivery } from "@/features/calendar/server/loadCalendarPageData";
 import {
@@ -51,6 +52,15 @@ const statusDot: Record<Status, string> = {
   CHANGES_REQUESTED: "bg-[#e10600]",
 };
 
+// Team-facing phrasing for the same statuses — the decision belongs to the
+// client, so this reads as a report, never a call to action (same treatment
+// as the single-post review page).
+const teamStatusLabel: Record<Status, string> = {
+  PENDING: "Aguardando decisão do cliente",
+  APPROVED: "Aprovado pelo cliente",
+  CHANGES_REQUESTED: "Cliente pediu alterações",
+};
+
 type OverviewGroup = "pending_client" | "pending_team" | "approved" | "published";
 
 const OVERVIEW_FILTERS: { key: "all" | OverviewGroup; label: string }[] = [
@@ -73,8 +83,10 @@ function DayDetailModal({
   accountLabel,
   avatarUrl,
   isTeamMember,
-  freelancerName,
+  sequence,
 }: {
+  /** Set while the client is going through "Revisar em sequência". */
+  sequence?: { index: number; total: number; onNext?: () => void };
   delivery: CalendarDelivery;
   copyStatus: Status;
   onClose: () => void;
@@ -84,9 +96,9 @@ function DayDetailModal({
   accountLabel?: string | null;
   avatarUrl?: string | null;
   isTeamMember?: boolean;
-  freelancerName?: string | null;
 }) {
-  const [commentsOpen, setCommentsOpen] = useState(false);
+  const [isReleasing, setIsReleasing] = useState(false);
+  const [releaseError, setReleaseError] = useState("");
   const date = new Date(delivery.scheduledAt!);
   const hasCopyContent = Boolean(
     delivery.copyText ||
@@ -100,6 +112,18 @@ function DayDetailModal({
   // planning-stage copy mockup.
   const creativeRevealed =
     hasCreativeFile || copyStatus === "APPROVED" || !hasCopyContent;
+
+  const handleReleaseArt = async () => {
+    setIsReleasing(true);
+    setReleaseError("");
+    const result = await releaseArtForReview(delivery.id);
+    setIsReleasing(false);
+    if (result.error) {
+      setReleaseError(result.error);
+      return;
+    }
+    onStatusChange("PENDING");
+  };
 
   return (
     <Modal
@@ -118,8 +142,8 @@ function DayDetailModal({
           {!creativeRevealed ? (
             <div className="p-6 flex flex-col gap-5">
               <p className="text-[11px] font-mono text-black/40">
-                Etapa 1 de 2 — aprove o planejamento abaixo. A arte é criada
-                e enviada para aprovação depois.
+                Aprove o texto abaixo. Quando a arte ficar pronta, você revisa
+                arte e legenda juntas.
               </p>
               {(delivery.theme || delivery.format || delivery.product || delivery.objective || delivery.postFunction) && (
                 <div className="flex flex-col gap-3 pb-4 border-b border-black/10">
@@ -225,11 +249,52 @@ function DayDetailModal({
           )}
         </div>
 
-        {creativeRevealed ? (
+        {isTeamMember ? (
+          <div className="flex flex-col gap-3">
+            <p className="text-xs text-black/50 uppercase tracking-wider font-bold font-mono">
+              Status da revisão
+            </p>
+            <div className="flex items-center gap-2.5 p-4 bg-white border-2 border-black">
+              <Badge
+                variant={statusVariant[creativeRevealed ? delivery.status : copyStatus]}
+                dot
+                size="sm"
+              >
+                {teamStatusLabel[creativeRevealed ? delivery.status : copyStatus]}
+              </Badge>
+            </div>
+
+            {creativeRevealed && delivery.status === "CHANGES_REQUESTED" && (
+              <div className="flex flex-col gap-2">
+                <Button
+                  variant="primary"
+                  fullWidth
+                  onClick={handleReleaseArt}
+                  loading={isReleasing}
+                  leftIcon={<Check className="w-4 h-4" />}
+                >
+                  Liberar para aprovação do cliente
+                </Button>
+                {releaseError && (
+                  <p className="text-xs font-medium text-[#e10600]" role="alert">
+                    {releaseError}
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
+        ) : creativeRevealed ? (
           <ApprovalPanel
             token={delivery.reviewToken}
             status={delivery.status as Status}
             onStatusChange={onStatusChange}
+            labels={{
+              heading: "Decisão sobre o post",
+              approveButton: "Aprovar post",
+              approveConfirmTitle: "Confirmar aprovação do post",
+              requestButton: "Pedir ajustes",
+              requestConfirmTitle: "O que precisa mudar?",
+            }}
           />
         ) : (
           <ApprovalPanel
@@ -247,22 +312,23 @@ function DayDetailModal({
           />
         )}
 
-        {isTeamMember && (
-          <Button variant="outline" size="sm" fullWidth onClick={() => setCommentsOpen(true)}>
-            Editar copy e comentários
-          </Button>
+        {sequence && (
+          <div className="flex items-center justify-between gap-3 pt-4 border-t-2 border-black/10">
+            <span className="text-xs font-mono font-bold text-black/50">
+              Post {sequence.index} de {sequence.total}
+            </span>
+            {sequence.onNext ? (
+              <Button variant="outline" size="sm" onClick={sequence.onNext}>
+                Próximo post ›
+              </Button>
+            ) : (
+              <Button variant="primary" size="sm" onClick={onClose}>
+                Concluir
+              </Button>
+            )}
+          </div>
         )}
       </div>
-
-      {isTeamMember && commentsOpen && (
-        <DeliveryCommentsModal
-          deliveryId={delivery.id}
-          isOpen
-          onClose={() => setCommentsOpen(false)}
-          freelancerName={freelancerName ?? "Equipe"}
-          onChanged={() => window.location.reload()}
-        />
-      )}
     </Modal>
   );
 }
@@ -272,7 +338,6 @@ function DayDetailModal({
 export default function CalendarClientShell({
   data,
   isTeamMember = false,
-  freelancerName,
 }: CalendarClientShellProps) {
   const [monthDate, setMonthDate] = useState(() => {
     const today = new Date();
@@ -285,6 +350,9 @@ export default function CalendarClientShell({
   const [view, setView] = useState<"calendar" | "grid">(
     searchParams.get("view") === "grid" ? "grid" : "calendar",
   );
+  // Ids (in publish order) of the month's posts waiting on the client, frozen
+  // when "Revisar em sequência" starts so deciding one doesn't reshuffle it.
+  const [sequenceIds, setSequenceIds] = useState<string[] | null>(null);
   const [overviewFilter, setOverviewFilter] = useState<"all" | OverviewGroup>("all");
 
   const deliveriesByDay = useMemo(() => {
@@ -347,6 +415,36 @@ export default function CalendarClientShell({
       ? overviewItems
       : overviewItems.filter((item) => item.group === overviewFilter);
 
+  const monthPrefix = `${monthDate.getFullYear()}-${monthDate.getMonth()}-`;
+  const monthItems = overviewItems.filter(
+    (i) =>
+      i.delivery.scheduledAt &&
+      scheduledDayKey(new Date(i.delivery.scheduledAt)).startsWith(monthPrefix),
+  );
+  const monthPendingForClient = monthItems
+    .filter((i) => i.group === "pending_client")
+    .sort(
+      (a, b) =>
+        new Date(a.delivery.scheduledAt as Date).getTime() -
+        new Date(b.delivery.scheduledAt as Date).getTime(),
+    );
+  const monthApproved = monthItems.filter(
+    (i) => i.group === "approved" || i.group === "published",
+  ).length;
+
+  const startSequence = () => {
+    const ids = monthPendingForClient.map((i) => i.delivery.id);
+    if (ids.length === 0) return;
+    setSequenceIds(ids);
+    setOpenDeliveryId(ids[0]);
+  };
+
+  const sequenceNextId = (() => {
+    if (!sequenceIds || !openDeliveryId) return null;
+    const at = sequenceIds.indexOf(openDeliveryId);
+    return at >= 0 && at < sequenceIds.length - 1 ? sequenceIds[at + 1] : null;
+  })();
+
   return (
     <div className="min-h-screen bg-white">
       {/* Header */}
@@ -363,6 +461,31 @@ export default function CalendarClientShell({
           <p className="text-sm text-black/50">Cliente: {data.project.clientName}</p>
         </div>
       </header>
+
+      {/* Month progress + approval queue */}
+      {!isTeamMember && monthItems.length > 0 && (
+        <div className="max-w-4xl mx-auto w-full px-6 pt-5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-2 border-black p-4">
+            <div>
+              <p className="text-sm font-extrabold uppercase text-black">
+                {monthLabel(monthDate)}
+              </p>
+              <p className="text-xs text-black/60">
+                {monthApproved} de {monthItems.length} posts aprovados
+                {monthPendingForClient.length > 0
+                  ? ` · ${monthPendingForClient.length} aguardando você`
+                  : " · tudo certo por aqui"}
+              </p>
+            </div>
+            {monthPendingForClient.length > 0 && (
+              <Button variant="primary" size="sm" onClick={startSequence}>
+                Revisar {monthPendingForClient.length}{" "}
+                {monthPendingForClient.length === 1 ? "post" : "posts"} em sequência
+              </Button>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* View toggle */}
       <div className="flex items-center justify-center gap-2 px-6 py-4">
@@ -585,7 +708,21 @@ export default function CalendarClientShell({
           copyStatus={
             copyStatuses[openDelivery.id] ?? (openDelivery.copyStatus as Status)
           }
-          onClose={() => setOpenDeliveryId(null)}
+          onClose={() => {
+            setOpenDeliveryId(null);
+            setSequenceIds(null);
+          }}
+          sequence={
+            sequenceIds
+              ? {
+                  index: sequenceIds.indexOf(openDelivery.id) + 1,
+                  total: sequenceIds.length,
+                  onNext: sequenceNextId
+                    ? () => setOpenDeliveryId(sequenceNextId)
+                    : undefined,
+                }
+              : undefined
+          }
           onStatusChange={(status) =>
             setStatuses((prev) => ({ ...prev, [openDelivery.id]: status }))
           }
@@ -596,7 +733,6 @@ export default function CalendarClientShell({
           accountLabel={data.branding?.displayName}
           avatarUrl={data.branding?.logoUrl}
           isTeamMember={isTeamMember}
-          freelancerName={freelancerName}
         />
       )}
 
@@ -604,7 +740,7 @@ export default function CalendarClientShell({
         className="text-center text-[11px] text-black/30 py-6"
         style={primaryColor ? { color: primaryColor } : undefined}
       >
-        Powered by Approve Falcon
+        Powered by Approve
       </footer>
     </div>
   );

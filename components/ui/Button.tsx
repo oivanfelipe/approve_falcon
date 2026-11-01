@@ -28,7 +28,7 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 // ─── Variant & size maps ──────────────────────────────────────────────────────
-// Approve Falcon system: black structure, white surfaces, red reserved for
+// Approve system: black structure, white surfaces, red reserved for
 // the primary action. Solid offset shadows instead of blur, hard borders
 // instead of soft translucent ones, no gradients.
 

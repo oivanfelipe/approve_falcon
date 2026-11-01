@@ -24,8 +24,8 @@ export async function generateMetadata({
 
   return {
     title: delivery
-      ? `Review: ${delivery.project?.name ?? "Review"} - Approve Falcon`
-      : "Review - Approve Falcon",
+      ? `Review: ${delivery.project?.name ?? "Review"} - Approve`
+      : "Review - Approve",
     robots: { index: false },
   };
 }

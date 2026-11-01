@@ -1,6 +1,6 @@
 <div align="center">
-  <img src="public/logo.png" alt="Approve Falcon" width="56" />
-  <h1>Approve Falcon</h1>
+  <img src="public/logo.png" alt="Approve" width="56" />
+  <h1>Approve</h1>
   <p><strong>Aprovação de criativos sem a bagunça, com suporte nativo a links do Google Drive.</strong></p>
   <p>Ferramenta de uso interno.</p>
 </div>
@@ -9,7 +9,7 @@
 
 ## O que é
 
-Approve Falcon é uma ferramenta interna para enviar criativos para clientes e receber aprovações ou pedidos de alteração — sem precisar de e-mail, WhatsApp ou planilha. O cliente acessa um link seguro, visualiza o criativo, comenta e aprova (ou solicita alterações) com um clique.
+Approve é uma ferramenta interna para enviar criativos para clientes e receber aprovações ou pedidos de alteração — sem precisar de e-mail, WhatsApp ou planilha. O cliente acessa um link seguro, visualiza o criativo, comenta e aprova (ou solicita alterações) com um clique.
 
 Além do upload direto de arquivo, é possível **colar o link de um criativo do Google Drive** (arquivo, pasta, Google Docs/Sheets/Slides) e gerar o mesmo link de revisão para o cliente — sem precisar baixar e reenviar o arquivo para o storage.
 

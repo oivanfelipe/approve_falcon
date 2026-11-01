@@ -1,13 +1,13 @@
-# Approve Falcon — Onboarding para Desenvolvedores
+# Approve — Onboarding para Desenvolvedores
 
-Bem-vindo ao Approve Falcon. Este guia explica como o projeto está organizado,
+Bem-vindo ao Approve. Este guia explica como o projeto está organizado,
 o que cada parte faz e como adicionar código novo corretamente.
 
 Uso interno — sem billing, sem páginas públicas de marketing.
 
 ---
 
-## O que é o Approve Falcon?
+## O que é o Approve?
 
 Uma ferramenta para times/agências enviarem criativos a clientes e coletarem
 aprovações ou pedidos de alteração — tudo via link compartilhável, sem o
