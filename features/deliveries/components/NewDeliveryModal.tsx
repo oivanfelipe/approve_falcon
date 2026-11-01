@@ -14,8 +14,9 @@ import {
 } from "@/features/deliveries/actions/deliveries";
 import { supabaseClient } from "@/lib/supabase/browser";
 import { cn } from "@/lib/utils";
-import { getPublicReviewPath } from "@/lib/freelancer-branding-shared";
 import { isGoogleDriveUrl } from "@/lib/google-drive";
+import { isCaptionRequired } from "@/lib/caption-rules";
+import { getOrCreateCalendarToken } from "@/features/calendar/actions/calendar";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -33,15 +34,8 @@ type SourceMode = "file" | "drive";
 
 // ─── Link copy toast ──────────────────────────────────────────────────────────
 
-function ReviewLinkBox({
-  token,
-  slug,
-}: {
-  token: string;
-  slug?: string | null;
-}) {
+function ReviewLinkBox({ url }: { url: string }) {
   const [copied, setCopied] = useState(false);
-  const url = `${window.location.origin}${getPublicReviewPath(token, slug)}`;
 
   const copy = () => {
     navigator.clipboard.writeText(url).then(() => {
@@ -53,7 +47,7 @@ function ReviewLinkBox({
   return (
     <div className="flex flex-col gap-3">
       <p className="text-sm text-black/60">
-        Compartilhe este link com seu cliente. Sem necessidade de conta.
+        Este é o link do mês do cliente — o mesmo de sempre. O post novo já está nele, na fila de aprovação.
       </p>
       <div className="flex items-center gap-2 p-3 bg-white border-2 border-black">
         <span className="flex-1 text-xs text-black font-mono truncate">
@@ -77,7 +71,6 @@ function ReviewLinkBox({
 
 export default function NewDeliveryModal({
   projectId,
-  projectSlug,
   isOpen,
   onClose,
   onSuccess,
@@ -108,6 +101,7 @@ export default function NewDeliveryModal({
   const [errorMsg, setErrorMsg] = useState("");
   const [progress, setProgress] = useState(0);
   const [isPending, startTransition] = useTransition();
+  const [calendarUrl, setCalendarUrl] = useState("");
   const [isSplitting, setIsSplitting] = useState(false);
   const [splitNote, setSplitNote] = useState("");
 
@@ -115,7 +109,8 @@ export default function NewDeliveryModal({
   const isDriveUrlValid = trimmedDriveUrl.length > 0 && isGoogleDriveUrl(trimmedDriveUrl);
   const hasCreative = sourceMode === "file" ? !!selectedFile : isDriveUrlValid;
   // Art without a caption leaves the client with half a post to approve.
-  const missingCaption = hasCreative && copyText.trim().length === 0;
+  const captionRequired = hasCreative && isCaptionRequired(format);
+  const missingCaption = captionRequired && copyText.trim().length === 0;
   const canSubmit = hasCreative
     ? !missingCaption
     : theme.trim().length > 0 ||
@@ -137,6 +132,12 @@ export default function NewDeliveryModal({
         ? "Separado pela IA. Confira antes de salvar — as palavras não foram alteradas."
         : "Separado por parágrafos (a IA não está disponível agora). Confira antes de salvar.",
     );
+  };
+
+  // After saving, hand over the client's month link (not a per-post link).
+  const loadCalendarUrl = async () => {
+    const r = await getOrCreateCalendarToken(projectId);
+    if (r.token) setCalendarUrl(`${window.location.origin}/calendar/${r.token}`);
   };
 
   const handleClose = () => {
@@ -162,6 +163,7 @@ export default function NewDeliveryModal({
     setErrorMsg("");
     setProgress(0);
     setSplitNote("");
+    setCalendarUrl("");
     onClose();
   };
 
@@ -227,6 +229,7 @@ export default function NewDeliveryModal({
         setReviewToken(token);
         setStep("done");
         onSuccess(token);
+        void loadCalendarUrl();
       } catch (e) {
         setErrorMsg(e instanceof Error ? e.message : "Falha no envio");
         setStep("error");
@@ -260,6 +263,7 @@ export default function NewDeliveryModal({
         setReviewToken(token);
         setStep("done");
         onSuccess(token);
+        void loadCalendarUrl();
       } catch (e) {
         setErrorMsg(e instanceof Error ? e.message : "Falha ao salvar o link");
         setStep("error");
@@ -286,6 +290,7 @@ export default function NewDeliveryModal({
         setReviewToken(token);
         setStep("done");
         onSuccess(token);
+        void loadCalendarUrl();
       } catch (e) {
         setErrorMsg(e instanceof Error ? e.message : "Falha ao salvar");
         setStep("error");
@@ -339,6 +344,14 @@ export default function NewDeliveryModal({
             placeholder="Ex.: 5 erros ao contratar…"
             value={theme}
             onChange={(e) => setTheme(e.target.value)}
+            fullWidth
+          />
+
+          <Input
+            label="Formato"
+            placeholder="Reels, Carrossel, Estático, Stories…"
+            value={format}
+            onChange={(e) => setFormat(e.target.value)}
             fullWidth
           />
 
@@ -396,7 +409,7 @@ export default function NewDeliveryModal({
           <section className="flex flex-col gap-3">
             <h3 className="text-xs font-extrabold uppercase tracking-wider text-black">
               2 · Legenda e CTA{" "}
-              {hasCreative && <span className="text-[#e10600]">*</span>}
+              {captionRequired && <span className="text-[#e10600]">*</span>}
             </h3>
             <Textarea
               aria-label="Legenda e CTA"
@@ -434,18 +447,11 @@ export default function NewDeliveryModal({
               Planejamento do post (opcional)
             </summary>
             <div className="flex flex-col gap-5 p-4 border-t-2 border-black/15">
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <Input
                   label="Nº"
                   value={planNumber}
                   onChange={(e) => setPlanNumber(e.target.value)}
-                  fullWidth
-                />
-                <Input
-                  label="Formato"
-                  placeholder="Carrossel, Reels…"
-                  value={format}
-                  onChange={(e) => setFormat(e.target.value)}
                   fullWidth
                 />
                 <Input
@@ -621,11 +627,21 @@ export default function NewDeliveryModal({
             <div>
               <p className="text-sm font-bold text-black">Envio concluído!</p>
               <p className="text-xs text-black/50 mt-0.5">
-                Seu link de revisão está pronto
+                Post salvo
               </p>
             </div>
           </div>
-          <ReviewLinkBox token={reviewToken} slug={projectSlug} />
+          {calendarUrl ? (
+            <ReviewLinkBox url={calendarUrl} />
+          ) : (
+            <p className="text-xs text-black/50">Gerando o link do mês…</p>
+          )}
+          {!scheduledAt && (
+            <p className="text-xs font-semibold text-[#b45309]">
+              Sem data de publicação o post não aparece no calendário do
+              cliente. Defina a data em Edição.
+            </p>
+          )}
         </div>
       )}
 

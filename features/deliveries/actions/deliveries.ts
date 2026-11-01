@@ -8,6 +8,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import bcrypt from "bcryptjs";
 import { isGoogleDriveUrl } from "@/lib/google-drive";
+import { isCaptionRequired } from "@/lib/caption-rules";
 import { splitCopyIntoSlides } from "@/features/deliveries/server/splitCopyIntoSlides";
 
 function assertDeliveryNotApproved(delivery: { status: string }) {
@@ -160,7 +161,7 @@ export async function createDelivery(
 
   // A post with art but no caption leaves the client with nothing to
   // approve alongside it — block it here, not only in the form.
-  if (sourceType && !copyText?.trim()) {
+  if (sourceType && isCaptionRequired(format) && !copyText?.trim()) {
     return { error: MISSING_CAPTION_ERROR };
   }
 
@@ -315,6 +316,7 @@ export async function attachCreativeToDelivery(
       sourceType: true,
       filePath: true,
       copyText: true,
+      format: true,
     },
   });
   if (!delivery) return { error: "Post não encontrado" };
@@ -325,7 +327,7 @@ export async function attachCreativeToDelivery(
     return { error: err instanceof Error ? err.message : "Delivery bloqueada" };
   }
 
-  if (!delivery.copyText?.trim()) return { error: MISSING_CAPTION_ERROR };
+  if (isCaptionRequired(delivery.format) && !delivery.copyText?.trim()) return { error: MISSING_CAPTION_ERROR };
 
   const previousFilePath =
     delivery.sourceType === "FILE" ? delivery.filePath : null;

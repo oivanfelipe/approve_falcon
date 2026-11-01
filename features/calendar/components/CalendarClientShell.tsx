@@ -83,7 +83,10 @@ function DayDetailModal({
   accountLabel,
   avatarUrl,
   isTeamMember,
+  sequence,
 }: {
+  /** Set while the client is going through "Revisar em sequência". */
+  sequence?: { index: number; total: number; onNext?: () => void };
   delivery: CalendarDelivery;
   copyStatus: Status;
   onClose: () => void;
@@ -308,6 +311,23 @@ function DayDetailModal({
             }}
           />
         )}
+
+        {sequence && (
+          <div className="flex items-center justify-between gap-3 pt-4 border-t-2 border-black/10">
+            <span className="text-xs font-mono font-bold text-black/50">
+              Post {sequence.index} de {sequence.total}
+            </span>
+            {sequence.onNext ? (
+              <Button variant="outline" size="sm" onClick={sequence.onNext}>
+                Próximo post ›
+              </Button>
+            ) : (
+              <Button variant="primary" size="sm" onClick={onClose}>
+                Concluir
+              </Button>
+            )}
+          </div>
+        )}
       </div>
     </Modal>
   );
@@ -330,6 +350,9 @@ export default function CalendarClientShell({
   const [view, setView] = useState<"calendar" | "grid">(
     searchParams.get("view") === "grid" ? "grid" : "calendar",
   );
+  // Ids (in publish order) of the month's posts waiting on the client, frozen
+  // when "Revisar em sequência" starts so deciding one doesn't reshuffle it.
+  const [sequenceIds, setSequenceIds] = useState<string[] | null>(null);
   const [overviewFilter, setOverviewFilter] = useState<"all" | OverviewGroup>("all");
 
   const deliveriesByDay = useMemo(() => {
@@ -392,6 +415,36 @@ export default function CalendarClientShell({
       ? overviewItems
       : overviewItems.filter((item) => item.group === overviewFilter);
 
+  const monthPrefix = `${monthDate.getFullYear()}-${monthDate.getMonth()}-`;
+  const monthItems = overviewItems.filter(
+    (i) =>
+      i.delivery.scheduledAt &&
+      scheduledDayKey(new Date(i.delivery.scheduledAt)).startsWith(monthPrefix),
+  );
+  const monthPendingForClient = monthItems
+    .filter((i) => i.group === "pending_client")
+    .sort(
+      (a, b) =>
+        new Date(a.delivery.scheduledAt as Date).getTime() -
+        new Date(b.delivery.scheduledAt as Date).getTime(),
+    );
+  const monthApproved = monthItems.filter(
+    (i) => i.group === "approved" || i.group === "published",
+  ).length;
+
+  const startSequence = () => {
+    const ids = monthPendingForClient.map((i) => i.delivery.id);
+    if (ids.length === 0) return;
+    setSequenceIds(ids);
+    setOpenDeliveryId(ids[0]);
+  };
+
+  const sequenceNextId = (() => {
+    if (!sequenceIds || !openDeliveryId) return null;
+    const at = sequenceIds.indexOf(openDeliveryId);
+    return at >= 0 && at < sequenceIds.length - 1 ? sequenceIds[at + 1] : null;
+  })();
+
   return (
     <div className="min-h-screen bg-white">
       {/* Header */}
@@ -408,6 +461,31 @@ export default function CalendarClientShell({
           <p className="text-sm text-black/50">Cliente: {data.project.clientName}</p>
         </div>
       </header>
+
+      {/* Month progress + approval queue */}
+      {!isTeamMember && monthItems.length > 0 && (
+        <div className="max-w-4xl mx-auto w-full px-6 pt-5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-2 border-black p-4">
+            <div>
+              <p className="text-sm font-extrabold uppercase text-black">
+                {monthLabel(monthDate)}
+              </p>
+              <p className="text-xs text-black/60">
+                {monthApproved} de {monthItems.length} posts aprovados
+                {monthPendingForClient.length > 0
+                  ? ` · ${monthPendingForClient.length} aguardando você`
+                  : " · tudo certo por aqui"}
+              </p>
+            </div>
+            {monthPendingForClient.length > 0 && (
+              <Button variant="primary" size="sm" onClick={startSequence}>
+                Revisar {monthPendingForClient.length}{" "}
+                {monthPendingForClient.length === 1 ? "post" : "posts"} em sequência
+              </Button>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* View toggle */}
       <div className="flex items-center justify-center gap-2 px-6 py-4">
@@ -630,7 +708,21 @@ export default function CalendarClientShell({
           copyStatus={
             copyStatuses[openDelivery.id] ?? (openDelivery.copyStatus as Status)
           }
-          onClose={() => setOpenDeliveryId(null)}
+          onClose={() => {
+            setOpenDeliveryId(null);
+            setSequenceIds(null);
+          }}
+          sequence={
+            sequenceIds
+              ? {
+                  index: sequenceIds.indexOf(openDelivery.id) + 1,
+                  total: sequenceIds.length,
+                  onNext: sequenceNextId
+                    ? () => setOpenDeliveryId(sequenceNextId)
+                    : undefined,
+                }
+              : undefined
+          }
           onStatusChange={(status) =>
             setStatuses((prev) => ({ ...prev, [openDelivery.id]: status }))
           }
