@@ -24,9 +24,9 @@ export default function useLiveProjects<T extends { id: string }>(
       } as unknown as T;
 
       setLiveProjects((prev) => {
-        const exists = prev.some((p) => p.id === (updated as any).id);
+        const exists = prev.some((p) => p.id === updated.id);
         if (exists) {
-          return prev.map((p) => (p.id === (updated as any).id ? updated : p));
+          return prev.map((p) => (p.id === updated.id ? updated : p));
         }
         return [updated, ...prev];
       });
@@ -103,15 +103,7 @@ export default function useLiveProjects<T extends { id: string }>(
     return () => {
       // unsubscribe the channel on cleanup
       try {
-        // `unsubscribe` returns a promise in some versions
-        // call it and ignore any errors
-        // @ts-ignore
-        if (typeof channel.unsubscribe === "function") {
-          // @ts-ignore
-          channel.unsubscribe();
-        } else {
-          supabaseClient.removeChannel(channel as any);
-        }
+        void supabaseClient.removeChannel(channel);
       } catch {
         // ignore
       }

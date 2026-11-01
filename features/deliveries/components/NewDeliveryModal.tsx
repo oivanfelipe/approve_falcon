@@ -97,7 +97,6 @@ export default function NewDeliveryModal({
   }, [isOpen, initialScheduledAt]);
   const [password, setPassword] = useState("");
   const [allowDownload, setAllowDownload] = useState(true);
-  const [reviewToken, setReviewToken] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
   const [progress, setProgress] = useState(0);
   const [isPending, startTransition] = useTransition();
@@ -159,7 +158,6 @@ export default function NewDeliveryModal({
     setArtCopy("");
     setPassword("");
     setAllowDownload(true);
-    setReviewToken("");
     setErrorMsg("");
     setProgress(0);
     setSplitNote("");
@@ -226,7 +224,6 @@ export default function NewDeliveryModal({
         const token = result.reviewToken ?? "";
 
         setProgress(100);
-        setReviewToken(token);
         setStep("done");
         onSuccess(token);
         void loadCalendarUrl();
@@ -260,7 +257,6 @@ export default function NewDeliveryModal({
         const token = result.reviewToken ?? "";
 
         setProgress(100);
-        setReviewToken(token);
         setStep("done");
         onSuccess(token);
         void loadCalendarUrl();
@@ -287,7 +283,6 @@ export default function NewDeliveryModal({
         const token = result.reviewToken ?? "";
 
         setProgress(100);
-        setReviewToken(token);
         setStep("done");
         onSuccess(token);
         void loadCalendarUrl();
