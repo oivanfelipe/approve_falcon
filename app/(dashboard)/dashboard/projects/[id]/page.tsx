@@ -28,7 +28,16 @@ export default async function ProjectDetailPage({ params }: PageProps) {
           _count: { select: { comments: true, views: true } },
           comments: {
             where: { authorType: "CLIENT", resolvedAt: null },
-            select: { id: true },
+            orderBy: { createdAt: "asc" },
+            select: {
+              id: true,
+              authorName: true,
+              content: true,
+              audioUrl: true,
+              xPosition: true,
+              yPosition: true,
+              createdAt: true,
+            },
           },
           views: {
             orderBy: { createdAt: "desc" },
@@ -70,6 +79,14 @@ export default async function ProjectDetailPage({ params }: PageProps) {
     reviewToken: d.reviewToken,
     commentCount: d._count.comments,
     pendingCommentCount: d.comments.length,
+    openFeedback: d.comments.map((c) => ({
+      id: c.id,
+      authorName: c.authorName,
+      content: c.content,
+      hasAudio: Boolean(c.audioUrl),
+      hasPin: c.xPosition !== null && c.yPosition !== null,
+      createdAt: c.createdAt,
+    })),
     viewCount: d._count.views,
     createdAt: d.createdAt,
     lastViewedAt: d.views[0]?.createdAt ?? null,

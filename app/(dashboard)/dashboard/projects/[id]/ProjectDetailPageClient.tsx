@@ -12,6 +12,9 @@ import CalendarLinkButton from "@/features/calendar/components/CalendarLinkButto
 import DashboardCalendarView from "@/features/calendar/components/DashboardCalendarView";
 import ImportSpreadsheetModal from "@/features/calendar/components/ImportSpreadsheetModal";
 import DeliveryCommentsModal from "@/features/comments/components/DeliveryCommentsModal";
+import FeedbackChecklist, {
+  type FeedbackItem,
+} from "@/features/comments/components/FeedbackChecklist";
 import {
   scheduleDelivery,
   deleteDelivery,
@@ -41,6 +44,7 @@ interface DeliveryRow {
   reviewToken: string;
   commentCount: number;
   pendingCommentCount: number;
+  openFeedback: FeedbackItem[];
   viewCount: number;
   createdAt: Date;
   lastViewedAt: Date | null;
@@ -220,6 +224,7 @@ function DeliveryEditRow({
   onScheduled,
   onDeleted,
   onPublished,
+  onReturned,
 }: {
   delivery: DeliveryRow;
   selected: boolean;
@@ -229,6 +234,7 @@ function DeliveryEditRow({
   onScheduled: () => void;
   onDeleted: () => void;
   onPublished: () => void;
+  onReturned: () => void;
 }) {
   const [date, setDate] = useState(
     delivery.scheduledAt ? toDateInputValue(new Date(delivery.scheduledAt)) : "",
@@ -347,6 +353,19 @@ function DeliveryEditRow({
           Próxima ação: {nextActionLabel(delivery)}
         </p>
       )}
+
+      <FeedbackChecklist
+        // Fresh checklist state whenever the set of open requests changes.
+        key={delivery.openFeedback.map((i) => i.id).join(",")}
+        deliveryId={delivery.id}
+        items={delivery.openFeedback}
+        changesRequested={
+          delivery.status === "CHANGES_REQUESTED" ||
+          delivery.copyStatus === "CHANGES_REQUESTED"
+        }
+        onOpenThread={onComments}
+        onReturned={onReturned}
+      />
 
       <div className="flex items-center gap-2 flex-wrap pt-2 border-t border-black/10">
         <input
@@ -992,6 +1011,7 @@ export default function ProjectDetailClient({
                       onScheduled={refetch}
                       onDeleted={refetch}
                       onPublished={refetch}
+                      onReturned={refetch}
                     />
                   ))}
                 </div>
