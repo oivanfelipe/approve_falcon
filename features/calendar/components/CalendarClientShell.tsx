@@ -705,6 +705,10 @@ export default function CalendarClientShell({
 
       {openDelivery && (
         <DayDetailModal
+          // Remount per post: the approval panel keeps its own state (e.g. the
+          // "approved" screen), which must not leak into the next post in the
+          // sequence.
+          key={openDelivery.id}
           delivery={openDelivery}
           copyStatus={
             copyStatuses[openDelivery.id] ?? (openDelivery.copyStatus as Status)
