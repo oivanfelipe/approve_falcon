@@ -44,12 +44,18 @@ export default function AudioPlayer({ src, className }: AudioPlayerProps) {
     };
   }, [src]);
 
-  useEffect(() => {
-    // reset when src changes
+  // Reset playback state when src changes — done during render (not in an
+  // effect) so it doesn't trigger a cascading re-render.
+  const [prevSrc, setPrevSrc] = useState(src);
+  if (prevSrc !== src) {
+    setPrevSrc(src);
     setCurrent(0);
     setDuration(0);
     setPlaying(false);
-    if (audioRef.current) audioRef.current.pause();
+  }
+
+  useEffect(() => {
+    audioRef.current?.pause();
   }, [src]);
 
   const toggle = async () => {

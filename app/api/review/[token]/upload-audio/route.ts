@@ -41,9 +41,9 @@ export async function POST(
     }
 
     return NextResponse.json({ publicUrl: publicData.data.publicUrl });
-  } catch (err: any) {
+  } catch (err) {
     return NextResponse.json(
-      { error: err?.message ?? "unknown" },
+      { error: err instanceof Error ? err.message : "unknown" },
       { status: 500 },
     );
   }
