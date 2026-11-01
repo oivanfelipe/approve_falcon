@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useTransition } from "react";
+import React, { useState, useSyncExternalStore, useTransition } from "react";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
@@ -21,7 +21,14 @@ export default function CalendarLinkButton({
   const [error, setError] = useState("");
   const [isPending, startTransition] = useTransition();
 
-  const url = token ? `${window.location.origin}/calendar/${token}` : "";
+  // `window` doesn't exist during server rendering — reading it at render time
+  // made the whole project page respond 500 whenever a calendar link existed.
+  const origin = useSyncExternalStore(
+    () => () => {},
+    () => window.location.origin,
+    () => "",
+  );
+  const url = token ? `${origin}/calendar/${token}` : "";
 
   const handleGenerate = () => {
     setError("");
