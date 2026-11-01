@@ -7,7 +7,11 @@ import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import { Tabs } from "@/components/ui/Tabs";
 import UploadZone from "@/features/deliveries/components/UploadZone";
-import { getUploadUrl, createDelivery } from "@/features/deliveries/actions/deliveries";
+import {
+  getUploadUrl,
+  createDelivery,
+  splitArtCopyIntoSlides,
+} from "@/features/deliveries/actions/deliveries";
 import { supabaseClient } from "@/lib/supabase/browser";
 import { cn } from "@/lib/utils";
 import { getPublicReviewPath } from "@/lib/freelancer-branding-shared";
@@ -104,12 +108,36 @@ export default function NewDeliveryModal({
   const [errorMsg, setErrorMsg] = useState("");
   const [progress, setProgress] = useState(0);
   const [isPending, startTransition] = useTransition();
+  const [isSplitting, setIsSplitting] = useState(false);
+  const [splitNote, setSplitNote] = useState("");
 
   const trimmedDriveUrl = driveUrl.trim();
   const isDriveUrlValid = trimmedDriveUrl.length > 0 && isGoogleDriveUrl(trimmedDriveUrl);
   const hasCreative = sourceMode === "file" ? !!selectedFile : isDriveUrlValid;
-  const canSubmit =
-    hasCreative || theme.trim().length > 0 || planNumber.trim().length > 0;
+  // Art without a caption leaves the client with half a post to approve.
+  const missingCaption = hasCreative && copyText.trim().length === 0;
+  const canSubmit = hasCreative
+    ? !missingCaption
+    : theme.trim().length > 0 ||
+      planNumber.trim().length > 0 ||
+      copyText.trim().length > 0;
+
+  const handleSplitSlides = async () => {
+    setIsSplitting(true);
+    setSplitNote("");
+    const result = await splitArtCopyIntoSlides(artCopy);
+    setIsSplitting(false);
+    if (result.error || !result.text) {
+      setSplitNote(result.error ?? "Não consegui separar o texto.");
+      return;
+    }
+    setArtCopy(result.text);
+    setSplitNote(
+      result.method === "ai"
+        ? "Separado pela IA. Confira antes de salvar — as palavras não foram alteradas."
+        : "Separado por parágrafos (a IA não está disponível agora). Confira antes de salvar.",
+    );
+  };
 
   const handleClose = () => {
     if (step === "uploading") return; // prevent close while uploading
@@ -133,6 +161,7 @@ export default function NewDeliveryModal({
     setReviewToken("");
     setErrorMsg("");
     setProgress(0);
+    setSplitNote("");
     onClose();
   };
 
@@ -275,7 +304,7 @@ export default function NewDeliveryModal({
       isOpen={isOpen}
       onClose={handleClose}
       title="Novo post"
-      description="Preencha o planejamento e, se já tiver a arte pronta, envie o arquivo ou cole o link do Google Drive. Dá pra salvar só o planejamento e anexar a arte depois."
+      description="Suba a arte e cole a legenda — o cliente aprova os dois juntos, como o post vai aparecer. Só o planejamento? Preencha o tema e salve; a arte entra depois."
       size="md"
       closeOnOverlayClick={step !== "uploading"}
       footer={
@@ -303,162 +332,224 @@ export default function NewDeliveryModal({
     >
       {/* ── Upload form ───────────────────────────────────────────────────── */}
       {step === "upload" && (
-        <div className="flex flex-col gap-5">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <Input
-              label="Nº"
-              value={planNumber}
-              onChange={(e) => setPlanNumber(e.target.value)}
-              fullWidth
-            />
-            <Input
-              label="Formato"
-              placeholder="Carrossel, Reels…"
-              value={format}
-              onChange={(e) => setFormat(e.target.value)}
-              fullWidth
-            />
-            <Input
-              label="Função"
-              placeholder="Institucional…"
-              value={postFunction}
-              onChange={(e) => setPostFunction(e.target.value)}
-              fullWidth
-            />
-            <Input
-              label="Produto"
-              value={product}
-              onChange={(e) => setProduct(e.target.value)}
-              fullWidth
-            />
-          </div>
-
+        <div className="flex flex-col gap-6">
+          {/* 1 — Tema: how the team recognises this post in the list */}
           <Input
-            label="Tema"
+            label="Tema do post"
+            placeholder="Ex.: 5 erros ao contratar…"
             value={theme}
             onChange={(e) => setTheme(e.target.value)}
             fullWidth
           />
 
-          <Textarea
-            label="Objetivo / Pilar"
-            value={objective}
-            onChange={(e) => setObjective(e.target.value)}
-            rows={2}
-            fullWidth
-            resize="vertical"
-          />
+          {/* 2 — Arte */}
+          <section className="flex flex-col gap-3">
+            <h3 className="text-xs font-extrabold uppercase tracking-wider text-black">
+              1 · Arte
+            </h3>
+            <Tabs
+              value={sourceMode}
+              onValueChange={(v) => setSourceMode(v as SourceMode)}
+            >
+              <Tabs.List>
+                <Tabs.Tab value="file">Enviar arquivo</Tabs.Tab>
+                <Tabs.Tab value="drive">Link do Google Drive</Tabs.Tab>
+              </Tabs.List>
 
-          <Textarea
-            label="Copy da arte (lâminas)"
-            hint='Use "Slide 1:", "Slide 2:"… em linhas separadas por uma linha em branco para cada lâmina.'
-            value={artCopy}
-            onChange={(e) => setArtCopy(e.target.value)}
-            rows={4}
-            fullWidth
-            resize="vertical"
-          />
+              <Tabs.Panel value="file" className="mt-4">
+                <UploadZone
+                  onFileSelect={(f) => setSelectedFile(f)}
+                  maxSizeMb={100}
+                />
+              </Tabs.Panel>
 
-          <Textarea
-            label="Legenda e CTA (opcional)"
-            placeholder="Texto que o cliente vai ler e aprovar antes do criativo…"
-            value={copyText}
-            onChange={(e) => setCopyText(e.target.value)}
-            rows={3}
-            fullWidth
-            hint="Se preenchida, o cliente só vê o criativo depois de aprovar essa copy"
-          />
+              <Tabs.Panel value="drive" className="mt-4">
+                <div className="flex flex-col gap-4">
+                  <Input
+                    label="Link do Google Drive"
+                    placeholder="https://drive.google.com/file/d/..."
+                    value={driveUrl}
+                    onChange={(e) => setDriveUrl(e.target.value)}
+                    error={
+                      trimmedDriveUrl.length > 0 && !isDriveUrlValid
+                        ? "Cole um link válido do Google Drive (arquivo, pasta, Doc, Sheet ou Slide)."
+                        : undefined
+                    }
+                    hint="No Drive, clique em Compartilhar e defina como “Qualquer pessoa com o link” pode visualizar."
+                  />
+                  <Input
+                    label="Nome do criativo (opcional)"
+                    placeholder="Ex.: Feed 1080x1080 - Campanha Setembro"
+                    value={driveName}
+                    onChange={(e) => setDriveName(e.target.value)}
+                  />
+                </div>
+              </Tabs.Panel>
+            </Tabs>
+            <p className="text-xs text-black/50">
+              Carrossel? Salve o post e adicione as outras lâminas em
+              Editar → Arte e lâminas.
+            </p>
+          </section>
 
-          <hr className="border-black/10" />
+          {/* 3 — Legenda (required once there is art) */}
+          <section className="flex flex-col gap-3">
+            <h3 className="text-xs font-extrabold uppercase tracking-wider text-black">
+              2 · Legenda e CTA{" "}
+              {hasCreative && <span className="text-[#e10600]">*</span>}
+            </h3>
+            <Textarea
+              aria-label="Legenda e CTA"
+              placeholder="O texto que vai junto com o post. O cliente lê e aprova aqui, ao lado da arte."
+              value={copyText}
+              onChange={(e) => setCopyText(e.target.value)}
+              rows={5}
+              fullWidth
+              resize="vertical"
+              error={
+                missingCaption
+                  ? "Falta a legenda. Sem ela o cliente só aprovaria metade do post."
+                  : undefined
+              }
+            />
+          </section>
 
-          <Tabs
-            value={sourceMode}
-            onValueChange={(v) => setSourceMode(v as SourceMode)}
-          >
-            <Tabs.List>
-              <Tabs.Tab value="file">Enviar arquivo</Tabs.Tab>
-              <Tabs.Tab value="drive">Link do Google Drive</Tabs.Tab>
-            </Tabs.List>
+          {/* 4 — Data */}
+          <section className="flex flex-col gap-3">
+            <h3 className="text-xs font-extrabold uppercase tracking-wider text-black">
+              3 · Quando publica
+            </h3>
+            <Input
+              type="date"
+              aria-label="Data de publicação"
+              value={scheduledAt}
+              onChange={(e) => setScheduledAt(e.target.value)}
+              hint="Opcional. O post entra no calendário e na fila de aprovação desse dia."
+            />
+          </section>
 
-            <Tabs.Panel value="file" className="mt-4">
-              <UploadZone
-                onFileSelect={(f) => setSelectedFile(f)}
-                maxSizeMb={100}
-              />
-            </Tabs.Panel>
-
-            <Tabs.Panel value="drive" className="mt-4">
-              <div className="flex flex-col gap-4">
+          {/* Everything else, out of the way */}
+          <details className="group border-2 border-black/15">
+            <summary className="cursor-pointer select-none px-4 py-3 text-xs font-bold uppercase tracking-wider text-black/70 hover:bg-black/5">
+              Planejamento do post (opcional)
+            </summary>
+            <div className="flex flex-col gap-5 p-4 border-t-2 border-black/15">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 <Input
-                  label="Link do Google Drive"
-                  placeholder="https://drive.google.com/file/d/..."
-                  value={driveUrl}
-                  onChange={(e) => setDriveUrl(e.target.value)}
-                  error={
-                    trimmedDriveUrl.length > 0 && !isDriveUrlValid
-                      ? "Cole um link válido do Google Drive (arquivo, pasta, Doc, Sheet ou Slide)."
-                      : undefined
-                  }
-                  hint="No Drive, clique em Compartilhar e defina como “Qualquer pessoa com o link” pode visualizar."
+                  label="Nº"
+                  value={planNumber}
+                  onChange={(e) => setPlanNumber(e.target.value)}
+                  fullWidth
                 />
                 <Input
-                  label="Nome do criativo (opcional)"
-                  placeholder="Ex.: Feed 1080x1080 - Campanha Setembro"
-                  value={driveName}
-                  onChange={(e) => setDriveName(e.target.value)}
-                  hint="Exibido para o cliente como o nome do arquivo"
+                  label="Formato"
+                  placeholder="Carrossel, Reels…"
+                  value={format}
+                  onChange={(e) => setFormat(e.target.value)}
+                  fullWidth
+                />
+                <Input
+                  label="Função"
+                  placeholder="Institucional…"
+                  value={postFunction}
+                  onChange={(e) => setPostFunction(e.target.value)}
+                  fullWidth
+                />
+                <Input
+                  label="Produto"
+                  value={product}
+                  onChange={(e) => setProduct(e.target.value)}
+                  fullWidth
                 />
               </div>
-            </Tabs.Panel>
-          </Tabs>
 
-          <Input
-            label="Rótulo da versão (opcional)"
-            placeholder="Ex.: Ajustes de cor, Versão final…"
-            value={label}
-            onChange={(e) => setLabel(e.target.value)}
-            hint="Exibido no histórico de versões do cliente"
-          />
-
-          <Input
-            type="date"
-            label="Data de publicação (opcional)"
-            value={scheduledAt}
-            onChange={(e) => setScheduledAt(e.target.value)}
-            hint="Se preenchida, esta peça aparece no link de calendário do projeto"
-          />
-
-          <Input
-            type="password"
-            label="Senha do link (opcional)"
-            placeholder="Deixar em branco para sem senha"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            hint="O cliente deve inserir esta senha para ver o arquivo"
-          />
-
-          <label className="flex items-center justify-between cursor-pointer">
-            <span className="text-sm font-medium text-black/70">
-              Permitir download pelo cliente
-            </span>
-            <button
-              type="button"
-              role="switch"
-              aria-checked={allowDownload}
-              onClick={() => setAllowDownload((v) => !v)}
-              className={cn(
-                "relative w-10 h-5.5 border-2 border-black transition-colors duration-150",
-                allowDownload ? "bg-[#e10600]" : "bg-white",
-              )}
-            >
-              <span
-                className={cn(
-                  "absolute top-0.5 left-0.5 w-4 h-4 border border-black transition-transform duration-150",
-                  allowDownload ? "translate-x-4 bg-white" : "translate-x-0 bg-black",
-                )}
+              <Textarea
+                label="Objetivo / Pilar"
+                value={objective}
+                onChange={(e) => setObjective(e.target.value)}
+                rows={2}
+                fullWidth
+                resize="vertical"
               />
-            </button>
-          </label>
+
+              <div className="flex flex-col gap-2">
+                <Textarea
+                  label="Texto da arte (para o designer)"
+                  hint="Cole o texto corrido e use o botão para separar em lâminas."
+                  value={artCopy}
+                  onChange={(e) => setArtCopy(e.target.value)}
+                  rows={5}
+                  fullWidth
+                  resize="vertical"
+                />
+                <div className="flex items-center gap-3 flex-wrap">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleSplitSlides}
+                    loading={isSplitting}
+                    disabled={!artCopy.trim() || isSplitting}
+                  >
+                    Separar em lâminas
+                  </Button>
+                  {splitNote && (
+                    <p className="text-xs text-black/60 flex-1 min-w-48">
+                      {splitNote}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+          </details>
+
+          <details className="group border-2 border-black/15">
+            <summary className="cursor-pointer select-none px-4 py-3 text-xs font-bold uppercase tracking-wider text-black/70 hover:bg-black/5">
+              Opções do link
+            </summary>
+            <div className="flex flex-col gap-5 p-4 border-t-2 border-black/15">
+              <Input
+                label="Rótulo da versão"
+                placeholder="Ex.: Ajustes de cor, Versão final…"
+                value={label}
+                onChange={(e) => setLabel(e.target.value)}
+                hint="Exibido no histórico de versões do cliente"
+              />
+
+              <Input
+                type="password"
+                label="Senha do link"
+                placeholder="Deixar em branco para sem senha"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                hint="O cliente deve inserir esta senha para ver o post"
+              />
+
+              <label className="flex items-center justify-between cursor-pointer">
+                <span className="text-sm font-medium text-black/70">
+                  Permitir download pelo cliente
+                </span>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={allowDownload}
+                  onClick={() => setAllowDownload((v) => !v)}
+                  className={cn(
+                    "relative w-10 h-5.5 border-2 border-black transition-colors duration-150",
+                    allowDownload ? "bg-[#e10600]" : "bg-white",
+                  )}
+                >
+                  <span
+                    className={cn(
+                      "absolute top-0.5 left-0.5 w-4 h-4 border border-black transition-transform duration-150",
+                      allowDownload
+                        ? "translate-x-4 bg-white"
+                        : "translate-x-0 bg-black",
+                    )}
+                  />
+                </button>
+              </label>
+            </div>
+          </details>
         </div>
       )}
 

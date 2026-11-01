@@ -92,6 +92,12 @@ function copyStatusLabel(copyStatus: string): string {
   return "Pendente (Cliente)";
 }
 
+function postStatusLabel(status: string): string {
+  if (status === "APPROVED") return "Post aprovado";
+  if (status === "CHANGES_REQUESTED") return "Ajustes pedidos (V4)";
+  return "Aguardando o cliente";
+}
+
 function artStatusLabel(status: string, hasFile: boolean): string {
   if (status === "APPROVED") return "Aprovada";
   if (status === "CHANGES_REQUESTED") return "Pendente (V4)";
@@ -106,11 +112,16 @@ function nextActionLabel(delivery: DeliveryRow): string | null {
   if (delivery.pendingCommentCount > 0) {
     return "Responder comentário do cliente";
   }
-  if (delivery.copyStatus === "CHANGES_REQUESTED") return "Ajustar a copy";
-  if (delivery.copyStatus === "PENDING") {
+  const hasArt = Boolean(delivery.fileName);
+  if (!hasArt && delivery.copyStatus === "CHANGES_REQUESTED") {
+    return "Ajustar a copy";
+  }
+  if (!hasArt && delivery.copyStatus === "PENDING") {
     return "Aguardando o cliente revisar a copy";
   }
-  if (delivery.status === "CHANGES_REQUESTED") return "Ajustar a arte";
+  if (delivery.status === "CHANGES_REQUESTED") {
+    return "Ajustar o post (arte ou legenda) e devolver ao cliente";
+  }
   if (delivery.status === "PENDING" && !delivery.fileName) return "Subir a arte";
   if (delivery.status === "PENDING") {
     return "Aguardando o cliente aprovar a arte";
@@ -172,7 +183,10 @@ function editStage(delivery: DeliveryRow): "pending_copy" | "pending_art" | "rea
       delivery.objective ||
       delivery.postFunction,
   );
-  const copyStageActive = hasCopyContent && delivery.copyStatus !== "APPROVED";
+  // With the art attached the client approves art + caption once, so the
+  // copy-only stage only exists while there is no art yet.
+  const copyStageActive =
+    hasCopyContent && delivery.copyStatus !== "APPROVED" && !delivery.fileName;
   if (copyStageActive) return "pending_copy";
   if (delivery.status !== "APPROVED") return "pending_art";
   return "ready";
@@ -310,12 +324,21 @@ function DeliveryEditRow({
         </div>
 
         <div className="flex items-center gap-2 shrink-0 flex-wrap">
-          <Badge variant={statusVariant[delivery.copyStatus]} size="sm" dot>
-            Copy: {copyStatusLabel(delivery.copyStatus)}
-          </Badge>
-          <Badge variant={statusVariant[delivery.status]} size="sm" dot>
-            Arte: {artStatusLabel(delivery.status, Boolean(delivery.fileName))}
-          </Badge>
+          {delivery.fileName ? (
+            // Art attached → the client approves art + caption as one post.
+            <Badge variant={statusVariant[delivery.status]} size="sm" dot>
+              {postStatusLabel(delivery.status)}
+            </Badge>
+          ) : (
+            <>
+              <Badge variant={statusVariant[delivery.copyStatus]} size="sm" dot>
+                Copy: {copyStatusLabel(delivery.copyStatus)}
+              </Badge>
+              <Badge variant={statusVariant[delivery.status]} size="sm" dot>
+                Arte: {artStatusLabel(delivery.status, false)}
+              </Badge>
+            </>
+          )}
         </div>
       </div>
 

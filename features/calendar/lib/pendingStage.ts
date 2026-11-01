@@ -27,7 +27,10 @@ export function getPendingStageBadge({
   agencyLabel,
   published = false,
 }: PendingStageInput): PendingStageBadge {
-  const copyStageActive = hasCopyContent && copyStatus !== "APPROVED";
+  // Once the art is attached the client reviews art + caption together and
+  // approves the post once — the copy-only stage only exists before that.
+  const copyStageActive =
+    hasCopyContent && copyStatus !== "APPROVED" && !hasFile;
 
   if (copyStageActive) {
     const label =

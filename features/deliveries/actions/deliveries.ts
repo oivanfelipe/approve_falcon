@@ -8,6 +8,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import bcrypt from "bcryptjs";
 import { isGoogleDriveUrl } from "@/lib/google-drive";
+import { splitCopyIntoSlides } from "@/features/deliveries/server/splitCopyIntoSlides";
 
 function assertDeliveryNotApproved(delivery: { status: string }) {
   if (delivery.status === "APPROVED") {
@@ -23,6 +24,25 @@ function assertCopyNotApproved(delivery: { copyStatus: string }) {
       "Esta copy já foi aprovada pelo cliente — remova a aprovação da copy antes de editar.",
     );
   }
+}
+
+const MISSING_CAPTION_ERROR =
+  "Falta a legenda do post. Cole a legenda e o CTA antes de enviar a arte — o cliente aprova arte e legenda juntas.";
+
+// Separates pasted "copy da arte" into Slide 1 / Slide 2… blocks. Words are
+// never changed (see splitCopyIntoSlides) — only where each slide breaks.
+export async function splitArtCopyIntoSlides(
+  text: string,
+): Promise<{ text?: string; method?: "ai" | "paragraphs"; error?: string }> {
+  const session = await auth();
+  if (!session?.user?.id) return { error: "Não autenticado" };
+
+  const clean = text.trim();
+  if (!clean) return { error: "Cole o texto da arte primeiro." };
+  if (clean.length > 5000) return { error: "Texto muito longo (máx. 5000)." };
+
+  const result = await splitCopyIntoSlides(clean);
+  return { text: result.text, method: result.method };
 }
 
 const createDeliverySchema = z
@@ -137,6 +157,12 @@ export async function createDelivery(
     expiresInDays,
     password,
   } = parsed.data;
+
+  // A post with art but no caption leaves the client with nothing to
+  // approve alongside it — block it here, not only in the form.
+  if (sourceType && !copyText?.trim()) {
+    return { error: MISSING_CAPTION_ERROR };
+  }
 
   const project = await prisma.project.findFirst({
     where: { id: projectId, userId: session.user.ownerId },
@@ -288,6 +314,7 @@ export async function attachCreativeToDelivery(
       status: true,
       sourceType: true,
       filePath: true,
+      copyText: true,
     },
   });
   if (!delivery) return { error: "Post não encontrado" };
@@ -297,6 +324,8 @@ export async function attachCreativeToDelivery(
   } catch (err) {
     return { error: err instanceof Error ? err.message : "Delivery bloqueada" };
   }
+
+  if (!delivery.copyText?.trim()) return { error: MISSING_CAPTION_ERROR };
 
   const previousFilePath =
     delivery.sourceType === "FILE" ? delivery.filePath : null;

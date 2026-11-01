@@ -139,8 +139,8 @@ function DayDetailModal({
           {!creativeRevealed ? (
             <div className="p-6 flex flex-col gap-5">
               <p className="text-[11px] font-mono text-black/40">
-                Etapa 1 de 2 — aprove o planejamento abaixo. A arte é criada
-                e enviada para aprovação depois.
+                Aprove o texto abaixo. Quando a arte ficar pronta, você revisa
+                arte e legenda juntas.
               </p>
               {(delivery.theme || delivery.format || delivery.product || delivery.objective || delivery.postFunction) && (
                 <div className="flex flex-col gap-3 pb-4 border-b border-black/10">
@@ -285,6 +285,13 @@ function DayDetailModal({
             token={delivery.reviewToken}
             status={delivery.status as Status}
             onStatusChange={onStatusChange}
+            labels={{
+              heading: "Decisão sobre o post",
+              approveButton: "Aprovar post",
+              approveConfirmTitle: "Confirmar aprovação do post",
+              requestButton: "Pedir ajustes",
+              requestConfirmTitle: "O que precisa mudar?",
+            }}
           />
         ) : (
           <ApprovalPanel
