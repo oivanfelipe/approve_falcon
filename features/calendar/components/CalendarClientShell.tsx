@@ -356,10 +356,12 @@ export default function CalendarClientShell({
   const [overviewFilter, setOverviewFilter] = useState<"all" | OverviewGroup>("all");
 
   const deliveriesByDay = useMemo(() => {
-    const map = new Map<string, CalendarDelivery>();
+    // Several posts can land on the same day — keep them all.
+    const map = new Map<string, CalendarDelivery[]>();
     for (const d of data.deliveries) {
       if (!d.scheduledAt) continue;
-      map.set(scheduledDayKey(new Date(d.scheduledAt)), d);
+      const key = scheduledDayKey(new Date(d.scheduledAt));
+      map.set(key, [...(map.get(key) ?? []), d]);
     }
     return map;
   }, [data.deliveries]);
@@ -643,34 +645,14 @@ export default function CalendarClientShell({
 
           {grid.map((date) => {
             const inMonth = date.getMonth() === monthDate.getMonth();
-            const delivery = deliveriesByDay.get(dayKey(date));
-            const badge = delivery
-              ? getPendingStageBadge({
-                  copyStatus: copyStatuses[delivery.id] ?? (delivery.copyStatus as Status),
-                  artStatus: statuses[delivery.id] ?? (delivery.status as Status),
-                  hasFile: Boolean(delivery.driveUrl || delivery.signedUrl),
-                  hasCopyContent: Boolean(
-                    delivery.copyText ||
-                      delivery.artCopy ||
-                      delivery.theme ||
-                      delivery.objective ||
-                      delivery.postFunction,
-                  ),
-                  agencyLabel,
-                  published: Boolean(delivery.publishedAt),
-                })
-              : null;
+            const dayDeliveries = deliveriesByDay.get(dayKey(date)) ?? [];
 
             return (
-              <button
+              <div
                 key={date.toISOString()}
-                disabled={!delivery}
-                onClick={() => delivery && setOpenDeliveryId(delivery.id)}
                 className={cn(
-                  "border-r-2 border-b-2 border-black min-h-20 sm:min-h-28 flex flex-col items-start p-2 text-left transition-colors",
+                  "border-r-2 border-b-2 border-black min-h-20 sm:min-h-28 flex flex-col items-start gap-1 p-2 text-left",
                   !inMonth && "bg-black/5",
-                  delivery && "cursor-pointer hover:bg-[#e10600]/5",
-                  !delivery && "cursor-default",
                 )}
               >
                 <span
@@ -681,20 +663,39 @@ export default function CalendarClientShell({
                 >
                   {date.getDate()}
                 </span>
-                {delivery && badge && (
-                  <div className="mt-auto flex flex-col gap-1 w-full">
-                    <span
-                      className={cn(
-                        "w-2 h-2 rounded-full",
-                        statusDot[badge.status],
-                      )}
-                    />
-                    <Badge variant={statusVariant[badge.status]} className="w-fit text-[9px]">
-                      {badge.label}
-                    </Badge>
-                  </div>
-                )}
-              </button>
+                {dayDeliveries.map((delivery) => {
+                  const badge = getPendingStageBadge({
+                    copyStatus:
+                      copyStatuses[delivery.id] ?? (delivery.copyStatus as Status),
+                    artStatus: statuses[delivery.id] ?? (delivery.status as Status),
+                    hasFile: Boolean(delivery.driveUrl || delivery.signedUrl),
+                    hasCopyContent: Boolean(
+                      delivery.copyText ||
+                        delivery.artCopy ||
+                        delivery.theme ||
+                        delivery.objective ||
+                        delivery.postFunction,
+                    ),
+                    agencyLabel,
+                    published: Boolean(delivery.publishedAt),
+                  });
+                  return (
+                    <button
+                      key={delivery.id}
+                      type="button"
+                      onClick={() => setOpenDeliveryId(delivery.id)}
+                      className="flex w-full flex-col items-start gap-1 cursor-pointer text-left hover:bg-[#e10600]/5"
+                    >
+                      <span
+                        className={cn("w-2 h-2 rounded-full", statusDot[badge.status])}
+                      />
+                      <Badge variant={statusVariant[badge.status]} className="w-fit text-[9px]">
+                        {badge.label}
+                      </Badge>
+                    </button>
+                  );
+                })}
+              </div>
             );
           })}
         </div>
