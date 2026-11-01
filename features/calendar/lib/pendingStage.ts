@@ -48,5 +48,7 @@ export function getPendingStageBadge({
     artStatus === "CHANGES_REQUESTED" || !hasFile
       ? `Pendente (${agencyLabel})`
       : "Pendente (Cliente)";
-  return { status: artStatus, label: `${label} · Arte` };
+  // With the art attached it's one post under review — no "· Arte" suffix.
+  // Without it, "(agência) · Arte" still tells the team the upload is theirs.
+  return { status: artStatus, label: hasFile ? label : `${label} · Arte` };
 }
