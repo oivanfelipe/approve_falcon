@@ -99,10 +99,12 @@ export default function DashboardCalendarView({
   const [isDeleting, startDeleteTransition] = useTransition();
 
   const deliveriesByDay = useMemo(() => {
-    const map = new Map<string, CalendarDeliveryRow>();
+    // Several posts can land on the same day — keep them all.
+    const map = new Map<string, CalendarDeliveryRow[]>();
     for (const d of deliveries) {
       if (!d.scheduledAt) continue;
-      map.set(scheduledDayKey(new Date(d.scheduledAt)), d);
+      const key = scheduledDayKey(new Date(d.scheduledAt));
+      map.set(key, [...(map.get(key) ?? []), d]);
     }
     return map;
   }, [deliveries]);
@@ -166,71 +168,87 @@ export default function DashboardCalendarView({
 
         {grid.map((date) => {
           const inMonth = date.getMonth() === monthDate.getMonth();
-          const delivery = deliveriesByDay.get(dayKey(date));
+          const dayDeliveries = deliveriesByDay.get(dayKey(date)) ?? [];
 
           return (
-            <button
+            <div
               key={date.toISOString()}
               onClick={() =>
-                delivery
-                  ? setSelectedDelivery(delivery)
-                  : onEmptyDayClick(toDateInputValue(date))
+                dayDeliveries.length === 0 &&
+                onEmptyDayClick(toDateInputValue(date))
               }
               className={cn(
-                "relative border-r-2 border-b-2 border-black min-h-16 sm:min-h-24 flex flex-col items-start p-2 text-left transition-colors",
+                "relative border-r-2 border-b-2 border-black min-h-16 sm:min-h-24 flex flex-col items-start gap-1 p-2 text-left transition-colors",
                 !inMonth && "bg-black/5",
-                delivery ? "hover:bg-[#e10600]/5" : "hover:bg-black/5",
+                dayDeliveries.length === 0 && "cursor-pointer hover:bg-black/5",
               )}
             >
-              <span
-                className={cn(
-                  "text-xs font-bold",
-                  inMonth ? "text-black" : "text-black/30",
-                )}
-              >
-                {date.getDate()}
-              </span>
-              {delivery && !!delivery.pendingCommentCount && (
+              <div className="flex w-full items-center justify-between">
                 <span
-                  className="absolute top-1.5 right-1.5 flex items-center justify-center min-w-[16px] h-4 px-1 rounded-full bg-[#e10600] text-white text-[9px] font-bold"
-                  title={`${delivery.pendingCommentCount} comentário${delivery.pendingCommentCount !== 1 ? "s" : ""} do cliente aguardando resposta`}
+                  className={cn(
+                    "text-xs font-bold",
+                    inMonth ? "text-black" : "text-black/30",
+                  )}
                 >
-                  {delivery.pendingCommentCount}
+                  {date.getDate()}
                 </span>
-              )}
-              {delivery &&
-                (() => {
-                  const badge = getPendingStageBadge({
-                    copyStatus: delivery.copyStatus ?? "APPROVED",
-                    artStatus: delivery.status,
-                    hasFile: Boolean(delivery.fileName),
-                    hasCopyContent: Boolean(
-                      delivery.copyText ||
-                        delivery.artCopy ||
-                        delivery.theme ||
-                        delivery.objective ||
-                        delivery.postFunction,
-                    ),
-                    agencyLabel: "V4",
-                    published: Boolean(delivery.publishedAt),
-                  });
-                  return (
-                    <div className="mt-auto flex flex-col gap-1 w-full">
-                      <span className={cn("w-2 h-2 rounded-full", statusDot[badge.status])} />
-                      <Badge variant={statusVariant[badge.status]} className="w-fit text-[9px]">
-                        {badge.label}
-                      </Badge>
-                    </div>
-                  );
-                })()}
-            </button>
+                {dayDeliveries.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => onEmptyDayClick(toDateInputValue(date))}
+                    className="text-[10px] font-bold text-black/40 hover:text-black"
+                    title="Adicionar outro post neste dia"
+                    aria-label="Adicionar outro post neste dia"
+                  >
+                    +
+                  </button>
+                )}
+              </div>
+              {dayDeliveries.map((delivery) => {
+                const badge = getPendingStageBadge({
+                  copyStatus: delivery.copyStatus ?? "APPROVED",
+                  artStatus: delivery.status,
+                  hasFile: Boolean(delivery.fileName),
+                  hasCopyContent: Boolean(
+                    delivery.copyText ||
+                      delivery.artCopy ||
+                      delivery.theme ||
+                      delivery.objective ||
+                      delivery.postFunction,
+                  ),
+                  agencyLabel: "V4",
+                  published: Boolean(delivery.publishedAt),
+                });
+                return (
+                  <button
+                    key={delivery.id}
+                    type="button"
+                    onClick={() => setSelectedDelivery(delivery)}
+                    className="relative flex w-full flex-col items-start gap-1 text-left hover:bg-[#e10600]/5"
+                  >
+                    {!!delivery.pendingCommentCount && (
+                      <span
+                        className="absolute top-0 right-0 flex items-center justify-center min-w-[16px] h-4 px-1 rounded-full bg-[#e10600] text-white text-[9px] font-bold"
+                        title={`${delivery.pendingCommentCount} comentário${delivery.pendingCommentCount !== 1 ? "s" : ""} do cliente aguardando resposta`}
+                      >
+                        {delivery.pendingCommentCount}
+                      </span>
+                    )}
+                    <span className={cn("w-2 h-2 rounded-full", statusDot[badge.status])} />
+                    <Badge variant={statusVariant[badge.status]} className="w-fit text-[9px]">
+                      {badge.label}
+                    </Badge>
+                  </button>
+                );
+              })}
+            </div>
           );
         })}
       </div>
 
       <p className="text-xs text-black/40">
         Clique em um dia vazio para enviar uma peça agendada para aquela
-        data. Clique em um dia com post para ver o status e o link de
+        data (ou em + para um segundo post no mesmo dia). Clique em um dia com post para ver o status e o link de
         revisão.
       </p>
 
